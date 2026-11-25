@@ -1,0 +1,128 @@
+/* mba-arrangements.css — Arrangements screens (plan Task 8). Tokens only (tokens.css).
+   Square corners, no shadows, solid purple for primary actions (brand/CAPTURE-NOTES.md). */
+
+/* ---- shared cell helpers for the Task 8 screens (scoped) ---------------------------------- */
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .cell-2 { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .cell-2.al-right { align-items: flex-end; }
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview, .modal) .cell-sub { font-size: var(--fs-xs); color: var(--text-muted); font-weight: var(--fw-medium); }
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .chip-sm { font-size: var(--fs-xs); padding: 2px 8px 2px 6px; }
+:is(.page-arrangements, .page-creditors, .page-portfolios) .tbl td a { font-weight: var(--fw-semibold); }
+.arr-file { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; }
+.arr-file .icon { color: var(--mba-purple); flex: none; }
+
+/* ---- list: status tiles ------------------------------------------------------------------- */
+.arr-tiles {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  background: var(--surface);
+  margin-bottom: var(--space-5);
+}
+.arr-tile {
+  position: relative;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
+  min-height: 92px; min-width: 0;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  text-align: left;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  transition: background-color var(--dur) var(--ease);
+}
+.arr-tile:last-child { border-right: 0; }
+.arr-tile:hover { background: var(--surface-2); }
+.arr-tile::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: transparent; }
+.arr-tile.is-on { background: var(--tone-brand-bg); }
+.arr-tile.is-on::after { background: var(--mba-purple); }
+.arr-tile:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.arr-tile .chip { max-width: 100%; white-space: nowrap; }
+.arr-tile .chip-label { overflow: hidden; text-overflow: ellipsis; }
+.arr-tile-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); }
+.arr-tile-count { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: 1; color: var(--text); }
+.arr-tile-all { background: var(--surface-2); }
+.arr-tile-all.is-on { background: var(--tone-brand-bg); }
+
+.arr-idcell { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.arr-id { font-variant-numeric: tabular-nums; }
+.arr-prog { display: flex; flex-direction: column; gap: 6px; min-width: 120px; }
+.arr-prog .progress { height: 6px; }
+
+/* ---- layouts ------------------------------------------------------------------------------ */
+.arr-layout { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(300px, 1fr); gap: var(--space-5); align-items: start; }
+.arr-picker { max-width: 560px; }
+
+/* ---- create form + preview ---------------------------------------------------------------- */
+.arr-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
+.arr-form-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.arr-form-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-3); flex-wrap: wrap; padding-top: var(--space-2); }
+.arr-preview { display: flex; flex-direction: column; gap: var(--space-4); }
+.arr-preview .tbl { border: 1px solid var(--border); }
+.arr-preview-sum { display: flex; flex-direction: column; gap: 4px; }
+.arr-preview-big { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--mba-purple); letter-spacing: -0.01em; }
+.arr-preview-check {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2); border-left: 3px solid var(--mba-purple);
+  font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+}
+.arr-preview-check strong { font-size: var(--fs-md); }
+.arr-preview-empty .empty { padding: var(--space-6) var(--space-4); }
+
+/* ---- detail ------------------------------------------------------------------------------- */
+.arr-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.arr-kpis .kpi { padding: var(--space-4); }
+.arr-kpis .kpi-value { font-size: var(--fs-xl); }
+.arr-progress-cap { margin-top: var(--space-2) !important; }
+.arr-foot-note { padding: var(--space-3) var(--space-5) var(--space-4); font-size: var(--fs-xs); color: var(--text-muted); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; border-top: 1px solid var(--border); }
+.arr-foot-note .qline { font-weight: var(--fw-semibold); }
+
+.arr-versions { list-style: none; display: flex; flex-direction: column; }
+.arr-version { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.arr-version:first-child { padding-top: 0; }
+.arr-version:last-child { border-bottom: 0; padding-bottom: 0; }
+.arr-version-link { display: flex; gap: var(--space-3); align-items: baseline; text-decoration: none; color: var(--text); min-width: 0; }
+.arr-version-link strong { color: var(--mba-purple); }
+.arr-version-link .num { font-size: var(--fs-sm); color: var(--text-muted); }
+.arr-version.is-current .arr-version-link .num { color: var(--text); font-weight: var(--fw-semibold); }
+.arr-version-link:hover strong { text-decoration: underline; }
+
+#modal-root .arr-preview-big { font-size: var(--fs-lg); }
+
+/* ---- responsive --------------------------------------------------------------------------- */
+@media (max-width: 1280px) {
+  .arr-tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .arr-tile { border-bottom: 1px solid var(--border); }
+  .arr-tile:nth-child(5n) { border-right: 0; }
+}
+@media (max-width: 1100px) {
+  .arr-layout { grid-template-columns: minmax(0, 1fr); }
+  .arr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .arr-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .arr-tile:nth-child(5n) { border-right: 1px solid var(--border); }
+  .arr-tile:nth-child(3n) { border-right: 0; }
+  .arr-form-grid, .arr-form-grid-3 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .arr-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .arr-tile:nth-child(3n) { border-right: 1px solid var(--border); }
+  .arr-tile:nth-child(2n) { border-right: 0; }
+  .arr-kpis { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- review fixes (1440 screenshots, 2026-11-26) ------------------------------------------ */
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .tbl td .num,
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .tbl td a,
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .tbl td .nowrap,
+:is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview) .tbl td .chip { white-space: nowrap; }
+.arr-tile-label { display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; overflow-wrap: normal; }
+.arr-tile-dot { flex: none; width: 7px; height: 7px; margin-top: 4px; background: var(--t); }
+.arr-kpis .kpi-value { font-size: var(--fs-lg); white-space: nowrap; }
+.arr-kpis .kpi-label { letter-spacing: 0.06em; }
+
+/* Narrow screens: locked action buttons ("Cancel arrangement | Requires Supervisor") may wrap
+   instead of overflowing the page (375px check). */
+@media (max-width: 600px) {
+  :is(.page-arrangements, .page-creditors, .page-portfolios) .page-actions { width: 100%; }
+  :is(.page-arrangements, .page-creditors, .page-portfolios) .page-actions .btn { max-width: 100%; white-space: normal; flex-wrap: wrap; height: auto; text-align: left; }
+}

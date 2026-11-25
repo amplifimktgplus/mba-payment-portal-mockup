@@ -1,0 +1,94 @@
+/* tokens.css — MBA CONSULT brand tokens for the payment-portal mockup.
+   Source: site-reforge capture of https://ph.mbacgroup.com/ (brand/audit/design-baseline.json,
+   brand/src/styles/tokens.css, 6 computed captures: home/debtors/contact @1440 + @390, 2026-11-26)
+   plus source-CSS values from the manual pass (design doc §4). Deviations: brand/CAPTURE-NOTES.md.
+   Change values HERE, never at a call site. */
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900; /* Google Fonts serves Montserrat as one variable font */
+  font-display: swap;
+  src: url('../assets/fonts/montserrat-var.woff2') format('woff2');
+}
+
+:root {
+  /* --- brand colour (captured / source CSS) ---------------------------- */
+  --mba-purple: #4B0096;        /* source CSS primary (38 uses); capture also shows #4B0196 */
+  --mba-purple-deep: #1E003C;   /* captured — hover/pressed */
+  --mba-lightblue: #64C8FF;     /* source CSS gradient end — DECORATIVE ONLY (1.87:1 on white) */
+  --mba-blue: #006EFF;          /* source CSS accent — text only >= 24px or >= 18.66px bold (4.49:1) */
+  --mba-cyan: #03BEF1;          /* captured accent — decorative */
+  --mba-navy: #060D1C;          /* captured dark surface */
+  --mba-ink: #000113;           /* captured near-black */
+  --mba-gradient: linear-gradient(90deg, #4B0096 0, #64C8FF);        /* source CSS (15 uses) */
+  --mba-gradient-strong: linear-gradient(90deg, #4B0096 0, #2A3FD6 70%, #006EFF); /* for white text on gradient: purple-dominant, AA at every stop */
+  --mba-logo-lines: linear-gradient(135deg, #64DC96 0, #64C8FF 45%, #4B0096 100%); /* logo line palette (source inline) */
+
+  /* --- surfaces & text -------------------------------------------------- */
+  --surface: #FFFFFF;
+  --surface-2: #F4F5F9;
+  --surface-3: #E9ECF3;
+  --surface-dark: var(--mba-navy);
+  --text: #0B1020;
+  --text-muted: #4A5068;
+  --text-on-dark: #FFFFFF;
+  --text-on-dark-muted: #B9C0D4;
+  --border: #DDE1EB;
+  --border-strong: #B8BFD0;
+  --focus: #4B0096;
+
+  /* --- status tones (V3 §16 colour mapping; text AA on its -bg and on white) */
+  --tone-ok: #0B6B3A;       --tone-ok-bg: #E6F6EC;       /* green: settled / completed / paid */
+  --tone-warn: #8A5300;     --tone-warn-bg: #FFF3D6;     /* amber: pending / overdue */
+  --tone-danger: #B42318;   --tone-danger-bg: #FDECEA;   /* red: failed / defaulted / exception */
+  --tone-info: #0050C8;     --tone-info-bg: #E6F0FF;     /* blue: sent / link sent */
+  --tone-neutral: #4A5068;  --tone-neutral-bg: #EEF0F5;  /* grey: expired / cancelled / superseded */
+  --tone-brand: #4B0096;    --tone-brand-bg: #F1E8FA;    /* purple: draft / pending approval */
+
+  /* --- type (captured: Montserrat body; scale 12/14/16/18/24/30/36 subset) */
+  --font: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+  --fs-2xl: 30px;
+  --fs-3xl: 36px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-heavy: 800;
+  --tracking-caps: 0.08em;     /* site nav + headings: bold uppercase, spaced */
+  --lh-tight: 1.2;
+  --lh-base: 1.5;
+
+  /* --- space (captured scale 5/8/10/15/20/30/40/70) -------------------- */
+  --space-1: 5px;
+  --space-2: 8px;
+  --space-3: 10px;
+  --space-4: 15px;
+  --space-5: 20px;
+  --space-6: 30px;
+  --space-7: 40px;
+  --space-8: 70px;
+
+  /* --- shape & depth (captured: square corners, no shadows) ------------ */
+  --radius-sm: 2px;            /* inputs, chips — near-square (deviation noted) */
+  --radius-md: 0;              /* cards, buttons, panels — square like the site */
+  --radius-round: 50%;         /* captured: circles only */
+  --shadow-1: none;            /* captured: none */
+  --shadow-modal: 0 20px 60px rgba(6, 13, 28, 0.35); /* deviation: modals need elevation */
+
+  /* --- motion (captured durations 0.3s / 0.5s, ease) ------------------- */
+  --ease: ease;
+  --dur: 0.3s;
+  --dur-slow: 0.5s;
+
+  /* --- layout (captured container 1170px, breakpoint 600px) ----------- */
+  --container: 1170px;
+  --bp-mobile: 600px;
+  --nav-width: 248px;
+  --borrower-col: 520px;
+}

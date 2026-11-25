@@ -1,0 +1,41 @@
+/* mba-creditors.css — Creditors screens (plan Task 8). Tokens only (tokens.css). */
+
+.cr-kpis { margin-bottom: var(--space-5); }
+.cr-row { margin-bottom: var(--space-5); align-items: start; }
+
+.cr-rec { display: grid; grid-template-columns: minmax(70px, 1fr) auto; align-items: center; gap: var(--space-3); min-width: 150px; }
+.cr-rec .progress { height: 6px; }
+.cr-rec .num { font-weight: var(--fw-semibold); }
+.cr-pfs { display: flex; flex-direction: column; gap: 2px; }
+.cr-comm { justify-content: flex-end; flex-wrap: nowrap; }
+.cr-big { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--mba-purple); }
+.cr-note { padding: var(--space-3) var(--space-4); background: var(--surface-2); border-left: 3px solid var(--mba-purple); font-size: var(--fs-sm); color: var(--text-muted); }
+.cr-note .link { font-weight: var(--fw-semibold); }
+
+/* ---- add creditor ------------------------------------------------------------------------- */
+.cr-new-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: var(--space-5); align-items: start; }
+.cr-form { display: flex; flex-direction: column; gap: var(--space-5); }
+.cr-form-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-4) var(--space-5); }
+.cr-form-actions { display: flex; justify-content: flex-end; gap: var(--space-3); flex-wrap: wrap; }
+.cr-steps { list-style: none; counter-reset: crstep; display: flex; flex-direction: column; gap: var(--space-4); }
+.cr-steps li { counter-increment: crstep; display: grid; grid-template-columns: 32px 1fr; column-gap: var(--space-3); row-gap: 2px; align-items: start; }
+.cr-steps li::before {
+  content: counter(crstep);
+  grid-row: span 2;
+  display: grid; place-items: center; width: 32px; height: 32px;
+  background: var(--tone-brand-bg); color: var(--mba-purple);
+  font-weight: var(--fw-bold); font-size: var(--fs-sm);
+}
+.cr-steps strong { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.06em; }
+.cr-steps span { font-size: var(--fs-sm); color: var(--text-muted); }
+
+@media (max-width: 1100px) {
+  .cr-new-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .cr-form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* KPI values must never break inside a number (₱25,700,550.00). */
+:is(.cr-kpis, .pf-kpis) .kpi-value { font-size: var(--fs-xl); white-space: nowrap; }
+@media (max-width: 1280px) { :is(.cr-kpis, .pf-kpis) .kpi-value { font-size: var(--fs-lg); } }

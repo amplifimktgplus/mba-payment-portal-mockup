@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output (the live preview is published from the gh-pages branch)
+dist/
+
+# Local verification artifacts
+verify/shots/
+verify/*-output.txt
+verify/REPORT.md
+
+# Local-only working material
+docs/
+brand/
+
+# OS
+.DS_Store

@@ -1,0 +1,102 @@
+/* mba-reports.css — Reports (plan Task 9). Tokens only (tokens.css), plus the chart slots below.
+   Chart colour roles (dataviz skill). Single-series bars use the brand purple.
+   Categorical slots (method mix) are a brand-derived set validated with the dataviz validator
+   (node validate_palette.js "#6B2FD0,#0B9BC8,#E8590C,#1F4FE0" --mode light → ALL CHECKS PASS:
+   lightness band, chroma, adjacent CVD ΔE ≥ 17.8, normal-vision ΔE ≥ 26.0, contrast ≥ 3:1 on white).
+   The brand purple itself (#4B0096) sits below the categorical lightness band, so slot 1 is a
+   lighter step of the same hue. The page has no dark mode, so only light steps are defined. */
+.page-reports, .viz {
+  --viz-1: #6B2FD0;  /* purple (brand hue, lighter step) */
+  --viz-2: #0B9BC8;  /* cyan (brand accent family) */
+  --viz-3: #E8590C;  /* orange */
+  --viz-4: #1F4FE0;  /* blue (brand accent family) */
+  --viz-ink: var(--text);
+  --viz-ink-2: var(--text-muted);
+  --viz-grid: var(--surface-3);
+  --viz-axis: var(--border-strong);
+}
+
+/* Grid: two columns; the reconciliation report spans both. */
+.report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.report-card { display: flex; flex-direction: column; }
+.report-card > .card-body { flex: 1; display: flex; flex-direction: column; }
+.report-card .report-table { margin-top: auto; padding-top: var(--space-4); }
+.report-wide { grid-column: 1 / -1; }
+.report-def { color: var(--text-muted); font-size: var(--fs-sm); line-height: var(--lh-base); max-width: 72ch; }
+
+/* Chart frame + tooltip */
+.viz { position: relative; }
+.viz-scroll { overflow-x: auto; }
+.viz-svg { display: block; overflow: visible; font-family: var(--font); }
+.viz-cat { font-size: 13px; font-weight: var(--fw-semibold); fill: var(--viz-ink); }
+.viz-cat-sub { font-size: 12px; fill: var(--viz-ink-2); }
+.viz-val { font-size: 13px; font-weight: var(--fw-bold); fill: var(--viz-ink); font-variant-numeric: tabular-nums; }
+.viz-val-zero { font-weight: var(--fw-medium); fill: var(--viz-ink-2); }
+.viz-in { font-size: 12px; font-weight: var(--fw-bold); fill: #FFFFFF; pointer-events: none; }
+.viz-in-dark { fill: var(--mba-ink); }
+.viz-axis { stroke: var(--viz-axis); stroke-width: 1; shape-rendering: crispEdges; }
+.viz-grid { stroke: var(--viz-grid); stroke-width: 1; shape-rendering: crispEdges; }
+
+.viz-fill-brand { fill: var(--mba-purple); }
+.viz-fill-1 { fill: var(--viz-1); }
+.viz-fill-2 { fill: var(--viz-2); }
+.viz-fill-3 { fill: var(--viz-3); }
+.viz-fill-4 { fill: var(--viz-4); }
+.viz-tone-ok { fill: var(--tone-ok); }
+.viz-tone-neutral { fill: var(--border-strong); }
+.viz-tone-danger { fill: var(--tone-danger); }
+.viz-tone-warn { fill: var(--tone-warn); }
+
+.viz-mark { cursor: default; outline: none; }
+.viz-mark .viz-bar { transition: opacity var(--dur) var(--ease); }
+.viz-mark:hover .viz-bar, .viz-mark:focus .viz-bar { opacity: 0.78; }
+.viz-mark:focus-visible .viz-hit { stroke: var(--focus); stroke-width: 2; }
+
+.viz-tip {
+  position: absolute; z-index: 5; pointer-events: none;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--mba-navy); color: var(--text-on-dark);
+  font-size: var(--fs-xs); white-space: nowrap;
+}
+.viz-tip[hidden] { display: none; }
+.viz-tip-value { font-size: var(--fs-sm); }
+.viz-tip-label { color: var(--text-on-dark-muted); }
+
+/* Method-mix legend: a compact table in block order (name · payments · amount). */
+.viz-legend-table { width: 100%; margin-top: var(--space-4); border-collapse: collapse; font-size: var(--fs-sm); }
+.viz-legend-table th, .viz-legend-table td { padding: 9px 0; border-bottom: 1px solid var(--border); text-align: left; }
+.viz-legend-table thead th { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding-top: 0; }
+.viz-legend-table .al-right { text-align: right; }
+.viz-legend-table tbody tr:last-child > * { border-bottom: 0; }
+.viz-legend-name { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: var(--fw-semibold); color: var(--text); }
+.viz-key { flex: none; }
+
+/* KPI values on this page are long peso amounts; one step down keeps them on one line. */
+.page-reports .kpi-value { font-size: var(--fs-xl); }
+
+/* Table view */
+.report-table summary {
+  cursor: pointer; display: inline-flex; align-items: center; gap: var(--space-2);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--mba-purple); padding: var(--space-2) 0;
+}
+.report-table summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.report-table[open] summary { margin-bottom: var(--space-3); }
+.report-table .tbl { border: 1px solid var(--border); }
+
+/* Reconciliation report: bars + exception counts side by side */
+.report-recon { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: var(--space-6); align-items: center; }
+.report-exc { list-style: none; margin: 0; padding: 0 0 0 var(--space-5); border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: var(--space-3); }
+.report-exc li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.report-exc-n { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--text); }
+.report-exc-link { padding-top: var(--space-2); font-size: var(--fs-sm); }
+
+@media (max-width: 1180px) {
+  .report-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .report-recon { grid-template-columns: minmax(0, 1fr); }
+  .report-exc { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: var(--space-4); }
+}
+.viz-legend-table td { padding-left: var(--space-4); white-space: nowrap; }

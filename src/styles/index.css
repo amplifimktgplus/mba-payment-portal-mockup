@@ -1,0 +1,21 @@
+/* Entry stylesheet. Order matters: tokens → motion → base → kit → shell chrome → per-area files.
+   Per-area files are owned by their screen builders (append-only here). */
+@import './tokens.css';
+@import './motion.css';
+@import './base.css';
+@import './components.css';
+@import './shell.css';
+@import './borrower.css';
+@import './mba.css';
+@import './mba-dashboard.css';
+@import './mba-accounts.css';
+@import './mba-requests.css';
+@import './mba-transactions.css';
+@import './mba-arrangements.css';
+@import './mba-creditors.css';
+@import './mba-portfolios.css';
+@import './mba-reconciliation.css';
+@import './mba-reports.css';
+@import './mba-remittances.css';
+@import './mba-settings.css';
+@import './integration.css';

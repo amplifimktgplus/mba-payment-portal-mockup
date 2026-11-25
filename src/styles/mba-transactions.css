@@ -1,0 +1,70 @@
+/* mba-transactions.css — owned by the screen builder for this area (plan Task 7). Tokens only (tokens.css). */
+
+.page-transactions .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.92em; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.page-transactions .cell-2 { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.page-transactions .cell-main { font-weight: var(--fw-semibold); color: var(--text); white-space: nowrap; }
+.page-transactions .cell-sub { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
+.page-transactions .tbl td a.link { font-weight: var(--fw-semibold); white-space: nowrap; }
+
+.tx-kpis { margin-bottom: var(--space-5); }
+.page-transactions > .notice { margin-bottom: var(--space-4); }
+.tx-pending-line a { font-weight: var(--fw-semibold); }
+
+.tx-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--space-5); align-items: start; }
+.tx-big { font-size: var(--fs-xl); font-weight: var(--fw-heavy); color: var(--text); }
+.tx-small { font-size: var(--fs-sm); }
+
+/* gross / fee / net strip */
+.tx-amounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); }
+.tx-amt { display: flex; flex-direction: column; gap: 4px; padding: var(--space-4) var(--space-5); min-width: 0; }
+.tx-amt + .tx-amt { border-left: 1px solid var(--border); }
+.tx-amt-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--text-muted); }
+.tx-amt-value { font-size: var(--fs-xl); font-weight: var(--fw-heavy); color: var(--text); }
+.tx-amt-sub { font-size: var(--fs-xs); color: var(--text-muted); }
+.tx-amt-fee .tx-amt-value { color: var(--text-muted); }
+.tx-amt-net { background: var(--tone-brand-bg); }
+.tx-amt-net .tx-amt-value { color: var(--mba-purple); }
+.tx-fee-label { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text); }
+
+/* webhook log */
+.wh-events { display: flex; flex-direction: column; gap: var(--space-4); }
+.wh-event { border: 1px solid var(--border); border-left: 4px solid var(--tone-ok); }
+.wh-event[data-kind="failed"] { border-left-color: var(--tone-danger); }
+.wh-event.is-dup { border-left-color: var(--tone-warn); }
+.wh-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.wh-id { font-weight: var(--fw-bold); }
+.wh-kind { color: var(--text-muted); }
+.wh-time { margin-left: auto; font-size: var(--fs-xs); color: var(--text-muted); }
+.wh-steps { display: flex; flex-direction: column; padding: var(--space-2) var(--space-4); }
+.wh-step { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: 6px 0; font-size: var(--fs-sm); color: var(--text); }
+.wh-step + .wh-step { border-top: 1px dashed var(--border); }
+.wh-step-time { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
+.wh-mark { display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none; font-size: 12px; font-weight: var(--fw-heavy); line-height: 1; }
+.wh-step.is-ok .wh-mark { background: var(--tone-ok-bg); color: var(--tone-ok); }
+.wh-step.is-bad .wh-mark { background: var(--tone-danger-bg); color: var(--tone-danger); }
+.wh-step.is-final .wh-label { font-weight: var(--fw-bold); }
+
+.tx-exc { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--fs-sm); }
+.tx-explain { list-style: decimal; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--fs-sm); color: var(--text-muted); }
+.tx-refund-msg .notice { font-size: var(--fs-sm); }
+
+@media (max-width: 1200px) {
+  .tx-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .tx-amounts { grid-template-columns: 1fr; }
+  .tx-amt + .tx-amt { border-left: 0; border-top: 1px solid var(--border); }
+  .wh-time { margin-left: 0; }
+}
+
+/* compact empty states inside detail cards */
+.page-tx-detail .card .empty { padding: var(--space-5) var(--space-4); }
+
+/* Narrow laptops (D§5.2 MBA down to 1024): keep ID, borrower, amount, date and status in view.
+   Request and method stay on the detail page. Columns: 1 TXN · 2 borrower · 3 request · 4 method · 5 amount · 6 started · 7 status */
+@media (max-width: 1279px) {
+  [data-testid="tx-table"] th:nth-child(3), [data-testid="tx-table"] td:nth-child(3) { display: none; }
+}
+@media (max-width: 1099px) {
+  [data-testid="tx-table"] th:nth-child(4), [data-testid="tx-table"] td:nth-child(4) { display: none; }
+}

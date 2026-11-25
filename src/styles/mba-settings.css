@@ -1,0 +1,9 @@
+/* mba-settings.css — Settings / Policies, read-only (plan Task 9). Tokens only (tokens.css). */
+
+.set-policy { font-weight: var(--fw-semibold); color: var(--text); }
+.set-value { font-weight: var(--fw-medium); color: var(--text); }
+.set-viewing { font-size: var(--fs-sm); }
+.set-yes { display: inline-flex; color: var(--tone-ok); }
+.set-no { color: var(--text-muted); }
+.page-settings .set-col-on { background: var(--tone-brand-bg); }
+.set-foot { font-size: var(--fs-sm); max-width: 80ch; }

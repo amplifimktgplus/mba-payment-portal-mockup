@@ -1,0 +1,59 @@
+/* mba-reconciliation.css — Reconciliation (plan Task 9). Tokens only (tokens.css). */
+
+.page-reconciliation .nowrap { white-space: nowrap; }
+
+/* Exceptions by type: 8 tiles, 4 × 2. Square, hairline, the site's numbered-section look. */
+.recon-types {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+}
+.recon-type {
+  position: relative;
+  display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'n label count' 'n sub count';
+  column-gap: var(--space-3); row-gap: 2px; align-items: center;
+  padding: var(--space-4); min-height: 76px; text-align: left;
+  background: var(--surface); color: var(--text);
+  border: 0; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  font: inherit; cursor: pointer;
+  transition: background-color var(--dur) var(--ease);
+}
+.recon-type:hover { background: var(--surface-2); }
+.recon-type:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.recon-type::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; }
+.recon-type.is-on { background: var(--tone-brand-bg); }
+.recon-type.is-on::before { background: var(--mba-purple); }
+.recon-type-n { grid-area: n; align-self: start; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--text-muted); letter-spacing: 0.08em; padding-top: 2px; }
+.recon-type-label { grid-area: label; font-size: var(--fs-sm); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
+.recon-type-sub { grid-area: sub; font-size: var(--fs-xs); color: var(--text-muted); }
+.recon-type-count { grid-area: count; font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--tone-danger); min-width: 1.5ch; text-align: right; }
+.recon-type.is-zero .recon-type-count { color: var(--tone-ok); }
+
+/* Tabs sit directly on the panel below. */
+.recon-tabpanel { margin-top: var(--space-5); }
+
+/* Queue: keep the finding readable but bounded. */
+.recon-detail-cell { max-width: 360px; }
+.recon-detail {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  color: var(--text-muted); line-height: 1.4;
+}
+.recon-diff-bad { color: var(--tone-danger); font-weight: var(--fw-bold); }
+
+/* Detail page */
+.recon-detail-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-5); align-items: start; }
+.recon-finding { font-size: var(--fs-md); line-height: var(--lh-base); color: var(--text); max-width: 70ch; }
+.recon-resolve-actions { justify-content: flex-end; }
+
+@media (max-width: 1180px) {
+  .recon-types { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .recon-detail-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .recon-types { grid-template-columns: minmax(0, 1fr); }
+  .recon-detail-cell { max-width: 220px; }
+}
+
+/* Money, ids and dates never break across lines. */
+.recon-nw { white-space: nowrap; }
+.recon-sub { margin-top: 2px; font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
+.recon-resolve-actions > .btn { flex: 1 1 auto; justify-content: center; }

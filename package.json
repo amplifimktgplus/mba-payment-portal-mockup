@@ -1,0 +1,19 @@
+{
+  "name": "mba-payment-portal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MBA CONSULT payment-portal mockup (demo data only, simulated PayMongo).",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/",
+    "e2e": "node verify/e2e.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2",
+    "puppeteer-core": "23.11.1"
+  },
+  "dependencies": {
+    "qrcode-generator": "1.4.4"
+  }
+}

@@ -1,0 +1,150 @@
+/* mba-accounts.css — Accounts list, account detail and the Send payment link modal (D§7.4).
+   Tokens only (tokens.css). Square corners; no shadows (the modal's own elevation is the kit's). */
+
+/* ---- list ---------------------------------------------------------------------------------- */
+.acc-meta { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--text-muted); }
+.acc-quick {
+  min-height: 32px; padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text);
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.acc-quick:hover { border-color: var(--mba-purple); color: var(--mba-purple); }
+.acc-who { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
+.acc-who-name { color: var(--text); font-weight: var(--fw-semibold); text-decoration: none; }
+.acc-who-name:hover { color: var(--mba-purple); text-decoration: underline; }
+.acc-who-ref { font-size: var(--fs-xs); color: var(--text-muted); }
+.acc-pf { display: flex; flex-direction: column; line-height: 1.35; }
+.acc-pf-cr { font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* ---- detail -------------------------------------------------------------------------------- */
+.page-account > * + * { margin-top: var(--space-5); }
+.page-account .page-head { margin-bottom: 0; }
+.page-account .page-meta { gap: var(--space-4); }
+
+.acc-sum { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); align-items: stretch; }
+.acc-bal { display: flex; flex-direction: column; justify-content: center; gap: var(--space-3); padding-left: var(--space-6); border-left: 1px solid var(--border); min-width: 230px; }
+.acc-bal-item { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-5); }
+.acc-bal-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+.acc-bal-value { font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+.acc-bal-item.is-strong { padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.acc-bal-item.is-strong .acc-bal-value { font-size: var(--fs-xl); font-weight: var(--fw-bold); }
+/* Discount / credit lines explain the gap between placed − paid and the current balance. */
+.acc-bal-item.is-adj { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: var(--space-5); row-gap: 2px; }
+.acc-bal-item .acc-bal-label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.acc-bal-item.is-adj .acc-bal-value { text-align: right; }
+.acc-bal-sub { grid-column: 1 / -1; max-width: 34ch; font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.35; }
+
+.acc-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.acc-actions-label { margin-right: var(--space-3); padding-left: var(--space-2); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+.acc-actions .btn-ghost { color: var(--mba-purple); }
+.acc-actions .btn-ghost:hover:not(:disabled) { background: var(--surface); }
+
+.acc-tabs .tabs { margin-bottom: var(--space-5); }
+.acc-panel { min-width: 0; }
+
+.acc-ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: var(--space-5); align-items: start; }
+.acc-help { font-size: var(--fs-sm); color: var(--text-muted); }
+.acc-prog-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.acc-prog-text { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text); }
+.acc-next { display: flex; flex-direction: column; gap: 4px; padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.acc-next-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); }
+.acc-next-row strong { font-size: var(--fs-lg); }
+
+.acc-contacts { display: flex; flex-direction: column; gap: var(--space-5); }
+.acc-contact-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.acc-nowrap { white-space: nowrap; }
+.acc-contact-form { display: flex; flex-direction: column; gap: var(--space-4); }
+.acc-form-actions { display: flex; align-items: flex-end; justify-content: flex-end; }
+.acc-note { display: block; min-width: 200px; max-width: 360px; white-space: normal; font-size: var(--fs-sm); }
+.acc-audit-what { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-sm); }
+.acc-change { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); white-space: nowrap; }
+.acc-steps { counter-reset: step; display: flex; flex-direction: column; gap: var(--space-3); }
+.acc-steps li { counter-increment: step; position: relative; padding-left: 36px; font-size: var(--fs-sm); color: var(--text-muted); }
+.acc-steps li strong { color: var(--text); }
+.acc-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 24px; height: 24px; display: grid; place-items: center;
+  background: var(--tone-brand-bg); color: var(--mba-purple); font-size: var(--fs-xs); font-weight: var(--fw-bold);
+}
+
+/* ---- Send payment link modal --------------------------------------------------------------- */
+.lp-step { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.lp-step-n { display: grid; place-items: center; width: 24px; height: 24px; background: var(--mba-purple); color: var(--text-on-dark); font-size: var(--fs-xs); font-weight: var(--fw-bold); }
+.lp-step-t { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text); margin-right: var(--space-3); }
+.lp { border: 1px solid var(--border); background: var(--surface-2); }
+.lp-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+.lp-note { padding: var(--space-2) var(--space-4) var(--space-3); font-size: var(--fs-xs); color: var(--text-muted); }
+.modal-body .lp-note { margin: 0; }
+.lp-url { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--mba-purple); overflow-wrap: anywhere; }
+.lp-k { display: inline-block; min-width: 64px; margin-right: var(--space-2); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+.lp-mail { margin: var(--space-4); background: var(--surface); border: 1px solid var(--border); }
+.lp-mail-meta { padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); font-size: var(--fs-sm); display: flex; flex-direction: column; gap: 2px; }
+.lp-mail-body { position: relative; padding: var(--space-6) var(--space-6) var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--fs-sm); color: var(--text); }
+.modal-body .lp-mail-body p { color: var(--text); }
+.lp-bar { position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--mba-gradient); }
+.lp-hello { font-weight: var(--fw-semibold); }
+.lp-cta {
+  align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 22px;
+  background: var(--mba-purple); color: var(--text-on-dark);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.1em;
+}
+.lp-qr { display: flex; align-items: center; gap: var(--space-4); }
+.lp-qr .qr { flex: none; }
+.lp-qr-text { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; color: var(--text-muted); }
+.lp-qr-empty { width: 132px; height: 132px; display: grid; place-items: center; text-align: center; padding: var(--space-3); border: 1px dashed var(--border-strong); font-size: var(--fs-xs); color: var(--text-muted); }
+.modal-body .lp-help, .lp-help { font-size: var(--fs-xs); color: var(--text-muted); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+
+.lp-sms .lp-bubble {
+  margin: var(--space-4); max-width: 420px; padding: var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--mba-purple);
+  font-size: var(--fs-sm); color: var(--text); line-height: 1.55;
+}
+.lp-foot { font-size: var(--fs-xs); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+.lp-done { display: flex; gap: var(--space-4); align-items: flex-start; padding: var(--space-4); background: var(--tone-ok-bg); border-left: 4px solid var(--tone-ok); }
+.lp-done-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; background: var(--tone-ok); color: var(--text-on-dark); }
+.lp-done-title { display: block; font-size: var(--fs-md); color: var(--text); margin-bottom: 4px; }
+.modal-body .lp-done p { color: var(--text); font-size: var(--fs-sm); }
+.lp-done-link { display: flex; gap: var(--space-5); align-items: center; padding: var(--space-4); border: 1px solid var(--border); }
+.lp-done-url { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lp-done-url .lp-note { padding: 0; }
+
+@media (max-width: 1200px) {
+  .acc-ov { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .acc-sum { grid-template-columns: minmax(0, 1fr); }
+  .acc-bal { padding-left: 0; padding-top: var(--space-4); border-left: 0; border-top: 1px solid var(--border); min-width: 0; }
+}
+@media (max-width: 720px) {
+  .acc-contact-row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .lp-qr, .lp-done-link { flex-direction: column; align-items: flex-start; }
+  .lp-mail-body { padding: var(--space-5) var(--space-4); }
+  .acc-actions-label { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .acc-nowrap { white-space: normal; }
+}
+
+/* Below 1200px "Paid to date" gives way (it is on the account page) so the list fits without side-scroll. */
+@media (max-width: 1200px) {
+  .page-accounts [data-testid="accounts-table"] th:nth-child(4),
+  .page-accounts [data-testid="accounts-table"] td:nth-child(4) { display: none; }
+}
+@media (max-width: 1360px) {
+  .acc-note { min-width: 0; }
+  [data-testid="contacts-table"] th:nth-child(6), [data-testid="contacts-table"] td:nth-child(6) { display: none; }
+}
+@media (max-width: 1100px) {
+  [data-testid="contacts-table"] .acc-nowrap { white-space: normal; }
+}

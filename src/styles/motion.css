@@ -1,0 +1,27 @@
+/* motion.css — keyframes captured verbatim from ph.mbacgroup.com (site-reforge sr-motion,
+   brand/src/styles/motion.css), renamed with an mba- prefix so they cannot collide.
+   The source has NO prefers-reduced-motion block; the rebuild adds one (site-reforge tenet). */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* source "a": fade out */
+  @keyframes mba-fade-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+  /* source "b": continuous rotation (spinner) */
+  @keyframes mba-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(359deg); } }
+  /* source "d": logo flip on Y axis */
+  @keyframes mba-flip { 0% { transform: rotateY(0deg); } 40% { transform: rotateY(1turn); } 100% { transform: rotateY(1turn); } }
+  /* added (not on source): entrance used for screens/toasts, built from the captured 0.3s ease */
+  @keyframes mba-rise { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+
+  .mba-anim-rise { animation: mba-rise var(--dur) var(--ease) both; }
+  .mba-anim-spin { animation: mba-spin 1s linear infinite; }
+  .mba-anim-flip { animation: mba-flip 2.4s var(--ease) 1; }
+  .mba-transition { transition: all var(--dur) var(--ease); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

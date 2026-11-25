@@ -1,0 +1,49 @@
+/* mba-remittances.css — Remittances decision screen (plan Task 9). Tokens only (tokens.css). */
+
+.rm-models { align-items: stretch; }
+.rm-model { display: flex; flex-direction: column; }
+.rm-model-lead { color: var(--text); font-size: var(--fs-md); line-height: var(--lh-base); max-width: 60ch; }
+
+/* Flow diagram: drawn at 480 units, never scaled up; shrinks only on narrow screens. */
+.rm-figure { margin: var(--space-5) 0; padding: var(--space-5); background: var(--surface-2); border: 1px solid var(--border); }
+.rm-flow { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; overflow: visible; font-family: var(--font); }
+.rm-node { stroke-width: 1; shape-rendering: crispEdges; }
+.rm-node-borrower { fill: var(--surface); stroke: var(--border-strong); }
+.rm-node-creditor { fill: var(--surface); stroke: var(--text-muted); }
+.rm-node-mba { fill: var(--tone-brand-bg); stroke: var(--mba-purple); }
+.rm-node-bar { fill: var(--mba-purple); }
+.rm-node-title { font-size: 13px; font-weight: var(--fw-bold); fill: var(--text); }
+.rm-node-sub { font-size: 12px; fill: var(--text-muted); }
+.rm-edge { stroke: var(--text-muted); stroke-width: 1.5; }
+.rm-edge.is-dashed { stroke-dasharray: 5 4; }
+.rm-arrowhead { fill: var(--text-muted); }
+.rm-edge-label { font-size: 12px; font-weight: var(--fw-semibold); fill: var(--text); }
+
+.rm-block + .rm-block { margin-top: var(--space-5); }
+.rm-block .eyebrow { margin-bottom: var(--space-3); }
+.rm-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--fs-sm); line-height: var(--lh-base); }
+.rm-model .dl dd { font-size: var(--fs-sm); font-weight: var(--fw-medium); line-height: var(--lh-base); }
+
+/* Sample statement */
+.rm-statement-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.rm-statement { border: 1px solid var(--border); }
+.rm-statement th { white-space: nowrap; }
+.rm-statement tbody th.rm-creditor { font-weight: var(--fw-semibold); text-transform: none; letter-spacing: 0; font-size: var(--fs-sm); color: var(--text); background: transparent; padding: 13px var(--space-4); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.rm-statement tfoot th, .rm-statement tfoot td { border-top: 2px solid var(--text); font-weight: var(--fw-bold); padding: 13px var(--space-4); background: var(--surface-2); }
+.rm-statement tfoot th { text-align: left; font-size: var(--fs-sm); color: var(--text); letter-spacing: 0; text-transform: none; }
+.rm-statement td { vertical-align: top; }
+.rm-nw { white-space: nowrap; }
+.rm-muted { color: var(--text-muted); }
+.rm-cell-note { display: block; margin-top: 2px; font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-muted); white-space: nowrap; }
+.rm-th-q { display: inline-flex; align-items: center; gap: var(--space-2); }
+.rm-notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--fs-sm); color: var(--text-muted); line-height: var(--lh-base); }
+.rm-notes .tag { vertical-align: 1px; }
+
+@media (max-width: 600px) {
+  .rm-figure { padding: var(--space-3); }
+}
+
+/* Square brand markers (the site's square shapes) for both lists. */
+.rm-list li, .rm-notes li { position: relative; padding-left: var(--space-5); }
+.rm-list li::before, .rm-notes li::before { content: ''; position: absolute; left: 2px; top: 0.6em; width: 6px; height: 6px; background: var(--mba-purple); }
+.rm-notes li::before { background: var(--border-strong); }

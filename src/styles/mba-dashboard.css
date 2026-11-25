@@ -1,0 +1,88 @@
+/* mba-dashboard.css — Dashboard (D§7.1). Tokens only (tokens.css). Square corners, no shadows,
+   bold uppercase labels; purple is the single data hue; gradients only as decoration. */
+
+.page-dashboard > * + * { margin-top: var(--space-5); }
+.page-dashboard .page-head { margin-bottom: var(--space-5); }
+
+.dash-asof { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* KPI row */
+.dash-kpis .kpi-value { font-size: 28px; }
+.dash-kpis .kpi-sub { line-height: 1.5; }
+
+/* Recent activity + side column */
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+.dash-main, .dash-side { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.dash-recent .tbl-foot { display: none; }
+.dash-recent .tbl td { white-space: nowrap; }
+
+.dash-id { font-weight: var(--fw-semibold); font-size: var(--fs-sm); text-decoration: none; color: var(--mba-purple); }
+.dash-id:hover { text-decoration: underline; }
+.dash-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.dash-who-name { color: var(--text); font-weight: var(--fw-semibold); text-decoration: none; }
+.dash-who-name:hover { color: var(--mba-purple); text-decoration: underline; }
+.dash-who-ref { font-size: var(--fs-xs); color: var(--text-muted); }
+.dash-when { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
+.dash-status { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.dash-repl { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
+
+/* Exceptions summary */
+.dash-exc-total { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--tone-danger); padding-top: 4px; }
+.dash-exc li + li { border-top: 1px solid var(--border); }
+.dash-exc-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  color: var(--text); text-decoration: none; font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  transition: background-color 0.15s var(--ease);
+}
+.dash-exc-row:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.dash-exc-row.is-zero .dash-exc-label { color: var(--text-muted); }
+.dash-foot-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.dash-exc-card .card-foot { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+
+/* Portfolio recovery bars (one hue, direct labels, recessive axis) */
+.rec { display: flex; flex-direction: column; gap: var(--space-4); }
+.rec-row { min-width: 0; }
+.rec-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin-bottom: 6px; }
+.rec-name { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text); text-decoration: none; }
+.rec-name:hover { color: var(--mba-purple); text-decoration: underline; }
+.rec-pct { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--text); }
+.rec-track { height: 10px; background: var(--surface-3); }
+.rec-fill { height: 100%; background: var(--mba-purple); transition: width var(--dur-slow) var(--ease); }
+.rec-row:hover .rec-fill { background: var(--mba-purple-deep); }
+.rec-sub { margin-top: 6px; font-size: var(--fs-xs); color: var(--text-muted); }
+.rec-axis { display: flex; justify-content: space-between; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--border); font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* Payment history */
+.dash-hist-count { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+.dash-history .card-body { padding-top: var(--space-4); }
+.dash-history .filterbar { margin: 0 0 var(--space-4); }
+.dash-history .filterbar .filter-date { flex: 1 1 150px; }
+.dash-history .filterbar .filter-number { flex: 1 1 110px; }
+.dash-history .filterbar .filter-select { flex: 1 1 170px; max-width: 280px; }
+.dash-history .filter-actions { margin-left: auto; }
+.dash-history .tbl { border: 1px solid var(--border); }
+
+@media (max-width: 1420px) {
+  .dash-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .dash-kpis .kpi-value { font-size: var(--fs-xl); }
+}
+
+/* Recent activity: type tag stacked over the record ID keeps the card free of side-scroll at 1440. */
+.dash-rec { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.dash-recent .dash-status { gap: 2px; }
+
+.dash-id, .dash-who-ref { white-space: nowrap; }
+.dash-history .tbl td { vertical-align: top; }
+
+/* Below 1200px the Portfolio column (still a filter) gives way so the table fits without side-scroll. */
+@media (max-width: 1200px) {
+  .dash-history table th:nth-child(3), .dash-history table td:nth-child(3) { display: none; }
+}
