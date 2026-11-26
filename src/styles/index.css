@@ -18,5 +18,6 @@
 @import './mba-reports.css';
 @import './mba-remittances.css';
 @import './mba-settings.css';
+@import './mba-docs.css'; /* 2026-11-26 contract / agreement files */
 @import './integration.css';
 @import './theme-glass.css'; /* 2026-11-26 visual refresh — keep last; remove to return to the flat original */

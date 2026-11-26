@@ -1,0 +1,162 @@
+/* Contract / agreement files (2026-11-26, user request): Transactions "Attachments" chips, the
+   transaction-detail file list and the preview modal (src/mba/docViewer.js). Contract = purple,
+   agreement = blue; the kind is always also written as text, never colour alone. */
+
+/* ---- chips in a table cell ---------------------------------------------------------------- */
+.tbl td.tx-docs-cell { min-width: 132px; }
+.doc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 28px; padding: 3px 10px 3px 8px;
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  background: var(--surface); color: var(--text);
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold); line-height: 1.2; white-space: nowrap;
+  transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.doc-chip .icon { color: var(--tone-brand); flex: none; }
+.doc-chip.is-agreement .icon { color: var(--tone-info); }
+.doc-chip:hover { border-color: var(--tone-brand); background: var(--tone-brand-bg); box-shadow: var(--shadow-1); transform: translateY(-1px); }
+.doc-chip.is-agreement:hover { border-color: var(--tone-info); background: var(--tone-info-bg); }
+.doc-chip:active { transform: translateY(0) scale(0.98); }
+.doc-chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.doc-chip-ver { padding: 0 5px; border-radius: var(--radius-pill); background: var(--tone-info-bg); color: var(--tone-info); font-size: 11px; font-weight: var(--fw-bold); }
+.doc-none { color: var(--text-muted); font-size: var(--fs-xs); white-space: nowrap; }
+
+/* ---- list in a card (transaction detail) -------------------------------------------------- */
+.doc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.doc-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3);
+  width: 100%; padding: 10px 12px; text-align: left;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+  transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.doc-row:hover { border-color: var(--tone-brand); background: var(--tone-brand-bg); box-shadow: var(--shadow-1); transform: translateY(-1px); }
+.doc-row.is-agreement:hover { border-color: var(--tone-info); background: var(--tone-info-bg); }
+.doc-row:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.doc-row-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-xs); background: var(--tone-brand-bg); color: var(--tone-brand); }
+.doc-row.is-agreement .doc-row-icon { background: var(--tone-info-bg); color: var(--tone-info); }
+.doc-row-text { display: flex; flex-direction: column; min-width: 0; }
+.doc-row-kind { font-size: 11px; font-weight: var(--fw-bold); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--text-muted); }
+.doc-row-name { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text); overflow-wrap: anywhere; }
+.doc-row-sub { font-size: var(--fs-xs); color: var(--text-muted); }
+.doc-row-go { color: var(--text-muted); display: inline-flex; }
+.doc-row:hover .doc-row-go { color: var(--tone-brand); }
+
+/* ---- arrangement page: file names open the same viewer ------------------------------------ */
+.arr-file-btn { color: var(--tone-brand); font-weight: var(--fw-semibold); text-align: left; border-radius: var(--radius-xs); }
+.arr-file-btn:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.arr-file-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---- viewer modal ------------------------------------------------------------------------- */
+.docv { display: grid; grid-template-columns: minmax(0, 1fr) 232px; gap: var(--space-5); align-items: start; }
+.docv-preview {
+  margin: 0; padding: var(--space-4);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #EEF0F6 0%, #E4E8F1 100%);
+}
+.docv-caption { margin-top: var(--space-3); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; font-size: var(--fs-xs); color: var(--text-muted); text-align: center; }
+
+.docv-paper {
+  position: relative; overflow: hidden;
+  padding: 28px 30px 16px;
+  background: #FFFFFF; color: #1A2233;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(6, 13, 28, 0.08), 0 14px 34px -14px rgba(6, 13, 28, 0.32);
+  font-family: Georgia, 'Times New Roman', serif; font-size: 12px; line-height: 1.5;
+  animation: docv-in 0.32s var(--ease) both;
+}
+.docv-paper::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--mba-gradient); }
+.docv-contract::before { background: #0B1A33; }
+.docv-paper > * { position: relative; }
+.modal-body .docv-paper p { color: #4A5068; margin: 0; }
+.docv-watermark {
+  position: absolute !important; inset: 0; display: grid; place-items: center;
+  font: 800 76px/1 var(--font); letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(75, 0, 150, 0.055); transform: rotate(-24deg);
+  pointer-events: none; user-select: none;
+}
+.docv-letterhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid #E3E6EE; }
+.docv-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font); min-width: 0; }
+.docv-logo { height: 38px; width: 38px; flex: none; display: block; }
+.docv-brand strong { display: block; font-size: 13px; font-weight: var(--fw-heavy); letter-spacing: 0.14em; text-transform: uppercase; color: #0B1A33; }
+.docv-brand span { display: block; font-size: 11px; color: #4A5068; }
+.docv-ref { display: flex; flex-direction: column; align-items: flex-end; font-family: var(--font); font-size: 11px; color: #4A5068; text-align: right; }
+.docv-ref .mono, .docv-ref .num { color: #1A2233; font-weight: var(--fw-semibold); }
+.docv-cred { display: flex; align-items: center; gap: 10px; font-family: var(--font); }
+.docv-mark { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 6px; background: #0B1A33; color: #FFFFFF; font: 800 13px/1 var(--font); letter-spacing: 0.04em; }
+.docv-cred strong { display: block; font-size: 13px; color: #0B1A33; }
+.docv-cred span { font-size: 11px; color: #4A5068; }
+.docv-title { margin: 0 0 2px; font-family: var(--font); font-size: 15px; font-weight: var(--fw-heavy); letter-spacing: 0.08em; text-transform: uppercase; color: #0B1A33; }
+.modal-body .docv-paper .docv-dated { margin-bottom: 12px; font-family: var(--font); font-size: 11px; }
+.docv-parties { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 10px 0 12px; }
+.docv-party { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border: 1px solid #E3E6EE; border-radius: 4px; background: #FAFBFD; font-family: var(--font); font-size: 11px; color: #4A5068; min-width: 0; }
+.docv-party strong { font-size: 12.5px; color: #0B1A33; overflow-wrap: anywhere; }
+.docv-party-role { font-size: 10.5px; font-weight: var(--fw-bold); letter-spacing: 0.08em; text-transform: uppercase; color: #4B0096; }
+.docv-terms { width: 100%; border-collapse: collapse; font-family: var(--font); font-size: 12px; }
+.docv-terms th, .docv-terms td { padding: 5px 0; border-bottom: 1px solid #EEF0F5; vertical-align: top; }
+.docv-terms th { width: 38%; text-align: left; font-weight: var(--fw-semibold); color: #4A5068; }
+.docv-terms td { text-align: right; font-weight: var(--fw-semibold); color: #0B1A33; }
+.docv-h4 { margin: 12px 0 6px; font-family: var(--font); font-size: 11px; font-weight: var(--fw-bold); letter-spacing: 0.08em; text-transform: uppercase; color: #0B1A33; }
+.docv-sched { list-style: none; margin: 0; padding: 0; font-family: var(--font); font-size: 11.5px; color: #1A2233; }
+.docv-sched li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; padding: 3px 0; border-bottom: 1px dashed #E3E6EE; }
+.docv-sched.is-long { columns: 2; column-gap: 22px; }
+.docv-sched.is-long li { break-inside: avoid; }
+.docv-sched-n { color: #4A5068; }
+.modal-body .docv-paper .docv-sched-note { margin-top: 6px; font-family: var(--font); font-size: 11px; font-style: italic; }
+.docv-sched-amt { font-weight: var(--fw-semibold); }
+.docv-lines { display: flex; flex-direction: column; gap: 7px; margin: 4px 0 6px; }
+.docv-lines span { display: block; height: 6px; border-radius: 3px; background: #E7EAF1; }
+.docv-stamp {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: max-content; max-width: 100%; margin: 16px 6px 0 auto; padding: 8px 14px;
+  border: 2px solid rgba(75, 0, 150, 0.6); border-radius: 6px;
+  color: #4B0096; background: rgba(241, 232, 250, 0.55);
+  font-family: var(--font); font-size: 11px; text-align: center;
+  transform: rotate(-4deg);
+}
+.docv-stamp strong { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+.docv-signs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 18px; }
+.docv-sign { display: flex; flex-direction: column; font-family: var(--font); font-size: 11px; color: #4A5068; min-width: 0; }
+.docv-sig { width: 118px; height: 42px; display: block; }
+.docv-sig path { fill: none; stroke: #1F2F6B; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.docv-sign-line { display: block; height: 1px; margin: -4px 0 6px; background: #9AA2B4; }
+.docv-sign strong { font-size: 12px; color: #0B1A33; overflow-wrap: anywhere; }
+.docv-sig-space { display: block; height: 42px; }
+.docv-hbar { display: block; height: 8px; margin: 14px 0 8px; border-radius: 3px; background: #CDD2DE; }
+.docv-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; padding-top: 8px; border-top: 1px solid #EEF0F5; font-family: var(--font); font-size: 10.5px; color: #4A5068; }
+
+.docv-preview-empty .docv-empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+  padding: 48px 24px; text-align: center;
+  background: #FFFFFF; border: 1px dashed var(--border-strong); border-radius: 6px;
+}
+.docv-empty .icon { color: var(--tone-brand); }
+.docv-empty strong { overflow-wrap: anywhere; }
+
+.docv-side { display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--fs-sm); min-width: 0; }
+.docv-side .dl { gap: var(--space-3); }
+.docv-side-h { margin: 0 0 6px; font-size: var(--fs-xs); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--text-muted); }
+.docv-versions ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.docv-versions li { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-size: var(--fs-xs); color: var(--text-muted); }
+.docv-versions li > span:not(.docv-v) { grid-column: 2; }
+.docv-versions li.is-current { border-color: var(--tone-brand); background: var(--tone-brand-bg); color: var(--text); }
+.docv-v { grid-row: span 2; font-weight: var(--fw-bold); color: var(--tone-brand); }
+.modal-body .docv-note { margin: 0; font-size: var(--fs-xs); }
+
+@keyframes docv-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 760px) {
+  .docv { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .docv-preview { padding: var(--space-2); }
+  .docv-paper { padding: 22px 16px 14px; }
+  .docv-parties, .docv-signs { grid-template-columns: 1fr; }
+  .docv-sched.is-long { columns: 1; }
+  .docv-watermark { font-size: 52px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .docv-paper { animation: none; }
+  .doc-chip, .doc-row { transition: none; }
+  .doc-chip:hover, .doc-row:hover { transform: none; }
+}

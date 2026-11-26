@@ -3,6 +3,8 @@
 // live schedule preview · Approve / Reject / Revise / Cancel / Submit through permBtn (C7).
 // Domain logic only through ctx.actions / ctx.selectors; DOM only through ctx.kit.
 import { renderMbaLayout } from './layout.js';
+import { openDocViewer } from './docViewer.js';
+import { fmtSize } from '../core/format.js';
 
 const STATUSES = ['draft', 'pending_approval', 'active', 'partially_paid', 'completed', 'defaulted', 'cancelled', 'superseded'];
 const IN_PROGRESS = ['draft', 'pending_approval', 'active', 'partially_paid'];
@@ -437,7 +439,11 @@ function detailPage(ctx, id) {
         rows: files,
         empty: 'No files yet. Upload the signed agreement (PDF preferred).',
         columns: [
-          { key: 'filename', label: 'File', render: (r) => h('span', { class: 'arr-file' }, k.icon('file', { size: 16 }), h('span', {}, r.filename)) },
+          {
+            key: 'filename', label: 'File',
+            render: (r) => h('button', { type: 'button', class: 'arr-file arr-file-btn', testid: 'arr-file-open', dataset: { attachment: r.id }, attrs: { title: 'Open preview' }, on: { click: () => openDocViewer(ctx, r.id) } },
+              k.icon('file', { size: 16 }), h('span', {}, r.filename)),
+          },
           { key: 'version', label: 'Version', render: (r) => k.tag(`v${r.version}`, { tone: r.version > 1 ? 'info' : 'neutral' }) },
           { key: 'size', label: 'Size', align: 'right', render: (r) => h('span', { class: 'num' }, fmtSize(r.size)) },
           { key: 'uploader', label: 'Uploaded by' },
@@ -485,13 +491,6 @@ function detailPage(ctx, id) {
     h('div', { class: 'arr-layout' },
       h('div', { class: 'stack' }, statusNote, summary, schedule, attachments),
       h('div', { class: 'stack' }, terms, versionsCard, history)));
-}
-
-function fmtSize(bytes) {
-  if (!Number.isFinite(bytes)) return '—';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /** Runs an action, toasts the result, re-renders. */

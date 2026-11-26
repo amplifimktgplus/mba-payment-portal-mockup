@@ -21,6 +21,14 @@ export function maskTail(s) {
   return clean.length >= 4 ? DOTS + clean.slice(-4) : DOTS;
 }
 
+/** File size for people: '512 B', '210 KB', '1.4 MB'. */
+export function fmtSize(bytes) {
+  if (!Number.isFinite(bytes)) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /** Borrower display name: 'Juan D.' */
 export function borrowerName(account) {
   const b = account?.borrower;

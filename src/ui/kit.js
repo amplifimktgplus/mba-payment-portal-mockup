@@ -545,7 +545,7 @@ const openModals = [];
  * modal({title, body, actions, testid, size:'sm'|'md'|'lg', onClose, dismissible}) → {open, close, el, body}
  * body / actions may be nodes, arrays, or functions (api) => nodes.
  */
-export function modal({ title, body = null, actions = null, testid = 'modal', size = 'md', onClose = null, dismissible = true, eyebrow: eb = null } = {}) {
+export function modal({ title, body = null, actions = null, testid = 'modal', size = 'md', onClose = null, dismissible = true, eyebrow: eb = null, initialFocus = null } = {}) {
   const titleId = nextId('mt');
   let returnFocus = null;
   let isOpen = false;
@@ -589,7 +589,8 @@ export function modal({ title, body = null, actions = null, testid = 'modal', si
     rootOf('modal-root', 'modal-root').appendChild(backdrop);
     openModals.push(api);
     document.documentElement.classList.add('has-modal');
-    const first = bodyEl.querySelector(FOCUSABLE) || footEl.querySelector(FOCUSABLE) || dialog;
+    // initialFocus (a selector inside the dialog) overrides the default first-focusable rule.
+    const first = (initialFocus && dialog.querySelector(initialFocus)) || bodyEl.querySelector(FOCUSABLE) || footEl.querySelector(FOCUSABLE) || dialog;
     first.focus({ preventScroll: true });
     return api;
   };

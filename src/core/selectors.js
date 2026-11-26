@@ -280,3 +280,59 @@ export function exceptionSummary(state) {
   }
   return out;
 }
+
+// ---- Contract / agreement files (V3 §7: one attachment type on the arrangement, every version
+// kept). Added 2026-11-26 for the Transactions "Attachments" column (user request).
+
+const DOC_ORDER = Object.freeze({ contract: 0, agreement: 1, file: 2 });
+export const DOC_LABEL = Object.freeze({ contract: 'Contract', agreement: 'Agreement', file: 'File' });
+
+/** 'contract' | 'agreement' | 'file': the seeded sample type when present, else read from the file name. */
+export function docKind(att) {
+  if (att?.sample === 'contract' || att?.sample === 'agreement') return att.sample;
+  const name = String(att?.filename ?? '');
+  if (/contract/i.test(name)) return 'contract';
+  if (/agree|promissory|compromise|arrangement/i.test(name)) return 'agreement';
+  return 'file';
+}
+
+/** Every file version uploaded to an arrangement's lineage (all its versions), newest first. */
+export function lineageAttachments(state, arrangementId) {
+  const arr = state.arrangements?.[arrangementId];
+  if (!arr) return [];
+  const ids = new Set(vals(state.arrangements).filter((a) => a.lineageId === arr.lineageId).map((a) => a.id));
+  return vals(state.attachments).filter((f) => ids.has(f.arrangementId)).sort((a, b) => desc(a, b) || b.version - a.version);
+}
+
+/** The files behind an arrangement: the latest version of each file name, contracts first, then agreements. */
+export function attachmentsFor(state, arrangementId) {
+  const latest = new Map();
+  for (const f of lineageAttachments(state, arrangementId)) {
+    const cur = latest.get(f.filename);
+    if (!cur || f.version > cur.version) latest.set(f.filename, f);
+  }
+  return [...latest.values()].sort((a, b) => DOC_ORDER[docKind(a)] - DOC_ORDER[docKind(b)]
+    || (a.at < b.at ? -1 : a.at > b.at ? 1 : 0) || a.filename.localeCompare(b.filename));
+}
+
+/**
+ * The shape of a schedule, for one-line descriptions that always add up:
+ * 'equal' n × per · 'final' (n − 1) × per + last · 'mixed' anything else (e.g. carried-over payments).
+ */
+export function installmentPlan(insts) {
+  const n = insts.length;
+  if (!n) return { shape: 'mixed', n: 0, per: 0, last: 0, total: 0 };
+  const per = insts[0].amount;
+  const last = insts[n - 1].amount;
+  const total = insts.reduce((s, i) => s + i.amount, 0);
+  const headEqual = insts.slice(0, -1).every((i) => i.amount === per);
+  const shape = !headEqual ? 'mixed' : last === per ? 'equal' : 'final';
+  return { shape, n, per, last, total };
+}
+
+/** Every version of one file (same lineage and file name), newest first. */
+export function attachmentVersions(state, attachmentId) {
+  const f = state.attachments?.[attachmentId];
+  if (!f) return [];
+  return lineageAttachments(state, f.arrangementId).filter((x) => x.filename === f.filename);
+}

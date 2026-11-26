@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createSeedState, HEROES } from '../src/data/seed.js';
-import { createStore, safeLocalStorage, nowOf } from '../src/core/store.js';
+import { createStore, safeLocalStorage, nowOf, STORAGE_KEY } from '../src/core/store.js';
 import { sendPaymentLink, revokeLink, expireRequestNow, cancelRequest, resolveToken } from '../src/core/actions/links.js';
 import { openByToken, openByRef, sendOtp, verifyOtp, exitBorrower, borrowerScreen, expireOtpNow } from '../src/core/actions/borrower.js';
 import { currentArrangement, currentOpenRequest } from '../src/core/selectors.js';
@@ -51,7 +51,7 @@ test('test_storage_unavailable', () => {
   assert.doesNotThrow(() => safeLocalStorage());
   // corrupt stored JSON → fresh seed, no crash
   const bad = memStorage();
-  bad.setItem('mba-demo-v1', '{not json');
+  bad.setItem(STORAGE_KEY, '{not json');
   assert.equal(createStore({ storage: bad, seed }).get().version, 1);
 });
 

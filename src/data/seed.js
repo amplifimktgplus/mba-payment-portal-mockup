@@ -276,7 +276,8 @@ export function createSeedState(seed = DEFAULT_SEED) {
   }
   function attach(arr, acc, at) {
     const name = `Signed agreement ${acc.ref}.pdf`;
-    const a = { id: oid('at'), arrangementId: arr.id, filename: name, size: R(80, 420) * 1024, uploader: S.agents[arr.createdBy]?.name ?? 'Agent', at, version: 1 };
+    // `sample` marks seeded files so the viewer may draw a sample page; it consumes no random draw.
+    const a = { id: oid('at'), arrangementId: arr.id, filename: name, size: R(80, 420) * 1024, uploader: S.agents[arr.createdBy]?.name ?? 'Agent', at, version: 1, sample: 'agreement' };
     S.attachments[a.id] = a;
     if (rng() < 0.12) {
       const b = { ...a, id: oid('at'), size: R(80, 420) * 1024, at: addMinutes(at, R(30, 300)), version: 2 };
@@ -861,6 +862,45 @@ export function createSeedState(seed = DEFAULT_SEED) {
     { row: 7, field: 'mobile', message: 'Mobile number must look like +639XXXXXXXXX' },
     { row: 15, field: 'placed_balance', message: 'Placed balance must be greater than zero' },
   ], '2026-09-03T10:30:00+08:00');
+
+  // ---------------------------------------------------------------- contract / agreement files (2026-11-26)
+  // User request: Transactions shows each borrower's own contract and signed agreement. Every
+  // arrangement that reached approval gets the creditor's original contract (received with the
+  // placement) and, where the random pass above gave it none, the signed arrangement agreement.
+  // Deterministic and RNG-free, so every figure above is unchanged.
+  {
+    const CONTRACT_NAME = { cr_sb: 'Loan contract', cr_dl: 'Loan contract', cr_tc: 'Postpaid service contract' };
+    const sizeOf = (key) => {
+      let x = 0x811c9dc5;
+      for (let i = 0; i < key.length; i++) { x ^= key.charCodeAt(i); x = Math.imul(x, 0x01000193); }
+      return (80 + ((x >>> 0) % 341)) * 1024;
+    };
+    const uploader = (arr) => S.agents[arr.createdBy]?.name ?? 'Agent';
+    const lineages = {};
+    for (const a of Object.values(S.arrangements)) (lineages[a.lineageId] ||= []).push(a);
+    const has = {};
+    for (const f of Object.values(S.attachments)) (has[S.arrangements[f.arrangementId].lineageId] ||= new Set()).add(f.sample);
+    for (const ln of Object.keys(lineages).sort()) {
+      const versions = lineages[ln].sort((x, y) => x.version - y.version);
+      if (!versions.some((v) => v.activatedAt)) continue;
+      const first = versions[0];
+      const signed = versions.filter((v) => v.activatedAt).at(-1);
+      const acc = S.accounts[first.accountId];
+      const kinds = has[ln] ?? new Set();
+      if (!kinds.has('contract')) {
+        const id = oid('at');
+        S.attachments[id] = { id, arrangementId: first.id, filename: `${CONTRACT_NAME[acc.creditorId] ?? 'Contract'} ${acc.ref}.pdf`, size: sizeOf(`${id}:contract`), uploader: uploader(first), at: addMinutes(first.createdAt, 10), version: 1, sample: 'contract' };
+      }
+      if (!kinds.has('agreement')) {
+        const id = oid('at');
+        S.attachments[id] = { id, arrangementId: signed.id, filename: `Signed agreement ${acc.ref}.pdf`, size: sizeOf(`${id}:agreement`), uploader: uploader(signed), at: addMinutes(signed.createdAt, 20), version: 1, sample: 'agreement' };
+      }
+    }
+    // V3 §19 (decided): every file upload is audited, as addAttachment() does at run time.
+    for (const f of Object.values(S.attachments)) {
+      audit(f.at, 'agent', 'attachment.upload', f.id, S.arrangements[f.arrangementId].accountId, `${f.filename} (v${f.version})`);
+    }
+  }
 
   // ---------------------------------------------------------------- audit + notifications
   auditRows.sort(byTime('at'));

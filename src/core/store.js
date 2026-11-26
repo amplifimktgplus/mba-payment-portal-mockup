@@ -7,7 +7,10 @@ import { createSeedState } from '../data/seed.js';
 import { DEMO_NOW, addSeconds } from './clock.js';
 import { seqId } from './format.js';
 
-export const STORAGE_KEY = 'mba-demo-v1';
+// v2 (2026-11-26): the seed gained contract files, so a browser holding v1 state starts fresh.
+export const STORAGE_KEY = 'mba-demo-v2';
+/** Superseded keys, removed on load so an old copy never competes for the storage quota. */
+export const LEGACY_KEYS = Object.freeze(['mba-demo-v1']);
 const SEQ_PREFIX = { req: 'MBA-REQ', txn: 'MBA-TXN' };
 
 export function initialBorrower() {
@@ -95,6 +98,7 @@ export function createStore({ storage = safeLocalStorage(), key = STORAGE_KEY, s
       storage.setItem(probe, '1');
       storage.removeItem(probe);
       persistent = true;
+      if (key === STORAGE_KEY) for (const old of LEGACY_KEYS) storage.removeItem(old);
     } catch {
       persistent = false;
     }

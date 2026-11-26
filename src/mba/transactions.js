@@ -5,7 +5,10 @@
 // Actions: Simulate webhook paid / failed (pending attempts only), Replay webhook (idempotency:
 // "Duplicate ignored — not re-posted"), Refund (payment.refund, Finance).
 // Payment truth: this file never marks anything paid itself — it calls deliverWebhook().
+// Attachments (2026-11-26, user request): each row shows the borrower's own contract and signed
+// agreement (the arrangement's files, V3 §7); a chip opens the preview without opening the row.
 import { renderMbaLayout } from './layout.js';
+import { docChips, docList } from './docViewer.js';
 
 const STATUSES = ['initiated', 'pending', 'paid', 'failed', 'expired', 'cancelled', 'refunded'];
 const STATUS_LABEL = { expired: 'Expired session' };
@@ -89,8 +92,15 @@ function renderList(ctx, query) {
     return true;
   }).sort((a, b) => byAt(b.createdAt, a.createdAt) || byAt(b.id, a.id)).map((a) => {
     const acc = state.accounts[a.accountId];
-    return { a, id: a.id, name: borrowerName(acc), accRef: acc?.ref || '', requestId: a.requestId, method: a.method || '', amount: a.amount, createdAt: a.createdAt, status: a.status };
+    return { a, id: a.id, name: borrowerName(acc), accRef: acc?.ref || '', requestId: a.requestId, arrangementId: state.requests[a.requestId]?.arrangementId ?? null, method: a.method || '', amount: a.amount, createdAt: a.createdAt, status: a.status };
   });
+  // Files per arrangement, looked up only for the rows a page actually draws.
+  const filesCache = new Map();
+  const filesOf = (arrId) => {
+    if (!arrId) return [];
+    if (!filesCache.has(arrId)) filesCache.set(arrId, ctx.selectors.attachmentsFor(state, arrId));
+    return filesCache.get(arrId);
+  };
 
   const applyFilters = (v) => {
     Object.assign(f, { status: v.status || '', q: v.q || '', method: v.method || '' });
@@ -149,6 +159,7 @@ function renderList(ctx, query) {
           { key: 'amount', label: 'Amount', align: 'right', render: (row) => kit.money(row.amount) },
           { key: 'createdAt', label: 'Started', render: (row) => dateTimeCell(kit, row.createdAt) },
           { key: 'status', label: 'Status', render: (row) => chip(row.status, { label: statusLabel(kit, row.status) }), sortValue: (row) => STATUSES.indexOf(row.status) },
+          { key: 'files', label: 'Attachments', sortable: false, cls: 'tx-docs-cell', render: (row) => docChips(ctx, filesOf(row.arrangementId)) },
         ],
       }),
     }));
@@ -326,8 +337,16 @@ function renderDetail(ctx, id) {
     ]
     : h('p', { class: 'muted tx-small' }, 'Only verified payments go to reconciliation.');
 
+  const files = req ? ctx.selectors.attachmentsFor(state, req.arrangementId) : [];
   const side = h('div', { class: 'stack' },
     card({ title: 'Status timeline', testid: 'tx-history', body: timeline(statusTimeline(ctx, state, a, pay), { testid: 'tx-timeline' }) }),
+    card({
+      title: 'Contract / agreement files',
+      eyebrow: 'Attachments',
+      testid: 'tx-attachments',
+      actions: files.length ? tag(`${files.length} file${files.length === 1 ? '' : 's'}`, { tone: 'neutral' }) : null,
+      body: files.length ? docList(ctx, files) : emptyState('No contract or agreement is on file for this arrangement.', { testid: 'tx-attachments-empty', icon: 'file' }),
+    }),
     card({ title: 'Reconciliation', testid: 'tx-recon', body: recon }),
     card({
       title: 'How a payment becomes Paid',
