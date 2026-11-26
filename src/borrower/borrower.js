@@ -13,8 +13,16 @@
 
 import { h } from '../ui/kit.js';
 import { POLICIES } from '../core/config.js';
+import { isMidnight } from '../ui/look.js';
 import { SCREENS, attemptStarted, startOtpTicker, closeSmsToast } from './screens.js';
 import { bui, bfooter } from './parts.js';
+
+/**
+ * Midnight: how long the code screen rests on its "Verified" state before the next screen. Kept
+ * well under a second: long enough to read the check, short enough that the flow never feels held
+ * up (and inside the 1.5 s the crossview check gives a code screen to move on by itself).
+ */
+const VERIFIED_HOLD_MS = 720;
 
 const timers = new Map(); // key → timeout id
 
@@ -76,10 +84,36 @@ function focusOnScreenChange(screen, root) {
   });
 }
 
+/**
+ * Midnight only: right after B2 verified a code (core has already moved on), keep the code screen
+ * itself up, in the verified state B2 put it in, for VERIFIED_HOLD_MS; then render the real next
+ * screen. Returns null when there is nothing to hold (Classic, reduced motion, another borrower,
+ * or the time is up).
+ */
+function verifiedMoment(ctx, screen) {
+  const ui = bui();
+  const v = ui.mnVerified;
+  if (!v) return null;
+  const b = ctx.store.get().borrower;
+  const left = v.at + VERIFIED_HOLD_MS - Date.now();
+  if (isMidnight() && left > 0 && v.root && !['B0', 'B1', 'B2'].includes(screen) && v.key === (b.token || b.ref)) {
+    if (!v.timer) v.timer = setTimeout(() => { v.timer = null; ctx.rerender(); }, left + 16);
+    closeSmsToast(); // the code is used up
+    return v.root;
+  }
+  if (v.timer) clearTimeout(v.timer);
+  ui.mnVerified = null;
+  return null;
+}
+
 export function renderBorrower(ctx) {
   const { screen, data } = ctx.actions.borrowerScreen(ctx.store.get());
+  const held = verifiedMoment(ctx, screen);
+  if (held) return held;
   const render = SCREENS[screen] || SCREENS.B0;
-  const root = h('div', { class: ['bscreen', `bscreen-${screen}`], dataset: { screen }, testid: 'borrower-screen' },
+  // Midnight: entrance motion only on arrival at a screen, never on a same-screen re-render.
+  const enter = isMidnight() && bui().lastScreen !== screen ? 'mn-enter' : '';
+  const root = h('div', { class: ['bscreen', `bscreen-${screen}`, enter], dataset: { screen }, testid: 'borrower-screen' },
     render(ctx, data || {}),
     bfooter());
 

@@ -1,0 +1,129 @@
+/* Option A · Midnight — tokens and shared primitives (2026-11-26).
+   Mood: a private bank at night. Deep navy-black canvas, slow aurora light in MBA purple and
+   light blue behind frosted glass, oversized tabular numbers that count up, light pill buttons for
+   the one main action, faint brand-gradient edges on what is selected or important.
+   Everything is scoped under .opt-a. Borrower screens add .a-b-* classes (a/borrower.css), MBA
+   screens add .a-m-* classes (a/mba.css). Use these tokens and primitives; don't hard-code new
+   colours unless a token is missing (then add it here, documented).
+   Contrast on --a-bg: --a-text 17:1, --a-text-2 9:1, --a-text-3 6:1, --a-cyan 12:1, --a-lilac 8:1.
+   Purple (#4B0096 / #6B2FD0) is for light and decoration only, never small text on navy. */
+
+.opt-a {
+  --a-bg: #050A16;
+  --a-bg-2: #081022;
+  --a-surface: rgba(255, 255, 255, 0.055);
+  --a-surface-2: rgba(255, 255, 255, 0.09);
+  --a-surface-solid: #0E1730;
+  --a-line: rgba(255, 255, 255, 0.10);
+  --a-line-2: rgba(255, 255, 255, 0.16);
+  --a-text: #F4F6FB;
+  --a-text-2: #AEB6CB;
+  --a-text-3: #8A93AB;
+  --a-cyan: #8FD8FF;
+  --a-lilac: #B89CFF;
+  --a-purple: #6B2FD0;
+  --a-purple-deep: #4B0096;
+  --a-blue: #2F6BFF;
+  --a-light-blue: #64C8FF;
+  --a-ok: #5EE6A8;      /* on navy 12:1 */
+  --a-warn: #FFC46B;    /* on navy 12:1 */
+  --a-danger: #FF8A80;  /* on navy 8:1 */
+  --a-edge: linear-gradient(135deg, rgba(143, 216, 255, 0.85), rgba(107, 47, 208, 0.85) 55%, rgba(100, 200, 255, 0.2));
+  --a-glow: 0 0 0 1px rgba(143, 216, 255, 0.25), 0 18px 50px -18px rgba(100, 200, 255, 0.45);
+  --a-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --a-r-xl: 32px;
+  --a-r-lg: 24px;
+  --a-r-md: 18px;
+  --a-r-sm: 12px;
+  --a-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --a-blur: 22px;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  color: var(--a-text);
+  background: radial-gradient(120% 70% at 50% -10%, #0C1736 0%, var(--a-bg) 55%) var(--a-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.005em;
+}
+.opt-a *, .opt-a *::before, .opt-a *::after { box-sizing: border-box; }
+.opt-a ::selection { background: rgba(143, 216, 255, 0.3); }
+
+/* frosted glass card */
+.opt-a .a-glass {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035));
+  border: 1px solid var(--a-line);
+  border-radius: var(--a-r-lg);
+  backdrop-filter: blur(var(--a-blur)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--a-blur)) saturate(1.3);
+  box-shadow: var(--a-shadow);
+}
+/* a 1px brand-gradient edge (for selected / featured glass) */
+.opt-a .a-edge { position: relative; }
+.opt-a .a-edge::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--a-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+/* pointer spotlight on glass (pair with fx.spotlight) */
+.opt-a .a-spot { overflow: hidden; }
+.opt-a .a-spot::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(143, 216, 255, 0.14), transparent 60%);
+  transition: opacity 0.3s var(--a-ease);
+}
+.opt-a .a-spot:hover::after { opacity: 1; }
+
+/* buttons */
+.opt-a .a-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 0 24px; border-radius: 999px; border: 0;
+  font: 700 15px/1 'Montserrat', sans-serif; letter-spacing: 0.02em; cursor: pointer;
+  transition: transform 0.25s var(--a-ease), box-shadow 0.25s var(--a-ease), background-color 0.25s;
+}
+.opt-a .a-btn:active { transform: scale(0.97); }
+.opt-a .a-btn-light { background: var(--a-text); color: #070D1C; box-shadow: 0 12px 30px -12px rgba(143, 216, 255, 0.55); }
+.opt-a .a-btn-light:hover { box-shadow: 0 16px 40px -12px rgba(143, 216, 255, 0.8); transform: translateY(-1px); }
+.opt-a .a-btn-glass { background: var(--a-surface-2); color: var(--a-text); border: 1px solid var(--a-line-2); }
+.opt-a .a-btn-glass:hover { background: rgba(255, 255, 255, 0.14); }
+.opt-a .a-btn:focus-visible, .opt-a button:focus-visible, .opt-a a:focus-visible { outline: 2px solid var(--a-cyan); outline-offset: 3px; }
+
+/* round icon action with a label under it */
+.opt-a .a-action { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: 0; color: var(--a-text-2); font: 600 12px/1.2 'Montserrat', sans-serif; cursor: pointer; }
+.opt-a .a-action-ic { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; background: var(--a-surface-2); border: 1px solid var(--a-line-2); color: var(--a-text); transition: transform 0.25s var(--a-ease), background-color 0.25s, box-shadow 0.25s; }
+.opt-a .a-action:hover .a-action-ic { transform: translateY(-2px); background: rgba(255, 255, 255, 0.15); box-shadow: var(--a-glow); }
+
+/* text */
+.opt-a .a-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--a-text-3); }
+.opt-a .a-h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; margin: 0; }
+.opt-a .a-h2 { font-size: 18px; font-weight: 700; letter-spacing: 0; margin: 0; }
+.opt-a .a-muted { color: var(--a-text-2); }
+.opt-a .a-num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+/* big money: fx.money() → .mc > .mc-sign .mc-whole .mc-cents */
+.opt-a .a-money { display: inline-flex; align-items: baseline; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+.opt-a .a-money .mc-sign { font-size: 0.5em; font-weight: 600; color: var(--a-text-2); margin-right: 0.12em; transform: translateY(-0.55em); }
+.opt-a .a-money .mc-cents { font-size: 0.5em; font-weight: 600; color: var(--a-text-2); }
+
+/* chips / pills */
+.opt-a .a-pill { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: var(--a-surface-2); border: 1px solid var(--a-line); font-size: 12px; font-weight: 600; color: var(--a-text); }
+.opt-a .a-pill.is-ok { color: var(--a-ok); }
+.opt-a .a-pill.is-warn { color: var(--a-warn); }
+.opt-a .a-pill.is-danger { color: var(--a-danger); }
+.opt-a .a-pill.is-info { color: var(--a-cyan); }
+.opt-a .a-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+
+/* progress */
+.opt-a .a-track { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.opt-a .a-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--a-purple), var(--a-light-blue)); box-shadow: 0 0 18px rgba(100, 200, 255, 0.55); transform-origin: left; animation: a-grow 1.4s var(--a-ease) 0.2s both; }
+@keyframes a-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.opt-a .a-divider { height: 1px; background: var(--a-line); border: 0; margin: 0; }
+
+/* method logo plate: logos are drawn for light backgrounds, so they sit on a small white plate */
+.opt-a .a-logo-plate { display: inline-grid; place-items: center; height: 34px; min-width: 52px; padding: 0 8px; border-radius: 10px; background: #fff; }
+.opt-a .a-logo-plate img { max-height: 20px; width: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .opt-a .a-fill { animation: none; }
+  .opt-a .a-btn, .opt-a .a-action-ic { transition: none; }
+}

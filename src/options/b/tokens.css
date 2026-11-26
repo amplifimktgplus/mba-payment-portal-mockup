@@ -1,0 +1,118 @@
+/* Option B · Daylight — tokens and shared primitives (2026-11-26).
+   Mood: bright, confident, friendly. A soft light canvas, oversized editorial type, chunky rounded
+   shapes, and ONE vivid MBA-gradient block per screen that carries the key number (with a slow
+   colour-blob motion inside and a pull-tab connector under it). Dark ink pill buttons, white
+   cards with soft shadows, bento grids, springy presses.
+   Everything is scoped under .opt-b. Borrower screens add .b-b-* classes (b/borrower.css), MBA
+   screens add .b-m-* classes (b/mba.css). Use these tokens and primitives; add a documented token
+   here if one is missing.
+   Contrast: --b-ink on --b-bg 17:1; --b-ink-2 8:1; --b-ink-3 4.9:1; white on every stop of
+   --b-hero ≥ 5:1 (#3A0080 13:1, #5B1FD0 7.4:1, #2457E6 5.2:1). Light blue #64C8FF is glow only,
+   never behind small white text. */
+
+.opt-b {
+  --b-bg: #F3F2F8;
+  --b-card: #FFFFFF;
+  --b-card-2: #F8F7FC;
+  --b-ink: #0B0F1E;
+  --b-ink-2: #3D4357;
+  --b-ink-3: #5E6478;
+  --b-line: #E6E4EF;
+  --b-line-2: #D7D4E4;
+  --b-purple: #4B0096;
+  --b-violet: #5B1FD0;
+  --b-blue: #2457E6;
+  --b-light-blue: #64C8FF;
+  --b-lav: #EEE7FD;      /* lavender tint (purple text #4B0096 on it 10:1) */
+  --b-sky: #E4F1FF;      /* blue tint (#1F4FE0 text on it 6:1) */
+  --b-ok: #0F7B4F;   --b-ok-bg: #E2F6EC;
+  --b-warn: #8A5A00; --b-warn-bg: #FFF2D6;
+  --b-danger: #B3261E; --b-danger-bg: #FDE8E5;
+  --b-hero: linear-gradient(140deg, #3A0080 0%, #5B1FD0 48%, #2457E6 100%);
+  --b-shadow: 0 1px 2px rgba(20, 10, 60, 0.06), 0 14px 34px -18px rgba(20, 10, 60, 0.22);
+  --b-shadow-lg: 0 2px 4px rgba(20, 10, 60, 0.06), 0 30px 60px -28px rgba(36, 18, 110, 0.38);
+  --b-r-xl: 34px;
+  --b-r-lg: 26px;
+  --b-r-md: 20px;
+  --b-r-sm: 14px;
+  --b-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --b-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: 'Montserrat', system-ui, sans-serif;
+  color: var(--b-ink);
+  background: var(--b-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opt-b *, .opt-b *::before, .opt-b *::after { box-sizing: border-box; }
+.opt-b ::selection { background: rgba(91, 31, 208, 0.18); }
+
+/* white card */
+.opt-b .b-card { position: relative; background: var(--b-card); border-radius: var(--b-r-lg); box-shadow: var(--b-shadow); }
+.opt-b .b-card-flat { position: relative; background: var(--b-card); border-radius: var(--b-r-lg); border: 1px solid var(--b-line); }
+/* the vivid block: put text in white on it; pair with fx.aurora(host, { colors: ['#64C8FF', '#8B5CF6', '#2457E6'] }) for the blob motion */
+.opt-b .b-hero { position: relative; overflow: hidden; color: #fff; background: var(--b-hero); border-radius: var(--b-r-xl); box-shadow: var(--b-shadow-lg); isolation: isolate; }
+.opt-b .b-hero > * { position: relative; z-index: 2; }
+/* the effect layers keep their own absolute positioning (fixed 2026-11-26: the rule above used to override it) */
+.opt-b .b-hero > .fx-aurora { position: absolute; z-index: 0; mix-blend-mode: screen; }
+.opt-b .b-hero > .fx-grain { position: absolute; z-index: 1; }
+/* the pull-tab connector under a hero block */
+.opt-b .b-tab { position: relative; display: grid; place-items: center; width: 74px; height: 30px; margin: -1px auto 0; border-radius: 0 0 22px 22px; background: #3B1FB0; color: #fff; border: 0; cursor: pointer; transition: transform 0.3s var(--b-spring); }
+.opt-b .b-tab::before, .opt-b .b-tab::after { content: ''; position: absolute; top: 0; width: 18px; height: 18px; background: radial-gradient(circle at 0 100%, transparent 17px, #3B1FB0 18px); }
+/* concave fillets: the colour hugs the hero's edge and the tab's side (fixed 2026-11-26: they faced the wrong way) */
+.opt-b .b-tab::before { left: -18px; }
+.opt-b .b-tab::after { right: -18px; transform: scaleX(-1); }
+.opt-b .b-tab:hover { transform: translateY(2px); }
+
+/* buttons */
+.opt-b .b-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 54px; padding: 0 26px; border-radius: 999px; border: 0;
+  font: 700 15px/1 'Montserrat', sans-serif; letter-spacing: 0.01em; cursor: pointer;
+  transition: transform 0.3s var(--b-spring), box-shadow 0.25s var(--b-ease), background-color 0.2s;
+}
+.opt-b .b-btn:active { transform: scale(0.96); }
+.opt-b .b-btn-ink { background: var(--b-ink); color: #fff; box-shadow: 0 14px 28px -14px rgba(11, 15, 30, 0.7); }
+.opt-b .b-btn-ink:hover { transform: translateY(-2px); box-shadow: 0 20px 34px -16px rgba(11, 15, 30, 0.75); }
+.opt-b .b-btn-white { background: #fff; color: var(--b-ink); box-shadow: var(--b-shadow); }
+.opt-b .b-btn-soft { background: var(--b-lav); color: var(--b-purple); }
+.opt-b .b-btn:focus-visible, .opt-b button:focus-visible, .opt-b a:focus-visible { outline: 3px solid var(--b-violet); outline-offset: 3px; }
+
+/* dark round quick action (icon in a dark disc, label under) */
+.opt-b .b-action { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: 0; color: inherit; font: 600 12.5px/1.2 'Montserrat', sans-serif; cursor: pointer; }
+.opt-b .b-action-ic { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 20px; background: var(--b-ink); color: #fff; transition: transform 0.35s var(--b-spring), box-shadow 0.25s; box-shadow: 0 10px 22px -12px rgba(11, 15, 30, 0.8); }
+.opt-b .b-action:hover .b-action-ic { transform: translateY(-3px) rotate(-4deg); }
+
+/* text */
+.opt-b .b-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--b-ink-3); }
+.opt-b .b-h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin: 0; }
+.opt-b .b-h2 { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; margin: 0; }
+.opt-b .b-muted { color: var(--b-ink-3); }
+.opt-b .b-num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+.opt-b .b-money { display: inline-flex; align-items: baseline; font-weight: 800; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; line-height: 1; }
+.opt-b .b-money .mc-sign { font-size: 0.55em; font-weight: 700; margin-right: 0.08em; opacity: 0.85; }
+.opt-b .b-money .mc-cents { font-size: 0.5em; font-weight: 700; opacity: 0.75; }
+
+/* chips */
+.opt-b .b-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: var(--b-card-2); border: 1px solid var(--b-line); font-size: 12px; font-weight: 700; color: var(--b-ink-2); }
+.opt-b .b-chip.is-ok { background: var(--b-ok-bg); border-color: transparent; color: var(--b-ok); }
+.opt-b .b-chip.is-warn { background: var(--b-warn-bg); border-color: transparent; color: var(--b-warn); }
+.opt-b .b-chip.is-danger { background: var(--b-danger-bg); border-color: transparent; color: var(--b-danger); }
+.opt-b .b-chip.is-brand { background: var(--b-lav); border-color: transparent; color: var(--b-purple); }
+.opt-b .b-chip.is-info { background: var(--b-sky); border-color: transparent; color: #1F4FE0; }
+.opt-b .b-chip-on-hero { background: rgba(20, 8, 70, 0.28); border: 1px solid rgba(255, 255, 255, 0.26); color: #fff; } /* darkened 2026-11-26: white on the old tint fell to ~4:1 at the blue end */
+
+/* segmented progress (n segments) */
+.opt-b .b-segs { display: grid; grid-auto-flow: column; gap: 6px; }
+.opt-b .b-seg { height: 10px; border-radius: 999px; background: var(--b-line); overflow: hidden; }
+.opt-b .b-seg.is-done { background: var(--b-violet); }
+.opt-b .b-seg.is-now { background: linear-gradient(90deg, var(--b-violet), var(--b-light-blue)); animation: b-pulse 1.8s ease-in-out infinite; }
+@keyframes b-pulse { 50% { opacity: 0.55; } }
+
+.opt-b .b-divider { height: 1px; background: var(--b-line); border: 0; margin: 0; }
+.opt-b .b-logo-plate { display: inline-grid; place-items: center; height: 36px; min-width: 56px; padding: 0 9px; border-radius: 12px; background: #fff; border: 1px solid var(--b-line); }
+.opt-b .b-logo-plate img { max-height: 20px; width: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .opt-b .b-seg.is-now { animation: none; }
+  .opt-b .b-btn, .opt-b .b-action-ic, .opt-b .b-tab { transition: none; }
+}

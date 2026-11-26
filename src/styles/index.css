@@ -20,4 +20,11 @@
 @import './mba-settings.css';
 @import './mba-docs.css'; /* 2026-11-26 contract / agreement files */
 @import './integration.css';
-@import './theme-glass.css'; /* 2026-11-26 visual refresh — keep last; remove to return to the flat original */
+@import './theme-glass.css'; /* 2026-11-26 visual refresh; the Classic look */
+@import './fx.css';            /* shared motion classes (src/ui/fx.js) */
+/* Midnight look (2026-11-26): everything below is scoped under html[data-look="midnight"]; Classic ignores it. */
+@import './theme-midnight.css';
+@import './midnight-borrower.css';
+@import './midnight-mba-shell.css';
+@import './midnight-mba-ops.css';
+@import './midnight-mba-records.css';

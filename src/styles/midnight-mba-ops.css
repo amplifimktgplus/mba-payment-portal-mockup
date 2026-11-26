@@ -1,0 +1,602 @@
+/* midnight-mba-ops.css — Midnight look, mba-ops area (2026-11-26). Every rule scoped under html[data-look="midnight"].
+   The MBA operations screens in design option A ("Midnight", picked by the product owner):
+   Transactions (list, quick-view panel, detail), Payment requests, Reconciliation, Reports,
+   Remittances and the contract / agreement viewer. Builds on theme-midnight.css (tokens, glass,
+   buttons, forms); Classic never matches a rule here, so it renders exactly as before.
+
+   Local decisions, documented here:
+   - Method marks sit on small WHITE plates (they are drawn for light backgrounds); the QR on a
+     payment request keeps its own white plate so it still scans; the document page stays white.
+   - KPI figures count up in an aria-hidden copy (.mn-count); the real .kpi-value keeps the exact
+     text for assistive tech and the checks, visually hidden (src/mba/transactions.js countKpis).
+   - Report colours: the six categorical slots keep their hue and their method (fixed order:
+     GCash, Maya, QR Ph, Online banking, Card, MariBank) and are re-stepped lighter for the dark
+     card surface. Validated with the dataviz validator, --mode dark, on the card surface #10182F
+     AND on a lighter #1A2747 (aurora drifting behind the glass):
+       "#8D5BFB,#20A3D0,#F1621D,#3D73FF,#B28318,#DB4170" → ALL CHECKS PASS on both surfaces
+       (lightness band, chroma floor, worst adjacent CVD ΔE 9.1 deutan, normal-vision ΔE 20.3,
+       every mark ≥ 3:1 — lowest 3.51:1 on #1A2747). Labels printed inside a block use dark ink
+       #070D1C (≥ 4.62:1 on every slot). Status bars use the light tone colours (≥ 9:1).
+   - Below 1280px the Transactions, Payment requests and exception tables become glass cards (two
+     per row, one on phones; CSS only — rows, cells and test ids are unchanged); every other table
+     keeps its in-card scroll.
+   - Hover lifts use the `translate` property so they never fight an entrance transform.
+   - Keyframes are prefixed mn-ops- so they cannot collide with the other areas' files. */
+
+html[data-look="midnight"] {
+  --ops-panel: linear-gradient(180deg, rgba(20, 30, 58, 0.72), rgba(11, 18, 36, 0.8));
+  --ops-tile: rgba(255, 255, 255, 0.035);
+  --ops-line: rgba(255, 255, 255, 0.07);
+  --ops-edge-glow: 0 0 0 1px rgba(143, 216, 255, 0.18), 0 16px 36px -22px rgba(100, 200, 255, 0.7);
+  --ops-ink: #070D1C;
+}
+
+/* =============================================================================================
+   Shared on these screens: ids, KPI tiles with count-up figures, status chips, glass tables
+   ============================================================================================= */
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation, .page-reports, .page-remittances) .mono {
+  font-family: var(--font); letter-spacing: 0.01em; font-variant-numeric: tabular-nums;
+}
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation, .page-reports, .page-remittances) .mono:not(.cell-sub) { font-size: 1em; }
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl td a.link,
+html[data-look="midnight"] :is(.tx-pending-line, .rq-repl, .rq-link-text) a {
+  text-decoration-color: rgba(143, 216, 255, 0.38); text-underline-offset: 4px;
+}
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl td a.link:hover { text-decoration-color: var(--mn-cyan); }
+
+/* Count-up figures: the real value stays for assistive tech and the checks; the copy is shown. */
+html[data-look="midnight"] .kpi-value.mn-counted {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+html[data-look="midnight"] .kpi .mn-count {
+  margin-top: var(--space-3); font-size: var(--fs-2xl); font-weight: var(--fw-bold); line-height: 1.1;
+  letter-spacing: -0.015em; color: var(--text); white-space: nowrap;
+}
+html[data-look="midnight"] .page-reports .kpi .mn-count { font-size: var(--fs-xl); }
+
+/* KPI tiles: glass with the tone's light in one corner, an icon tile, a gentle lift. */
+html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi,
+html[data-look="midnight"] .page-reports .grid-4 > .kpi {
+  border-radius: 20px;
+  background: radial-gradient(120% 95% at 100% 0%, color-mix(in srgb, var(--t) 13%, transparent), transparent 62%), var(--ops-panel);
+  transition: translate 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi:hover,
+html[data-look="midnight"] .page-reports .grid-4 > .kpi:hover {
+  translate: 0 -2px; border-color: rgba(143, 216, 255, 0.22);
+  box-shadow: var(--glass-edge), 0 22px 50px -28px rgba(100, 200, 255, 0.42);
+}
+html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi::before,
+html[data-look="midnight"] .page-reports .grid-4 > .kpi::before {
+  left: 20px; right: 20px; top: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--t), transparent); opacity: 0.85;
+}
+html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi .kpi-head .icon {
+  box-sizing: content-box; padding: 6px; border-radius: 10px; color: var(--t);
+  background: color-mix(in srgb, var(--t) 14%, transparent);
+}
+html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi .kpi-head { margin-top: -3px; }
+
+/* Status chips: text + colour, a hairline in the tone and a soft glowing dot. */
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation, .page-reports, .modal-quick, [data-testid="payout-modal"]) .chip {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t) 34%, transparent);
+}
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation, .page-reports, .modal-quick, [data-testid="payout-modal"]) .chip-dot {
+  box-shadow: 0 0 8px color-mix(in srgb, var(--t) 85%, transparent);
+}
+
+/* Glass tables: hairline separators, quiet head, rounded hover rows. */
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation, .page-remittances) .tbl table { border-collapse: separate; border-spacing: 0; }
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl th { background: rgba(255, 255, 255, 0.025); }
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl td { border-bottom-color: rgba(255, 255, 255, 0.055); }
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl tr.is-clickable:hover { background: transparent; box-shadow: none; }
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl tr.is-clickable > td { transition: background-color 0.25s var(--ease); }
+@media (min-width: 761px) {
+  html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl tr.is-clickable:hover > td { background: rgba(143, 216, 255, 0.055); }
+  html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl tr.is-clickable:hover > td:first-child { box-shadow: inset 3px 0 0 var(--mn-cyan); }
+}
+html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl-foot { border-top-color: var(--ops-line); }
+
+/* Timelines on the detail pages: a lit spine. */
+html[data-look="midnight"] :is(.page-tx-detail, .page-rq-detail, .page-recon-detail) .timeline::before {
+  background: linear-gradient(180deg, rgba(143, 216, 255, 0.55), rgba(107, 47, 208, 0.3) 70%, rgba(107, 47, 208, 0));
+}
+html[data-look="midnight"] :is(.page-tx-detail, .page-rq-detail, .page-recon-detail) .tl-item { padding: 12px 0; }
+
+/* =============================================================================================
+   Payment-method marks on white plates
+   ============================================================================================= */
+html[data-look="midnight"] .mn-plate {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; vertical-align: middle;
+  height: 30px; min-width: 72px; padding: 0 9px; border-radius: 9px;
+  background: #FFFFFF; color: #0B1020;
+  box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+html[data-look="midnight"] .mn-plate .bmethod-logo { display: block; width: auto; height: 14px; max-width: 60px; object-fit: contain; }
+html[data-look="midnight"] .mn-plate .bmethod-logo[data-mark="Visa"] { height: 11px; }
+html[data-look="midnight"] .mn-plate .bmethod-logo[data-mark="Mastercard"] { height: 17px; }
+html[data-look="midnight"] .mn-plate .bmethod-logo[data-mark="Maya"] { height: 13px; }
+html[data-look="midnight"] .mn-plate .bmethod-logo[data-mark="QR Ph"] { height: 15px; }
+html[data-look="midnight"] .mn-plate .bmethod-logo[data-mark="MariBank"] { height: 13px; }
+html[data-look="midnight"] .mn-plate .icon { flex: none; color: #2A1A6E; }
+html[data-look="midnight"] .mn-plate-name { font-size: 11.5px; font-weight: var(--fw-bold); color: #0B1020; white-space: nowrap; }
+html[data-look="midnight"] .mn-plate.has-name { gap: 5px; padding: 0 8px; }
+html[data-look="midnight"] .mn-plate.is-sm { height: 26px; min-width: 62px; padding: 0 7px; border-radius: 8px; }
+html[data-look="midnight"] .mn-plate.is-sm .bmethod-logo { height: 12px; max-width: 52px; }
+html[data-look="midnight"] .mn-plate.is-sm .bmethod-logo[data-mark="Visa"] { height: 9px; }
+html[data-look="midnight"] .mn-plate.is-sm .bmethod-logo[data-mark="Mastercard"] { height: 14px; }
+html[data-look="midnight"] .mn-plate.is-sm .mn-plate-name { font-size: 11.5px; }
+html[data-look="midnight"] .mn-method { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* =============================================================================================
+   Transactions list: status chips, eye button, attachments with a soft glow
+   ============================================================================================= */
+html[data-look="midnight"] .page-transactions > .notice { border-radius: 16px; }
+html[data-look="midnight"] .tx-pending-line a { font-weight: var(--fw-bold); }
+
+html[data-look="midnight"] .mn-chipbar {
+  display: flex; flex-wrap: nowrap; gap: 4px; width: fit-content; max-width: 100%; margin: 0 0 var(--space-4);
+  padding: 4px; border-radius: 999px; overflow-x: auto; scrollbar-width: none;
+  background: rgba(9, 16, 37, 0.74); border: 1px solid var(--glass-line);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+}
+html[data-look="midnight"] .mn-chipbar::-webkit-scrollbar { display: none; }
+html[data-look="midnight"] .mn-fchip {
+  display: inline-flex; align-items: center; gap: 7px; flex: none; height: 38px; padding: 0 12px;
+  border: 0; border-radius: 999px; background: transparent; color: var(--text-muted);
+  font: 600 13px/1 var(--font); white-space: nowrap; cursor: pointer;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+html[data-look="midnight"] .mn-fchip:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+html[data-look="midnight"] .mn-fchip[aria-pressed="true"] { background: var(--mn-pill); color: var(--mn-pill-ink); box-shadow: 0 10px 26px -12px rgba(143, 216, 255, 0.7); }
+html[data-look="midnight"] .mn-fchip:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 2px; }
+html[data-look="midnight"] .mn-fchip-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--t); box-shadow: 0 0 8px var(--t); }
+html[data-look="midnight"] .mn-fchip[aria-pressed="true"] .mn-fchip-dot { box-shadow: none; outline: 1.5px solid rgba(7, 13, 28, 0.35); }
+html[data-look="midnight"] .mn-fchip-n {
+  display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1); color: inherit; font-size: 12px; font-weight: var(--fw-bold);
+}
+html[data-look="midnight"] .mn-fchip[aria-pressed="true"] .mn-fchip-n { background: rgba(7, 13, 28, 0.1); }
+
+/* The list fits the 1440 content width: the request folds under the id (concept A), cells are a
+   little tighter and the Attachments chips sit side by side. */
+html[data-look="midnight"] [data-testid="tx-table"] :is(th, td):nth-child(3) { display: none; }
+@media (min-width: 1280px) {
+  html[data-look="midnight"] [data-testid="tx-table"] :is(th, td) { padding-left: 10px; padding-right: 10px; }
+  html[data-look="midnight"] [data-testid="tx-table"] :is(th, td):first-child { padding-left: 16px; }
+  html[data-look="midnight"] [data-testid="tx-table"] :is(th, td):last-child { padding-right: 16px; }
+}
+html[data-look="midnight"] [data-testid="tx-table"] .doc-chips { gap: 6px; }
+html[data-look="midnight"] [data-testid="tx-table"] td.al-right .num { font-weight: var(--fw-bold); }
+html[data-look="midnight"] .mn-txid { display: inline-flex; align-items: center; gap: 9px; }
+html[data-look="midnight"] .mn-txid .cell-sub { color: var(--text-muted); }
+html[data-look="midnight"] .tbl td a.link.mn-txreq { font-weight: var(--fw-semibold); color: var(--text-muted); text-decoration: underline dotted rgba(184, 192, 212, 0.55); text-underline-offset: 3px; }
+html[data-look="midnight"] .tbl td a.link.mn-txreq:hover { color: var(--mn-cyan); text-decoration: underline solid var(--mn-cyan); }
+html[data-look="midnight"] .mn-eye {
+  flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  border-radius: 50%; border: 1px solid rgba(143, 216, 255, 0.3); background: rgba(143, 216, 255, 0.08); color: var(--mn-cyan);
+  cursor: pointer; transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), translate 0.25s var(--ease);
+}
+html[data-look="midnight"] .mn-eye:hover {
+  translate: 0 -1px; background: rgba(143, 216, 255, 0.18); border-color: rgba(143, 216, 255, 0.65);
+  box-shadow: 0 0 0 1px rgba(143, 216, 255, 0.25), 0 10px 24px -10px rgba(100, 200, 255, 0.85);
+}
+html[data-look="midnight"] .mn-eye:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 2px; }
+
+/* Attachments column + the arrangement's file rows (docViewer.js): glowing document chips. */
+html[data-look="midnight"] .doc-chip {
+  min-height: 32px; gap: 7px; padding: 3px 12px 3px 4px; color: var(--text);
+  border: 1px solid rgba(143, 216, 255, 0.26);
+  background: linear-gradient(180deg, rgba(143, 216, 255, 0.12), rgba(107, 47, 208, 0.14));
+  box-shadow: 0 0 20px -10px rgba(100, 200, 255, 0.55);
+}
+html[data-look="midnight"] .doc-chip .icon {
+  box-sizing: content-box; padding: 5px; border-radius: 50%; color: #FFFFFF;
+  background: linear-gradient(135deg, #6B2FD0, #3466F0); box-shadow: 0 0 12px rgba(107, 47, 208, 0.7);
+  transition: box-shadow 0.25s var(--ease);
+}
+html[data-look="midnight"] .doc-chip.is-agreement .icon { color: #FFFFFF; background: linear-gradient(135deg, #3466F0, #1E9BD7); box-shadow: 0 0 12px rgba(100, 200, 255, 0.6); }
+html[data-look="midnight"] .doc-chip:hover,
+html[data-look="midnight"] .doc-chip.is-agreement:hover {
+  border-color: rgba(143, 216, 255, 0.7); background: linear-gradient(180deg, rgba(143, 216, 255, 0.18), rgba(107, 47, 208, 0.22));
+  box-shadow: 0 0 0 1px rgba(143, 216, 255, 0.3), 0 12px 26px -12px rgba(100, 200, 255, 0.75);
+}
+html[data-look="midnight"] .doc-chip:hover .icon { box-shadow: 0 0 18px rgba(143, 216, 255, 0.95); }
+html[data-look="midnight"] .doc-chip:focus-visible { outline-color: var(--mn-cyan); }
+html[data-look="midnight"] .doc-chip-ver { background: var(--mn-cyan); color: var(--ops-ink); }
+html[data-look="midnight"] .doc-none { color: var(--text-muted); }
+
+/* =============================================================================================
+   Quick-view panel (transactions.js openQuickView): glass from the right; a bottom sheet on phones
+   ============================================================================================= */
+html[data-look="midnight"] .modal-backdrop:has(> .modal-quick) {
+  place-items: stretch end; padding: 16px;
+  background: rgba(3, 6, 14, 0.46); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  animation: mn-ops-fade 0.35s var(--ease) both;
+}
+html[data-look="midnight"] .modal.modal-quick {
+  width: min(480px, 100%); height: calc(100vh - 32px); height: calc(100dvh - 32px); max-height: none;
+  border-radius: 28px; border: 1px solid rgba(143, 216, 255, 0.16);
+  background: linear-gradient(180deg, rgba(20, 31, 66, 0.95), rgba(8, 14, 33, 0.97));
+  box-shadow: -40px 0 90px -40px rgba(0, 0, 0, 0.95), 0 0 60px -20px rgba(100, 200, 255, 0.35);
+  animation: mn-ops-quick-in 0.55s var(--ease) both;
+}
+html[data-look="midnight"] .modal.modal-quick::before {
+  left: 0; right: auto; top: 28px; bottom: 28px; width: 2px; height: auto; border-radius: 2px;
+  background: linear-gradient(180deg, transparent, var(--mn-cyan) 30%, #6B2FD0 75%, transparent); opacity: 0.85;
+}
+html[data-look="midnight"] .modal-quick .modal-head { padding: 22px 22px 16px 26px; border-bottom: 1px solid var(--glass-line); }
+html[data-look="midnight"] .modal-quick .modal-title { font-size: 22px; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+html[data-look="midnight"] .modal-quick .modal-body { flex: 1; min-height: 0; gap: 22px; padding: 20px 26px 24px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+html[data-look="midnight"] .modal-quick .modal-body > * { animation: mn-ops-rise 0.6s var(--ease) both; }
+html[data-look="midnight"] .modal-quick .modal-body > :nth-child(2) { animation-delay: 0.07s; }
+html[data-look="midnight"] .modal-quick .modal-body > :nth-child(3) { animation-delay: 0.14s; }
+html[data-look="midnight"] .modal-quick .modal-body > :nth-child(4) { animation-delay: 0.21s; }
+html[data-look="midnight"] .modal-quick .modal-foot { gap: 10px; padding: 14px 22px 16px; }
+html[data-look="midnight"] .modal-quick .modal-foot .btn { flex: 1 1 0; justify-content: center; }
+
+html[data-look="midnight"] .mn-qv-sum {
+  padding: 18px; border-radius: 20px; border: 1px solid var(--glass-line);
+  background: radial-gradient(100% 120% at 100% 0%, color-mix(in srgb, var(--t) 14%, transparent), transparent 60%), var(--ops-tile);
+}
+html[data-look="midnight"] .mn-qv-sum-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-muted); }
+html[data-look="midnight"] .mn-qv-money {
+  display: block; margin-top: 14px; font-size: 44px; font-weight: var(--fw-bold); line-height: 1; letter-spacing: -0.02em;
+  color: var(--text); font-variant-numeric: tabular-nums; text-shadow: 0 0 34px rgba(100, 200, 255, 0.25); white-space: nowrap;
+}
+html[data-look="midnight"] .mn-qv-money .mc-sign { margin-right: 4px; font-size: 0.56em; vertical-align: 0.34em; color: var(--text-muted); }
+html[data-look="midnight"] .mn-qv-money .mc-cents { font-size: 0.5em; color: var(--text-muted); }
+html[data-look="midnight"] .mn-qv-method { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; color: var(--text-muted); }
+html[data-look="midnight"] .modal-quick .dl { gap: 14px 18px; }
+html[data-look="midnight"] .modal-quick .dl dd { font-size: 14px; }
+html[data-look="midnight"] .mn-qv-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 12px;
+  font-size: 12px; font-weight: var(--fw-bold); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+}
+html[data-look="midnight"] .mn-qv-h-n { font-weight: var(--fw-semibold); letter-spacing: 0.02em; text-transform: none; }
+
+html[data-look="midnight"] .mn-qv-steps { list-style: none; margin: 0; padding: 0; }
+html[data-look="midnight"] .mn-qv-step { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; padding-bottom: 18px; }
+html[data-look="midnight"] .mn-qv-step:last-child { padding-bottom: 0; }
+html[data-look="midnight"] .mn-qv-step:not(:last-child)::after {
+  content: ''; position: absolute; left: 13px; top: 31px; bottom: 3px; width: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.12);
+}
+html[data-look="midnight"] .mn-qv-step.is-done:not(:last-child)::after {
+  background: linear-gradient(180deg, var(--tone-ok), rgba(94, 230, 168, 0.3)); transform-origin: top;
+  animation: mn-ops-grow-y 0.6s var(--ease) both; animation-delay: calc(var(--i, 0) * 170ms + 250ms);
+}
+html[data-look="midnight"] .mn-qv-dot {
+  position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.22); background: #0B1226;
+}
+html[data-look="midnight"] .mn-qv-step.is-done .mn-qv-dot { border-color: var(--tone-ok); background: var(--tone-ok); color: #04261A; box-shadow: 0 0 14px rgba(94, 230, 168, 0.5); }
+html[data-look="midnight"] .mn-qv-step.is-fail .mn-qv-dot { border-color: var(--tone-danger); background: var(--tone-danger); color: #2E0906; box-shadow: 0 0 14px rgba(255, 138, 128, 0.5); }
+html[data-look="midnight"] .mn-qv-step.is-current .mn-qv-dot { border-color: var(--tone-warn); animation: mn-ops-breathe 2.6s ease-in-out infinite; }
+html[data-look="midnight"] .mn-qv-step.is-current .mn-qv-dot::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--tone-warn); }
+html[data-look="midnight"] .mn-qv-step-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-top: 3px; }
+html[data-look="midnight"] .mn-qv-step-text strong { font-size: 14px; font-weight: var(--fw-bold); color: var(--text); }
+html[data-look="midnight"] .mn-qv-step-text > span, html[data-look="midnight"] .mn-qv-step-text time { font-size: 12.5px; line-height: 1.4; color: var(--text-muted); }
+html[data-look="midnight"] .mn-qv-step.is-todo .mn-qv-step-text strong { color: var(--text-muted); }
+
+html[data-look="midnight"] .mn-qv-docs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+html[data-look="midnight"] .mn-qv-doc {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px;
+  border-radius: 16px; border: 1px solid var(--glass-line); background: var(--ops-tile);
+}
+html[data-look="midnight"] .mn-qv-doc-ic {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: #FFFFFF;
+  background: linear-gradient(135deg, #6B2FD0, #3466F0); box-shadow: 0 0 16px rgba(107, 47, 208, 0.6);
+}
+html[data-look="midnight"] .mn-qv-doc.is-agreement .mn-qv-doc-ic { background: linear-gradient(135deg, #3466F0, #1E9BD7); box-shadow: 0 0 16px rgba(100, 200, 255, 0.5); }
+html[data-look="midnight"] .mn-qv-doc-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+html[data-look="midnight"] .mn-qv-doc-text strong { font-size: 14px; font-weight: var(--fw-bold); color: var(--text); }
+html[data-look="midnight"] .mn-qv-doc-name { font-size: 12px; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; }
+html[data-look="midnight"] .mn-qv-doc-meta { font-size: 12px; color: var(--text-muted); }
+html[data-look="midnight"] .mn-qv-none { font-size: 13px; color: var(--text-muted); }
+
+/* =============================================================================================
+   Transaction detail: amounts, webhook log, attachments, explainer
+   ============================================================================================= */
+html[data-look="midnight"] .page-tx-detail .tx-big { font-size: 30px; letter-spacing: -0.015em; }
+html[data-look="midnight"] .tx-amounts { gap: 12px; border: 0; border-radius: 0; overflow: visible; }
+html[data-look="midnight"] .tx-amounts .tx-amt,
+html[data-look="midnight"] .tx-amounts .tx-amt + .tx-amt { border: 1px solid var(--glass-line); border-radius: 18px; background: var(--ops-tile); padding: 16px 18px; }
+html[data-look="midnight"] .tx-amt-value { font-size: 28px; letter-spacing: -0.015em; }
+html[data-look="midnight"] .tx-amt-fee .tx-amt-value { color: var(--text-muted); }
+html[data-look="midnight"] .tx-amounts .tx-amt.tx-amt-net {
+  border-color: rgba(143, 216, 255, 0.32);
+  background: radial-gradient(120% 120% at 100% 0%, rgba(143, 216, 255, 0.16), transparent 60%), linear-gradient(135deg, rgba(91, 33, 214, 0.3), rgba(31, 79, 224, 0.16));
+  box-shadow: 0 18px 40px -24px rgba(100, 200, 255, 0.6);
+}
+html[data-look="midnight"] .tx-amt-net .tx-amt-value { color: var(--text); text-shadow: 0 0 24px rgba(143, 216, 255, 0.35); }
+
+html[data-look="midnight"] .wh-event {
+  border: 1px solid var(--glass-line); border-left: 3px solid var(--tone-ok); border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03); box-shadow: -10px 0 26px -18px var(--tone-ok);
+}
+html[data-look="midnight"] .wh-event[data-kind="failed"] { border-left-color: var(--tone-danger); box-shadow: -10px 0 26px -18px var(--tone-danger); }
+html[data-look="midnight"] .wh-event.is-dup { border-left-color: var(--tone-warn); box-shadow: -10px 0 26px -18px var(--tone-warn); }
+html[data-look="midnight"] .wh-head { background: rgba(255, 255, 255, 0.035); border-bottom-color: var(--glass-line); }
+html[data-look="midnight"] .wh-step + .wh-step { border-top-color: rgba(255, 255, 255, 0.08); }
+html[data-look="midnight"] .wh-mark { border-radius: 50%; }
+html[data-look="midnight"] .wh-step.is-ok .wh-mark { background: var(--tone-ok); color: #04261A; box-shadow: 0 0 12px rgba(94, 230, 168, 0.45); }
+html[data-look="midnight"] .wh-step.is-bad .wh-mark { background: var(--tone-danger); color: #2E0906; box-shadow: 0 0 12px rgba(255, 138, 128, 0.45); }
+
+html[data-look="midnight"] .doc-list { gap: 10px; }
+html[data-look="midnight"] .doc-row {
+  border-radius: 16px; border-color: var(--glass-line); background: var(--ops-tile); color: var(--text);
+  transition: border-color 0.25s var(--ease), background-color 0.25s var(--ease), box-shadow 0.25s var(--ease), translate 0.25s var(--ease);
+}
+html[data-look="midnight"] .doc-row:hover,
+html[data-look="midnight"] .doc-row.is-agreement:hover { transform: none; translate: 0 -1px; border-color: rgba(143, 216, 255, 0.55); background: rgba(143, 216, 255, 0.07); box-shadow: var(--ops-edge-glow); }
+html[data-look="midnight"] .doc-row:focus-visible { outline-color: var(--mn-cyan); }
+html[data-look="midnight"] .doc-row-icon {
+  width: 38px; height: 38px; border-radius: 12px; color: #FFFFFF;
+  background: linear-gradient(135deg, #6B2FD0, #3466F0); box-shadow: 0 0 16px rgba(107, 47, 208, 0.6);
+}
+html[data-look="midnight"] .doc-row.is-agreement .doc-row-icon { color: #FFFFFF; background: linear-gradient(135deg, #3466F0, #1E9BD7); box-shadow: 0 0 16px rgba(100, 200, 255, 0.5); }
+html[data-look="midnight"] .doc-row-kind { color: var(--mn-cyan); }
+html[data-look="midnight"] .doc-row-go {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid rgba(143, 216, 255, 0.28); background: rgba(143, 216, 255, 0.08); color: var(--mn-cyan);
+}
+html[data-look="midnight"] .doc-row:hover .doc-row-go { color: var(--mn-cyan); background: rgba(143, 216, 255, 0.2); }
+
+html[data-look="midnight"] .tx-explain { list-style: none; padding-left: 0; gap: 12px; counter-reset: mn-ops-step; }
+html[data-look="midnight"] .tx-explain li { position: relative; min-height: 24px; padding-left: 36px; counter-increment: mn-ops-step; }
+html[data-look="midnight"] .tx-explain li::before {
+  content: counter(mn-ops-step); position: absolute; left: 0; top: -1px; display: grid; place-items: center;
+  width: 24px; height: 24px; border-radius: 50%; background: rgba(143, 216, 255, 0.12); color: var(--mn-cyan);
+  font-size: 12px; font-weight: var(--fw-bold); box-shadow: inset 0 0 0 1px rgba(143, 216, 255, 0.3);
+}
+html[data-look="midnight"] .tx-exc li { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+/* =============================================================================================
+   Payment requests
+   ============================================================================================= */
+html[data-look="midnight"] .page-rq-detail .rq-amount { font-size: 30px; letter-spacing: -0.015em; }
+html[data-look="midnight"] .rq-link {
+  padding: 18px; border: 1px solid var(--glass-line); border-left: 1px solid var(--glass-line); border-radius: 20px;
+  background: radial-gradient(120% 140% at 0% 0%, rgba(107, 47, 208, 0.24), transparent 55%), var(--ops-tile);
+}
+html[data-look="midnight"] .mn-qr-plate {
+  flex: none; width: max-content; padding: 10px; border-radius: 18px; background: #FFFFFF; line-height: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 18px 40px -18px rgba(100, 200, 255, 0.55), 0 0 44px -14px rgba(143, 216, 255, 0.5);
+}
+html[data-look="midnight"] .mn-qr-plate .qr { display: block; border: 0; border-radius: 4px; background: #FFFFFF; }
+html[data-look="midnight"] .rq-url { border-radius: 12px; border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.05); color: var(--text); }
+html[data-look="midnight"] .rq-subhead { margin-top: var(--space-2); color: var(--text-muted); }
+html[data-look="midnight"] .rq-repl { color: var(--text-muted); }
+html[data-look="midnight"] [data-testid="rq-table"] td.al-right .num { font-weight: var(--fw-bold); }
+@media (min-width: 1440px) {
+  html[data-look="midnight"] [data-testid="rq-table"] td:nth-child(6) .num { white-space: nowrap; }
+}
+@media (min-width: 1280px) {
+  html[data-look="midnight"] [data-testid="rq-table"] :is(th, td) { padding-left: 11px; padding-right: 11px; }
+  html[data-look="midnight"] [data-testid="rq-table"] :is(th, td):first-child { padding-left: 16px; }
+  html[data-look="midnight"] [data-testid="rq-table"] :is(th, td):last-child { padding-right: 16px; }
+}
+
+/* =============================================================================================
+   Reconciliation: exception-type tiles, queue, detail
+   ============================================================================================= */
+html[data-look="midnight"] .recon-types { gap: 10px; border: 0; border-radius: 0; clip-path: none; }
+html[data-look="midnight"] .recon-types::after { display: none; }
+html[data-look="midnight"] .recon-type {
+  border: 1px solid var(--glass-line); border-radius: 16px; background: var(--ops-tile); color: var(--text);
+  transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), translate 0.25s var(--ease);
+}
+html[data-look="midnight"] .recon-type::before { display: none; }
+html[data-look="midnight"] .recon-type:hover { translate: 0 -1px; background: rgba(255, 255, 255, 0.07); border-color: rgba(143, 216, 255, 0.25); }
+html[data-look="midnight"] .recon-type.is-on {
+  border-color: rgba(143, 216, 255, 0.45); box-shadow: var(--ops-edge-glow);
+  background: linear-gradient(135deg, rgba(91, 33, 214, 0.36), rgba(31, 79, 224, 0.14));
+}
+html[data-look="midnight"] .recon-type:focus-visible { outline-color: var(--mn-cyan); }
+html[data-look="midnight"] .recon-type-n { color: var(--mn-cyan); }
+html[data-look="midnight"] .recon-type-count { font-size: 26px; text-shadow: 0 0 18px color-mix(in srgb, currentColor 45%, transparent); }
+html[data-look="midnight"] .recon-detail { color: var(--text-muted); }
+html[data-look="midnight"] .page-recon-detail .recon-finding { font-size: 17px; line-height: 1.55; }
+
+/* =============================================================================================
+   Reports: re-stepped categorical colours, dark-ink labels in blocks, glass tooltip
+   ============================================================================================= */
+html[data-look="midnight"] .page-reports,
+html[data-look="midnight"] .viz {
+  --viz-1: #8D5BFB;  /* purple   (slot 1, GCash)          */
+  --viz-2: #20A3D0;  /* cyan     (slot 2, Maya)           */
+  --viz-3: #F1621D;  /* orange   (slot 3, QR Ph)          */
+  --viz-4: #3D73FF;  /* blue     (slot 4, Online banking) */
+  --viz-5: #B28318;  /* gold     (slot 5, Card)           */
+  --viz-6: #DB4170;  /* magenta  (slot 6, MariBank)       */
+  --viz-grid: rgba(255, 255, 255, 0.07);
+  --viz-axis: rgba(255, 255, 255, 0.24);
+}
+html[data-look="midnight"] .viz-in { fill: var(--ops-ink); }
+html[data-look="midnight"] .viz-tone-neutral { fill: var(--tone-neutral); }
+html[data-look="midnight"] .viz-mark .viz-bar { transition: opacity var(--dur) var(--ease), filter var(--dur) var(--ease); }
+html[data-look="midnight"] .viz-mark:hover .viz-bar,
+html[data-look="midnight"] .viz-mark:focus .viz-bar { opacity: 1; filter: brightness(1.12) drop-shadow(0 0 7px rgba(184, 156, 255, 0.55)); }
+html[data-look="midnight"] .viz-tip {
+  padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(143, 216, 255, 0.35);
+  background: rgba(8, 14, 32, 0.95); color: var(--text); box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.9);
+}
+html[data-look="midnight"] .viz-tip-label { color: var(--text-muted); }
+html[data-look="midnight"] .viz-legend-table :is(th, td) { border-bottom-color: var(--ops-line); }
+html[data-look="midnight"] .report-exc { border-left-color: var(--ops-line); }
+html[data-look="midnight"] .report-table .tbl { border-color: var(--glass-line); }
+html[data-look="midnight"] .report-card { border-radius: 22px; }
+@media (max-width: 900px) {
+  html[data-look="midnight"] .report-exc { border-top-color: var(--ops-line); }
+}
+
+/* =============================================================================================
+   Remittances: money-flow diagrams, sample statement
+   ============================================================================================= */
+html[data-look="midnight"] .rm-figure {
+  border-color: var(--glass-line); border-radius: 18px;
+  background: radial-gradient(80% 70% at 50% 0%, rgba(107, 47, 208, 0.18), transparent 70%), rgba(255, 255, 255, 0.025);
+}
+html[data-look="midnight"] .rm-node-borrower { fill: rgba(255, 255, 255, 0.05); stroke: rgba(255, 255, 255, 0.3); }
+html[data-look="midnight"] .rm-node-creditor { fill: rgba(143, 216, 255, 0.07); stroke: rgba(143, 216, 255, 0.55); }
+html[data-look="midnight"] .rm-node-mba { fill: rgba(91, 33, 214, 0.3); stroke: var(--mba-purple); filter: drop-shadow(0 0 10px rgba(155, 110, 255, 0.35)); }
+html[data-look="midnight"] .rm-node-bar { fill: var(--mn-cyan); }
+html[data-look="midnight"] .rm-edge { stroke: rgba(184, 192, 212, 0.75); }
+html[data-look="midnight"] .rm-arrowhead { fill: rgba(184, 192, 212, 0.95); }
+html[data-look="midnight"] [data-testid="model-a"] { border-color: rgba(143, 216, 255, 0.22); box-shadow: var(--glass-edge), 0 30px 70px -44px rgba(100, 200, 255, 0.6); }
+
+html[data-look="midnight"] .rm-statement { border: 1px solid var(--glass-line); border-radius: 16px; overflow: hidden; background: rgba(255, 255, 255, 0.02); }
+html[data-look="midnight"] .rm-statement thead th { background: rgba(255, 255, 255, 0.035); }
+html[data-look="midnight"] .rm-statement tbody th.rm-creditor { background: transparent; border-bottom-color: rgba(255, 255, 255, 0.055); }
+html[data-look="midnight"] .rm-statement tbody td { border-bottom-color: rgba(255, 255, 255, 0.055); }
+html[data-look="midnight"] .rm-statement tbody td:last-child { background: rgba(143, 216, 255, 0.04); }
+html[data-look="midnight"] .rm-statement tfoot :is(th, td) { border-top: 1px solid rgba(143, 216, 255, 0.4); background: rgba(143, 216, 255, 0.07); }
+html[data-look="midnight"] .rm-statement tfoot td:last-child strong { text-shadow: 0 0 18px rgba(143, 216, 255, 0.45); }
+html[data-look="midnight"] .rm-notes li::before { background: rgba(143, 216, 255, 0.45); }
+html[data-look="midnight"] .rm-statement + .rm-notes { margin-top: var(--space-4); }
+
+/* =============================================================================================
+   Contract / agreement viewer: a dark glass shell; the page itself stays white (it is printed)
+   ============================================================================================= */
+html[data-look="midnight"] .modal[data-testid="doc-viewer"] {
+  border-color: rgba(143, 216, 255, 0.16);
+  background: linear-gradient(180deg, rgba(20, 31, 66, 0.96), rgba(8, 14, 33, 0.98));
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 80px -28px rgba(100, 200, 255, 0.4);
+}
+html[data-look="midnight"] .docv-preview {
+  border-color: rgba(143, 216, 255, 0.16); border-radius: 18px;
+  background: radial-gradient(80% 60% at 50% 0%, rgba(107, 47, 208, 0.3), transparent 70%), radial-gradient(60% 50% at 50% 100%, rgba(31, 79, 224, 0.2), transparent 70%), rgba(3, 7, 16, 0.55);
+}
+html[data-look="midnight"] .docv-paper {
+  box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 48px -16px rgba(143, 216, 255, 0.5);
+}
+/* The creditor's initials on the contract page: white on the navy mark (mba-docs.css lets
+   `.docv-cred span` grey them to 2.2:1; Classic keeps that file unchanged). */
+html[data-look="midnight"] .docv-cred .docv-mark { color: #FFFFFF; }
+html[data-look="midnight"] .docv-caption { color: var(--text-muted); }
+html[data-look="midnight"] .docv-preview-empty .docv-empty { border: 1px dashed rgba(143, 216, 255, 0.35); border-radius: 14px; background: rgba(255, 255, 255, 0.04); color: var(--text); }
+html[data-look="midnight"] .docv-empty .icon { color: var(--mn-lilac); }
+html[data-look="midnight"] .docv-side-h { color: var(--text-muted); }
+html[data-look="midnight"] .docv-versions li { border-color: var(--glass-line); border-radius: 10px; }
+html[data-look="midnight"] .docv-versions li.is-current { border-color: rgba(184, 156, 255, 0.55); background: rgba(155, 110, 255, 0.14); }
+html[data-look="midnight"] .docv-v { color: var(--mn-lilac); }
+@media (max-width: 480px) {
+  html[data-look="midnight"] .modal[data-testid="doc-viewer"] .modal-foot { flex-wrap: nowrap; }
+  html[data-look="midnight"] .modal[data-testid="doc-viewer"] .modal-foot .btn { flex: 1 1 auto; justify-content: center; padding-left: 14px; padding-right: 14px; }
+}
+
+/* =============================================================================================
+   Record lists as glass cards. CSS only — every row and cell keeps its element, test id and
+   click behaviour (sorting stays on wider screens). Below 1280px the Transactions, Payment
+   requests and exception tables no longer fit their card, so they become cards: two per row on
+   tablets and narrow laptops, one on phones.
+   ============================================================================================= */
+@media (min-width: 1280px) and (max-width: 1365px) {
+  html[data-look="midnight"] [data-testid="tx-table"] :is(th, td):nth-child(6) { display: none; } /* Started: in the quick view and on the detail page */
+}
+@media (min-width: 1280px) {
+  html[data-look="midnight"] [data-testid="exception-table"] :is(th, td) { padding-left: 10px; padding-right: 10px; }
+  html[data-look="midnight"] [data-testid="exception-table"] :is(th, td):first-child { padding-left: 16px; }
+  html[data-look="midnight"] [data-testid="exception-table"] :is(th, td):last-child { padding-right: 16px; }
+}
+@media (max-width: 1279px) {
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) { padding: 12px 12px 0; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) .tbl-scroll { overflow: visible; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) table { display: block; width: 100%; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) thead { display: none; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-bottom: 12px; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) tbody tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto 1fr; align-items: start; gap: 10px 12px;
+    padding: 14px; border-radius: 18px; border: 1px solid var(--glass-line); background: var(--ops-tile);
+  }
+  html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) tbody tr.is-clickable:hover { box-shadow: inset 3px 0 0 var(--mn-cyan); background: rgba(143, 216, 255, 0.05); }
+  html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) tbody tr.is-clickable:hover > td { background: transparent; box-shadow: none; }
+  html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) tbody td { display: block; min-width: 0; padding: 0; border: 0; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) .cell-main { white-space: normal; }
+
+  /* Transactions: 1 id · 2 borrower · 3 request · 4 method · 5 amount · 6 started · 7 status · 8 files */
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(1) { grid-area: 1 / 1; }
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(7) { grid-area: 1 / 2; justify-self: end; }
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(2) { grid-area: 2 / 1; }
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(5) { grid-area: 2 / 2; align-self: center; font-size: 16px; font-weight: var(--fw-bold); }
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(4) { display: block; grid-area: 3 / 1; align-self: center; }
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(6) { grid-area: 3 / 2; }
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(6) .cell-2 { align-items: flex-end; text-align: right; }
+  html[data-look="midnight"] .page-transactions .tbl[data-testid="tx-table"] tbody td:nth-child(3) { display: none; } /* the request sits under the id */
+  html[data-look="midnight"] [data-testid="tx-table"] tbody td:nth-child(8) { grid-area: 4 / 1 / 5 / 3; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+  html[data-look="midnight"] [data-testid="tx-table"] .mn-eye { width: 40px; height: 40px; }
+  html[data-look="midnight"] [data-testid="tx-table"] .doc-chip { min-height: 36px; }
+
+  /* Exceptions: 1 id · 2 type · 3 finding · 4 linked record · 5 amount · 6 raised · 7 status */
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(1) { grid-area: 1 / 1; }
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(7) { grid-area: 1 / 2; justify-self: end; }
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(2) { grid-area: 2 / 1; font-weight: var(--fw-semibold); }
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(5) { grid-area: 2 / 2; font-weight: var(--fw-bold); }
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(3) { grid-area: 3 / 1 / 4 / 3; max-width: none; }
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(4) { grid-area: 4 / 1; align-self: end; }
+  html[data-look="midnight"] [data-testid="exception-table"] tbody td:nth-child(6) { grid-area: 4 / 2; align-self: end; text-align: right; color: var(--text-muted); font-size: var(--fs-xs); }
+
+  /* Payment requests: 1 id · 2 borrower · 3 installment · 4 amount · 5 deliveries · 6 expires · 7 status */
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(1) { grid-area: 1 / 1; }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(7) { grid-area: 1 / 2; justify-self: end; max-width: 26ch; }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(7) .rq-status { align-items: flex-end; text-align: right; }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(7) .rq-repl { white-space: normal; }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(2) { grid-area: 2 / 1; }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(4) { grid-area: 2 / 2; align-self: center; font-size: 16px; font-weight: var(--fw-bold); }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(3) { grid-area: 3 / 1; align-self: end; }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(6) { display: block; grid-area: 3 / 2; align-self: end; text-align: right; color: var(--text-muted); font-size: var(--fs-xs); }
+  html[data-look="midnight"] [data-testid="rq-table"] tbody td:nth-child(6)::before { content: 'Expires'; display: block; margin-bottom: 2px; font-size: 11px; font-weight: var(--fw-bold); letter-spacing: 0.08em; text-transform: uppercase; }
+  html[data-look="midnight"] .page-requests .tbl[data-testid="rq-table"] tbody td:nth-child(5) { display: none; } /* deliveries: on the detail page */
+}
+
+@media (max-width: 760px) {
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) { padding: 10px 10px 0; }
+  html[data-look="midnight"] .tbl:is([data-testid="tx-table"], [data-testid="rq-table"], [data-testid="exception-table"]) tbody { grid-template-columns: minmax(0, 1fr); gap: 10px; padding-bottom: 10px; }
+  html[data-look="midnight"] .mn-fchip { height: 40px; }
+  html[data-look="midnight"] .tx-amt-value { font-size: 24px; }
+}
+
+/* Quick view as a bottom sheet on phones. */
+@media (max-width: 640px) {
+  html[data-look="midnight"] .modal-backdrop:has(> .modal-quick) { place-items: end stretch; padding: 0; }
+  html[data-look="midnight"] .modal.modal-quick {
+    width: 100%; height: auto; max-height: 88vh; max-height: 88dvh;
+    border-radius: 26px 26px 0 0; border-bottom: 0; animation-name: mn-ops-sheet-in;
+  }
+  html[data-look="midnight"] .modal.modal-quick::before {
+    left: 50%; right: auto; top: 8px; bottom: auto; width: 44px; height: 4px; margin-left: -22px; border-radius: 4px;
+    background: rgba(255, 255, 255, 0.3); opacity: 1;
+  }
+  html[data-look="midnight"] .modal-quick .modal-head { padding: 24px 18px 14px; }
+  html[data-look="midnight"] .modal-quick .modal-body { padding: 18px 18px 20px; gap: 20px; }
+  html[data-look="midnight"] .modal-quick .modal-foot { flex-wrap: nowrap; padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); }
+  html[data-look="midnight"] .modal-quick .modal-foot .btn { flex: 1 1 auto; min-height: 46px; padding-left: 16px; padding-right: 16px; }
+  html[data-look="midnight"] .modal-quick .dl.dl-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-look="midnight"] .mn-qv-money { font-size: 38px; }
+}
+
+/* =============================================================================================
+   Motion
+   ============================================================================================= */
+@keyframes mn-ops-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mn-ops-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes mn-ops-quick-in { from { transform: translateX(calc(100% + 32px)); } to { transform: none; } }
+@keyframes mn-ops-sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes mn-ops-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes mn-ops-breathe { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 6px rgba(255, 196, 107, 0.22); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="midnight"] .modal-backdrop:has(> .modal-quick),
+  html[data-look="midnight"] .modal.modal-quick,
+  html[data-look="midnight"] .modal-quick .modal-body > *,
+  html[data-look="midnight"] .mn-qv-step.is-done:not(:last-child)::after,
+  html[data-look="midnight"] .mn-qv-step.is-current .mn-qv-dot { animation: none; }
+  html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi,
+  html[data-look="midnight"] .page-reports .grid-4 > .kpi,
+  html[data-look="midnight"] :is(.mn-fchip, .mn-eye, .doc-row, .recon-type, .doc-chip, .doc-chip .icon),
+  html[data-look="midnight"] :is(.page-transactions, .page-requests, .page-reconciliation) .tbl tr.is-clickable > td { transition: none; }
+  html[data-look="midnight"] :is(.tx-kpis, .rq-kpis, .recon-kpis) > .kpi:hover,
+  html[data-look="midnight"] .page-reports .grid-4 > .kpi:hover,
+  html[data-look="midnight"] :is(.mn-eye, .doc-row, .recon-type):hover { translate: none; }
+}

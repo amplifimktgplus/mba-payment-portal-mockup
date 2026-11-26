@@ -2,7 +2,10 @@
 // (no library; dataviz skill specs: ≤24px bars with a 4px rounded data end, 2px surface gaps,
 // recessive baseline, text in text tokens, selective direct labels, hover + focus tooltips),
 // a table view and a CSV export. Figures come from core/reports.js and core/selectors.js.
+// Midnight look (2026-11-26): the KPI figures count up (isMidnight() only) and the chart colours
+// are re-stepped for the dark surface in midnight-mba-ops.css (validated there). Classic is unchanged.
 import { renderMbaLayout } from './layout.js';
+import { countKpis } from './transactions.js';
 import { collectionsByPortfolio, agentPerformance, overdueAging, overdueAgingSplit, methodMix, reconOverview } from '../core/reports.js';
 
 export function register(router, ctx) {
@@ -345,7 +348,7 @@ function renderReports(ctx) {
     csvCols: [{ key: 'name', label: 'State' }, { key: 'count', label: 'Count' }, { key: 'amount', label: 'Amount (PHP)' }],
   });
 
-  return h('div', { class: 'page page-reports' },
+  return countKpis(ctx, h('div', { class: 'page page-reports' },
     pageHeader({
       eyebrow: 'Finance',
       title: 'Reports',
@@ -358,5 +361,5 @@ function renderReports(ctx) {
         kpi({ label: 'Recovered to date', value: `${recoveryPct}%`, sub: `${formatPHP(collected)} of ${formatPHP(placed)} placed`, tone: 'ok', testid: 'rep-kpi-recovery' }),
         kpi({ label: 'Overdue installments', value: String(k.overdue.count), sub: `${formatPHP(k.overdue.amount)} at risk (active plans)`, tone: 'warn', testid: 'rep-kpi-overdue' }),
         kpi({ label: 'Unresolved exceptions', value: String(unresolved), sub: `${rec.payments.reconciled.count} of ${rec.totalPayments} payments reconciled`, tone: 'danger', testid: 'rep-kpi-exc' })),
-      h('div', { class: 'report-grid' }, r1, r2, r3, r4, r5)));
+      h('div', { class: 'report-grid' }, r1, r2, r3, r4, r5))));
 }

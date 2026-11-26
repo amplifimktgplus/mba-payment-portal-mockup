@@ -1,0 +1,741 @@
+/* midnight-borrower.css — Midnight look, borrower area (2026-11-26). Every rule scoped under html[data-look="midnight"].
+
+   The product owner picked design option A ("Midnight") from dist/options.html; this file turns its
+   borrower concept (src/options/a/borrower.css) into the real B0–B12 screens, phone first.
+   Midnight-only DOM comes from src/borrower/midnight.js (.mn-* classes); the rest restyles the
+   Classic markup. Shared tokens and components: theme-midnight.css (loaded just before this file).
+
+   Colour and contrast (text ≥ 4.5:1, measured on the card glass over the aurora; see the report):
+   - text #F4F6FB · muted var(--text-muted) #B8C0D4 · soft #C9D0E0 (secondary text on tinted glass)
+   - accents: cyan #8FD8FF, ok #5EE6A8, warn #FFC46B, danger #FF8A80 (light-on-dark tints)
+   - fills behind white text are deep (#5B21D6, #2346B8, #3B1A8E): white stays ≥ 7:1
+   - the printed confirmation is paper: dark ink #0B1020 / #4F586C on #F1F4FA–#FBFCFE
+   Motion: entrances run only when a screen is reached (.mn-enter), never on a same-screen re-render;
+   everything is still under prefers-reduced-motion (block at the end).
+   Decoration never adds boxes outside the card: glows are shadows or pseudo-elements, so the 375px
+   overflow check (which measures every element) stays clean. */
+
+html[data-look="midnight"] .view-borrower {
+  --mn-soft: #C9D0E0;
+  --mn-panel: rgba(255, 255, 255, 0.035);
+  --mn-panel-2: rgba(255, 255, 255, 0.06);
+  --mn-line: rgba(255, 255, 255, 0.08);
+  --mn-line-2: rgba(255, 255, 255, 0.14);
+  --mn-dim: var(--mn-soft); /* the ₱ sign and centavos of big amounts */
+}
+
+/* =============================================================================================
+   Frame and card
+   ============================================================================================= */
+html[data-look="midnight"] .bscreen { gap: 22px; }
+html[data-look="midnight"] .bcard {
+  border-radius: 28px; isolation: isolate;
+  animation: none; /* theme-glass replays its entrance on every re-render; Midnight only on arrival */
+}
+html[data-look="midnight"] .bscreen.mn-enter .bcard { animation: mnb-card-in 0.7s var(--ease) both; }
+@keyframes mnb-card-in { from { opacity: 0; transform: translateY(16px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* the 4px brand bar becomes a fine glowing hairline */
+html[data-look="midnight"] .bcard::before {
+  left: 28px; right: 28px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(143, 216, 255, 0.85) 30%, rgba(123, 75, 224, 0.9) 70%, transparent);
+  box-shadow: 0 0 14px 1px rgba(100, 200, 255, 0.45);
+}
+/* slow light inside the glass (behind the content) */
+html[data-look="midnight"] .bcard::after {
+  content: ''; position: absolute; left: -10%; right: -10%; top: -30%; height: 75%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(45% 55% at 18% 10%, rgba(107, 47, 208, 0.2), transparent 70%),
+    radial-gradient(40% 50% at 88% 6%, rgba(100, 200, 255, 0.09), transparent 70%);
+  animation: mnb-card-light 26s ease-in-out infinite alternate;
+}
+@keyframes mnb-card-light { to { transform: translate3d(6%, 4%, 0) scale(1.08); } }
+
+/* secure strip + journey stepper */
+html[data-look="midnight"] .bcard-strip { padding-top: 18px; border-bottom-color: rgba(255, 255, 255, 0.07); }
+html[data-look="midnight"] .bsecure { color: var(--text-muted); letter-spacing: 0.12em; }
+html[data-look="midnight"] .bsecure .icon { color: var(--tone-ok); filter: drop-shadow(0 0 6px rgba(94, 230, 168, 0.55)); }
+html[data-look="midnight"] .bstep { color: var(--text-muted); }
+html[data-look="midnight"] .bstep + .bstep::before { width: 14px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.26)); }
+html[data-look="midnight"] .bstep.is-done + .bstep::before { background: linear-gradient(90deg, rgba(94, 230, 168, 0.7), rgba(143, 216, 255, 0.6)); }
+html[data-look="midnight"] .bstep-mark { width: 22px; height: 22px; border-color: rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.04); color: var(--text-muted); }
+html[data-look="midnight"] .bstep.is-done .bstep-mark { background: rgba(94, 230, 168, 0.14); border-color: rgba(94, 230, 168, 0.65); color: var(--tone-ok); }
+html[data-look="midnight"] .bstep.is-current { color: var(--text); }
+html[data-look="midnight"] .bstep.is-current .bstep-mark { box-shadow: 0 0 0 4px rgba(91, 33, 214, 0.25), 0 0 16px rgba(123, 75, 224, 0.75); }
+
+/* help strip and footer */
+html[data-look="midnight"] .bcard-help { background: rgba(255, 255, 255, 0.03); border-top-color: rgba(255, 255, 255, 0.07); color: var(--text-muted); }
+html[data-look="midnight"] .bfoot { color: var(--text-on-dark-muted); }
+html[data-look="midnight"] .bfoot-legal { color: var(--text); letter-spacing: 0.08em; }
+html[data-look="midnight"] .bfoot-link { min-height: 44px; color: var(--text-on-dark-muted); }
+html[data-look="midnight"] .bfoot-link:hover { color: var(--text); }
+html[data-look="midnight"] .bfoot-demo { padding: 2px 10px; border-radius: 999px; border-color: rgba(255, 196, 107, 0.45); background: rgba(255, 196, 107, 0.08); color: var(--tone-warn); }
+
+/* =============================================================================================
+   Type and buttons inside the borrower screens
+   ============================================================================================= */
+html[data-look="midnight"] .bscreen .bhead .eyebrow { color: var(--mn-cyan); letter-spacing: 0.14em; margin-bottom: 10px; }
+html[data-look="midnight"] .bscreen .bh1 { text-transform: none; font-size: 30px; font-weight: 700; line-height: 1.12; letter-spacing: -0.015em; text-wrap: balance; }
+html[data-look="midnight"] .bscreen .blead { margin-top: 10px; font-size: 15px; line-height: 1.55; color: var(--mn-soft); text-wrap: pretty; }
+html[data-look="midnight"] .bscreen .btext,
+html[data-look="midnight"] .bscreen .bsmall { color: var(--text-muted); }
+html[data-look="midnight"] .bscreen .btn,
+html[data-look="midnight"] .bscreen .seg-btn { text-transform: none; letter-spacing: 0.01em; font-size: 14px; }
+html[data-look="midnight"] .bscreen .btn-lg { min-height: 56px; font-size: 15px; }
+html[data-look="midnight"] .bscreen .btn-primary.btn-lg:not(:disabled) { box-shadow: 0 14px 34px -14px rgba(143, 216, 255, 0.75); }
+/* a soft light sweeps across the main pill now and then */
+html[data-look="midnight"] .bscreen .btn-primary.btn-lg:not(:disabled)::after {
+  display: block; left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(143, 216, 255, 0.5), transparent);
+  animation: mnb-shine 6.5s var(--ease) 2.2s infinite;
+}
+@keyframes mnb-shine { 0% { left: -60%; } 24%, 100% { left: 130%; } }
+/* disabled pills read as paused glass, not a faded light pill */
+html[data-look="midnight"] .bscreen .btn-primary:disabled {
+  background: rgba(255, 255, 255, 0.07); color: #AEB6CB;
+  border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: none;
+}
+html[data-look="midnight"] .bscreen .btn-ghost { color: var(--mn-soft); }
+html[data-look="midnight"] .bscreen .btn-ghost:hover:not(:disabled) { color: var(--text); }
+html[data-look="midnight"] .bactions { gap: 12px; }
+
+/* =============================================================================================
+   Shared blocks: rows, chips, notices, status marks
+   ============================================================================================= */
+html[data-look="midnight"] .bscreen .brows { padding: 2px 18px; border-radius: 20px; background: var(--mn-panel); border: 1px solid var(--mn-line); }
+html[data-look="midnight"] .bscreen .brow { padding: 13px 0; border-top-color: rgba(255, 255, 255, 0.07); }
+html[data-look="midnight"] .bscreen .brow:first-child { border-top: 0; }
+html[data-look="midnight"] .bscreen .brow:last-child { border-bottom: 0; }
+html[data-look="midnight"] .bscreen .brow dt { color: var(--text-muted); }
+html[data-look="midnight"] .bscreen .brow dd { color: var(--text); }
+html[data-look="midnight"] .bscreen .brow-strong dd { font-size: 17px; }
+
+/* danger text a step lighter than the shared tone, so small red text keeps ≥ 4.5:1 on its own tint
+   even where the brightest aurora light sits behind the glass */
+html[data-look="midnight"] .view-borrower .tone-danger { --t: #FFA59C; }
+html[data-look="midnight"] .bscreen .chip { border: 1px solid color-mix(in srgb, var(--t) 34%, transparent); }
+html[data-look="midnight"] .bscreen .chip-dot { border-radius: 50%; box-shadow: 0 0 8px var(--t); }
+
+html[data-look="midnight"] .bscreen .notice {
+  border-radius: 16px; border: 1px solid color-mix(in srgb, var(--t) 30%, transparent);
+  background: color-mix(in srgb, var(--t) 9%, rgba(8, 14, 30, 0.55));
+  box-shadow: inset 3px 0 0 var(--t);
+}
+
+html[data-look="midnight"] .bscreen .bmark {
+  width: 60px; height: 60px; margin-bottom: 18px;
+  background: color-mix(in srgb, var(--t) 13%, rgba(8, 14, 30, 0.55)); color: var(--t);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--t) 42%, transparent), 0 0 0 8px color-mix(in srgb, var(--t) 7%, transparent), 0 16px 40px -14px color-mix(in srgb, var(--t) 75%, transparent);
+}
+html[data-look="midnight"] .bscreen .bmark-spin .spinner { color: var(--mn-cyan); }
+
+/* the calm verified mark (B8, B9, the code screen's verified moment): ring + check draw once */
+html[data-look="midnight"] .mn-okmark svg { overflow: visible; }
+html[data-look="midnight"] .mn-ok-c,
+html[data-look="midnight"] .mn-ok-p { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+html[data-look="midnight"] .mn-ok-c { stroke-width: 2; opacity: 0.55; }
+html[data-look="midnight"] .bscreen.mn-enter .mn-ok-c { stroke-dasharray: 1; animation: mnb-draw 0.7s var(--ease) 0.35s both; }
+html[data-look="midnight"] .bscreen.mn-enter .mn-ok-p { stroke-dasharray: 1; animation: mnb-draw 0.45s var(--ease) 0.8s both; }
+html[data-look="midnight"] .bscreen.mn-verified .mn-ok-c { stroke-dasharray: 1; animation: mnb-draw 0.36s var(--ease) 0.04s both; }
+html[data-look="midnight"] .bscreen.mn-verified .mn-ok-p { stroke-dasharray: 1; animation: mnb-draw 0.26s var(--ease) 0.26s both; }
+@keyframes mnb-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* big amounts: smaller, softer ₱ sign and centavos */
+html[data-look="midnight"] .mn-money .mc { display: inline-flex; align-items: baseline; }
+html[data-look="midnight"] .mn-money .mc-sign,
+html[data-look="midnight"] .mn-money .mc-cents { font-size: 0.5em; font-weight: 600; color: var(--mn-dim); }
+html[data-look="midnight"] .mn-money .mc-sign { margin-right: 0.1em; transform: translateY(-0.55em); }
+html[data-look="midnight"] .mn-cur,
+html[data-look="midnight"] .mn-dec { font-size: 0.5em; font-weight: 600; color: var(--mn-dim); }
+html[data-look="midnight"] .mn-cur { margin-right: 0.1em; transform: translateY(-0.55em); }
+
+/* =============================================================================================
+   B0 start · B1 pre-verification
+   ============================================================================================= */
+html[data-look="midnight"] .bref-input { min-height: 56px; border-radius: 16px; font-size: 19px; letter-spacing: 0.06em; }
+html[data-look="midnight"] .btrust { gap: 12px; padding: 16px 18px; border-radius: 20px; background: var(--mn-panel); border: 1px solid var(--mn-line); }
+html[data-look="midnight"] .btrust li { color: var(--mn-soft); }
+html[data-look="midnight"] .btrust .icon { box-sizing: content-box; padding: 7px; border-radius: 11px; background: rgba(143, 216, 255, 0.1); color: var(--mn-cyan); }
+
+html[data-look="midnight"] .bphone { padding: 18px 20px; border-radius: 20px; background: var(--mn-panel); border-color: var(--mn-line-2); }
+html[data-look="midnight"] .bphone-icon { border-radius: 16px; background: linear-gradient(140deg, #5B21D6, #2346B8); color: #fff; box-shadow: 0 10px 26px -10px rgba(100, 200, 255, 0.6); }
+html[data-look="midnight"] .bphone-label { color: var(--text-muted); }
+html[data-look="midnight"] .bphone-num { color: var(--text); letter-spacing: 0.1em; }
+html[data-look="midnight"] .bnotyou { color: var(--text-muted); }
+
+/* =============================================================================================
+   B2 verify: glowing code boxes, countdown ring, glass keypad, the verified moment
+   ============================================================================================= */
+html[data-look="midnight"] .otp-boxes { gap: 8px; }
+html[data-look="midnight"] .otp-box {
+  height: 64px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text); font-size: 28px; font-weight: 600;
+  caret-color: var(--mn-cyan);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 0.3s var(--ease), background-color 0.3s, box-shadow 0.3s var(--ease);
+}
+html[data-look="midnight"] .otp-box:hover { border-color: rgba(255, 255, 255, 0.3); }
+html[data-look="midnight"] .otp-box:not(:placeholder-shown) { border-color: rgba(143, 216, 255, 0.4); background-color: rgba(143, 216, 255, 0.05); text-shadow: 0 0 18px rgba(143, 216, 255, 0.7); }
+/* the active box: the box the next digit goes into glows */
+html[data-look="midnight"] .otp-box:focus {
+  outline: none; border-color: rgba(143, 216, 255, 0.9); background-color: rgba(143, 216, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(143, 216, 255, 0.13), 0 12px 30px -10px rgba(100, 200, 255, 0.8);
+}
+html[data-look="midnight"] .otp-boxes.has-error .otp-box:not(:focus) { border-color: rgba(255, 138, 128, 0.5); }
+
+/* countdown: a ring around the clock drains as the code's five minutes run out */
+html[data-look="midnight"] .otp-timer { position: relative; gap: 10px; padding-left: 2px; font-size: 14px; color: var(--mn-soft); }
+html[data-look="midnight"] .otp-timer > .icon { position: relative; color: var(--mn-cyan); }
+html[data-look="midnight"] .otp-timer::before {
+  content: ''; position: absolute; left: -3px; top: 50%; width: 26px; height: 26px; margin-top: -13px; border-radius: 50%;
+  background: conic-gradient(var(--mn-cyan) calc(var(--mn-left, 1) * 1turn), rgba(255, 255, 255, 0.13) 0);
+  -webkit-mask: radial-gradient(circle, transparent 10.5px, #000 11.5px); mask: radial-gradient(circle, transparent 10.5px, #000 11.5px);
+}
+html[data-look="midnight"] .otp-timer strong { color: var(--text); }
+
+/* resend: a glass row with a glass pill */
+html[data-look="midnight"] .otp-resend {
+  justify-content: space-between; gap: 6px 10px;
+  padding: 5px 5px 5px 16px; border-radius: 999px;
+  background: var(--mn-panel); border: 1px solid var(--mn-line); color: var(--text-muted); font-size: 13px;
+}
+html[data-look="midnight"] .otp-resend .btn-link {
+  padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--mn-line-2);
+  color: var(--text); font-size: 13px; text-decoration: none; white-space: nowrap;
+}
+html[data-look="midnight"] .otp-resend .btn-link:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); box-shadow: var(--mn-glow); color: var(--text); }
+
+/* the glass keypad */
+html[data-look="midnight"] .mn-pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+html[data-look="midnight"] .mn-key {
+  position: relative; overflow: hidden; display: grid; place-items: center; height: 58px; padding: 0; border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
+  color: var(--text); font: 500 26px/1 var(--font);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 16px 30px -22px rgba(0, 0, 0, 0.9);
+  cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s var(--ease), background-color 0.2s, border-color 0.2s, box-shadow 0.3s var(--ease);
+}
+html[data-look="midnight"] .mn-key:hover { background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
+html[data-look="midnight"] .mn-key:active {
+  transform: translateY(2px) scale(0.965); transition-duration: 0.06s;
+  background-color: rgba(143, 216, 255, 0.1); border-color: rgba(143, 216, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 28px -6px rgba(100, 200, 255, 0.75);
+}
+html[data-look="midnight"] .mn-key:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 2px; }
+html[data-look="midnight"] .mn-key::after {
+  content: ''; position: absolute; left: var(--kx, 50%); top: var(--ky, 50%); width: 180px; height: 180px; margin: -90px 0 0 -90px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(143, 216, 255, 0.42), rgba(143, 216, 255, 0) 62%);
+  transform: scale(0); opacity: 0; pointer-events: none;
+}
+html[data-look="midnight"] .mn-key.is-ink::after { animation: mnb-ink 0.6s var(--ease); }
+@keyframes mnb-ink { 0% { transform: scale(0.1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+html[data-look="midnight"] .mn-key-d { position: relative; z-index: 1; }
+html[data-look="midnight"] .mn-key.is-blank { visibility: hidden; }
+html[data-look="midnight"] .mn-key.is-back { color: var(--mn-soft); background: transparent; border-color: transparent; box-shadow: none; }
+html[data-look="midnight"] .mn-key.is-back:hover { color: var(--text); background-color: rgba(255, 255, 255, 0.06); }
+
+/* the verified moment: B2 itself stays up for a beat after core verified the code. The boxes turn
+   calm green in a wave, a check draws, and the timer row becomes "Verified · Welcome back". */
+html[data-look="midnight"] .mn-vrow { display: none; align-items: center; gap: 10px; min-height: 40px; font-size: 14px; color: var(--mn-soft); }
+html[data-look="midnight"] .bscreen.mn-verified .mn-vrow { display: flex; animation: mnb-rise 0.4s var(--ease) both; }
+html[data-look="midnight"] .bscreen.mn-verified .otp-timer,
+html[data-look="midnight"] .bscreen.mn-verified [data-testid="otp-error"],
+html[data-look="midnight"] .bscreen.mn-verified [data-testid="otp-notice"] { display: none; }
+html[data-look="midnight"] .bscreen.mn-verified .otp-box { cursor: default; animation: mnb-vbox 0.38s var(--ease) both; animation-delay: calc(var(--v, 0) * 40ms); }
+html[data-look="midnight"] .otp-box:nth-child(2) { --v: 1; }
+html[data-look="midnight"] .otp-box:nth-child(3) { --v: 2; }
+html[data-look="midnight"] .otp-box:nth-child(4) { --v: 3; }
+html[data-look="midnight"] .otp-box:nth-child(5) { --v: 4; }
+html[data-look="midnight"] .otp-box:nth-child(6) { --v: 5; }
+@keyframes mnb-vbox {
+  from { color: var(--text); border-color: rgba(143, 216, 255, 0.4); background-color: rgba(143, 216, 255, 0.05); }
+  to { color: var(--tone-ok); border-color: rgba(94, 230, 168, 0.62); background-color: rgba(94, 230, 168, 0.1); box-shadow: 0 0 0 1px rgba(94, 230, 168, 0.12), 0 12px 30px -12px rgba(94, 230, 168, 0.7); text-shadow: 0 0 16px rgba(94, 230, 168, 0.7); }
+}
+html[data-look="midnight"] .bscreen.mn-verified .mn-pad,
+html[data-look="midnight"] .bscreen.mn-verified [data-testid="otp-verify"],
+html[data-look="midnight"] .bscreen.mn-verified .otp-resend { animation: mnb-dim 0.4s var(--ease) both; }
+@keyframes mnb-dim { to { opacity: 0.4; } }
+html[data-look="midnight"] .mn-key:disabled { cursor: default; }
+html[data-look="midnight"] .bscreen .mn-okmark-sm { width: 34px; height: 34px; margin: 0; box-shadow: 0 0 0 1px rgba(94, 230, 168, 0.4), 0 0 22px -6px rgba(94, 230, 168, 0.6); }
+html[data-look="midnight"] .mn-vpill { font-weight: 700; color: var(--tone-ok); }
+html[data-look="midnight"] .mn-vname { color: var(--mn-soft); }
+
+/* =============================================================================================
+   B3 your arrangement: notched glass card with the next installments stacked behind it
+   ============================================================================================= */
+html[data-look="midnight"] .mn-b3,
+html[data-look="midnight"] .mn-b3-main,
+html[data-look="midnight"] .mn-b3-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+html[data-look="midnight"] .mn-stack { position: relative; }
+html[data-look="midnight"] .mn-stack.has-1 { padding-top: 30px; }
+html[data-look="midnight"] .mn-stack.has-2 { padding-top: 56px; }
+html[data-look="midnight"] .mn-peeks { position: absolute; left: 0; right: 0; top: 0; height: 150px; }
+html[data-look="midnight"] .mn-peeks.is-click { cursor: pointer; }
+html[data-look="midnight"] .mn-peek {
+  position: absolute; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; height: 110px;
+  padding: 8px 18px 0; border-radius: 22px; overflow: hidden;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: #FFFFFF; white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 -8px 26px -12px rgba(100, 200, 255, 0.45);
+  transition: transform 0.55s var(--ease);
+}
+html[data-look="midnight"] .mn-peek::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(120% 160% at 90% -40%, rgba(255, 255, 255, 0.08), transparent 50%), repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 10px);
+}
+html[data-look="midnight"] .mn-peek-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+html[data-look="midnight"] .mn-peek-r { flex: none; font-variant-numeric: tabular-nums; }
+html[data-look="midnight"] .mn-peek-1 { left: 14px; right: 14px; top: 0; z-index: 2; background: linear-gradient(110deg, #3B1A8E 0%, #2346B8 100%); }
+html[data-look="midnight"] .mn-stack.has-2 .mn-peek-1 { top: 27px; }
+html[data-look="midnight"] .mn-peek-2 { left: 30px; right: 30px; top: 0; z-index: 1; background: linear-gradient(110deg, #24105A 0%, #172F7C 100%); }
+html[data-look="midnight"] .mn-stack:hover .mn-peek-1 { transform: translateY(-5px); }
+html[data-look="midnight"] .mn-stack:hover .mn-peek-2 { transform: translateY(-10px); }
+html[data-look="midnight"] .bscreen.mn-enter .mn-peek-1 { animation: mnb-peek 0.95s var(--ease) 0.55s backwards; }
+html[data-look="midnight"] .bscreen.mn-enter .mn-peek-2 { animation: mnb-peek 0.95s var(--ease) 0.72s backwards; }
+@keyframes mnb-peek { from { transform: translateY(48px); } }
+
+/* the amount card itself (.bdue): transparent box; the notched glass and its edge are layers */
+html[data-look="midnight"] .bdue.mn-notch {
+  position: relative; z-index: 3; overflow: visible; isolation: isolate;
+  padding: 26px 22px 22px; border-radius: 26px; background: transparent; color: var(--text);
+}
+html[data-look="midnight"] .bdue.mn-notch::after { display: none; }
+html[data-look="midnight"] .bdue.mn-notch::before { /* soft shadow under the card */
+  content: ''; position: absolute; left: 8%; right: 8%; top: auto; bottom: -12px; height: 60%; z-index: -1;
+  border-radius: 40px; background: rgba(0, 0, 0, 0.55); filter: blur(22px);
+}
+html[data-look="midnight"] .mn-notch-glass {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+  background: linear-gradient(165deg, rgba(30, 42, 86, 0.95) 0%, rgba(13, 20, 44, 0.97) 55%, rgba(8, 13, 30, 0.98) 100%);
+}
+html[data-look="midnight"] .mn-notch-glass::before { /* light drifting inside the glass */
+  content: ''; position: absolute; inset: -30%;
+  background:
+    radial-gradient(34% 30% at 24% 24%, rgba(143, 216, 255, 0.14), transparent 70%),
+    radial-gradient(40% 36% at 78% 82%, rgba(123, 75, 224, 0.3), transparent 70%);
+  animation: mnb-glass-drift 18s ease-in-out infinite alternate;
+}
+@keyframes mnb-glass-drift { to { transform: translate3d(5%, -4%, 0) rotate(4deg); } }
+html[data-look="midnight"] .mn-notch-svg { position: absolute; left: 0; top: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+html[data-look="midnight"] .mn-notch-line { fill: none; stroke-width: 1.5; }
+html[data-look="midnight"] .mn-notch-glow { fill: none; stroke-width: 3; opacity: 0.6; }
+html[data-look="midnight"] .bdue.mn-notch > :not(.mn-notch-glass):not(.mn-notch-svg) { position: relative; z-index: 2; }
+html[data-look="midnight"] .bdue.mn-notch .bdue-label { color: var(--mn-soft); }
+html[data-look="midnight"] .bdue.mn-notch .bdue-inst { color: var(--mn-soft); }
+html[data-look="midnight"] .bdue.mn-notch .bdue-amount { margin: 16px 0 16px; font-size: clamp(44px, 13vw, 58px); font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+html[data-look="midnight"] .bdue.mn-notch .mc-whole { text-shadow: 0 0 42px rgba(100, 200, 255, 0.3); }
+html[data-look="midnight"] .bdue.mn-notch .bdue-note { color: var(--mn-soft); }
+
+/* pay + methods + who you're paying */
+html[data-look="midnight"] .bpay { gap: 12px; }
+html[data-look="midnight"] .bmethods { color: var(--text-muted); }
+html[data-look="midnight"] .bmethods-label { color: var(--mn-cyan); }
+html[data-look="midnight"] .mn-payee {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px;
+  background: rgba(94, 230, 168, 0.06); border: 1px solid rgba(94, 230, 168, 0.22);
+  font-size: 13px; line-height: 1.45; color: var(--mn-soft);
+}
+html[data-look="midnight"] .mn-payee .icon { flex: none; margin-top: 1px; color: var(--tone-ok); }
+html[data-look="midnight"] .mn-payee strong { color: var(--text); font-weight: 600; }
+
+/* progress: glass panel, glowing segments, the current one shimmers */
+html[data-look="midnight"] .bscreen .bprog { padding: 16px 18px; border-radius: 20px; background: var(--mn-panel); border: 1px solid var(--mn-line); }
+html[data-look="midnight"] .bprog-title { color: var(--text); }
+html[data-look="midnight"] .bprog-right,
+html[data-look="midnight"] .bprog-bottom { color: var(--text-muted); }
+html[data-look="midnight"] .bprog-bottom strong { color: var(--text); }
+html[data-look="midnight"] .bsegs { gap: 5px; }
+html[data-look="midnight"] .bseg { position: relative; overflow: hidden; height: 8px; background: rgba(255, 255, 255, 0.1); transform-origin: left; }
+html[data-look="midnight"] .bseg.is-paid {
+  background: linear-gradient(90deg, color-mix(in oklab, #6B2FD0, #64C8FF var(--a, 0%)), color-mix(in oklab, #6B2FD0, #64C8FF var(--b, 100%)));
+  box-shadow: 0 0 14px rgba(100, 200, 255, 0.45);
+}
+html[data-look="midnight"] .bseg:nth-child(1) { --a: 0%; --b: 17%; --n: 0; }
+html[data-look="midnight"] .bseg:nth-child(2) { --a: 17%; --b: 33%; --n: 1; }
+html[data-look="midnight"] .bseg:nth-child(3) { --a: 33%; --b: 50%; --n: 2; }
+html[data-look="midnight"] .bseg:nth-child(4) { --a: 50%; --b: 67%; --n: 3; }
+html[data-look="midnight"] .bseg:nth-child(5) { --a: 67%; --b: 83%; --n: 4; }
+html[data-look="midnight"] .bseg:nth-child(n+6) { --a: 83%; --b: 100%; --n: 5; }
+html[data-look="midnight"] .bseg.is-current { background: rgba(143, 216, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(143, 216, 255, 0.55); }
+html[data-look="midnight"] .bseg.is-current::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(143, 216, 255, 0.85), transparent);
+  transform: translateX(-100%); animation: mnb-shim 2.4s ease-in-out infinite;
+}
+@keyframes mnb-shim { to { transform: translateX(100%); } }
+html[data-look="midnight"] .bseg.is-overdue { background: rgba(255, 196, 107, 0.28); box-shadow: inset 0 0 0 1px rgba(255, 196, 107, 0.75); }
+html[data-look="midnight"] .bscreen.mn-enter .bseg.is-paid { animation: mnb-seg 0.7s var(--ease) backwards; animation-delay: calc(520ms + var(--n, 0) * 120ms); }
+@keyframes mnb-seg { from { transform: scaleX(0); } }
+
+/* full schedule */
+html[data-look="midnight"] .bsched { border-color: var(--mn-line-2); border-radius: 20px; background: var(--mn-panel); overflow: hidden; }
+html[data-look="midnight"] .bsched > summary { min-height: 52px; padding: 0 18px; color: var(--text); }
+html[data-look="midnight"] .bsched > summary .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .bsched > summary:hover { background: rgba(255, 255, 255, 0.05); }
+html[data-look="midnight"] .bsched-list { display: grid; gap: 6px; padding: 8px; border-top-color: var(--mn-line); }
+html[data-look="midnight"] .bsched-item {
+  position: relative; grid-template-columns: 30px minmax(0, 1fr) auto 108px;
+  padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 16px; background: rgba(255, 255, 255, 0.03);
+}
+html[data-look="midnight"] .bsched-item:first-child { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+html[data-look="midnight"] .bsched-item.is-now { background: rgba(143, 216, 255, 0.08); border-color: transparent; box-shadow: var(--mn-glow); }
+html[data-look="midnight"] .bsched-item.is-now::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+}
+html[data-look="midnight"] .bsched-seq { width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--mn-line-2); color: var(--text); }
+html[data-look="midnight"] .bsched-item:has([data-status="paid"]) .bsched-seq { background: linear-gradient(135deg, #5A23C2, #2556E0); border-color: transparent; color: #FFFFFF; }
+html[data-look="midnight"] .bsched-item.is-now .bsched-seq { border-color: rgba(143, 216, 255, 0.65); color: var(--mn-cyan); }
+html[data-look="midnight"] .bsched-date,
+html[data-look="midnight"] .bsched-amt { color: var(--text); }
+html[data-look="midnight"] .bsched[open] .bsched-item { animation: mnb-rise 0.45s var(--ease) backwards; animation-delay: calc(60ms + var(--r, 0) * 40ms); }
+html[data-look="midnight"] .bsched-item:nth-child(2) { --r: 1; }
+html[data-look="midnight"] .bsched-item:nth-child(3) { --r: 2; }
+html[data-look="midnight"] .bsched-item:nth-child(4) { --r: 3; }
+html[data-look="midnight"] .bsched-item:nth-child(5) { --r: 4; }
+html[data-look="midnight"] .bsched-item:nth-child(n+6) { --r: 5; }
+
+/* help links become glass rows */
+html[data-look="midnight"] .blinks { gap: 8px; align-items: stretch; padding-top: 0; border-top: 0; }
+html[data-look="midnight"] .blinks .btn-link {
+  width: 100%; gap: 12px; padding: 10px 16px; border-radius: 16px;
+  background: var(--mn-panel); border: 1px solid var(--mn-line);
+  color: var(--text); font-weight: 600; text-decoration: none;
+}
+html[data-look="midnight"] .blinks .btn-link .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .blinks .btn-link:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); border-color: rgba(143, 216, 255, 0.3); color: var(--text); }
+
+/* =============================================================================================
+   B4 review and pay: glass checkout, glass method tiles with a gliding edge, glass notes
+   ============================================================================================= */
+html[data-look="midnight"] .bcheckout { border: 1px solid var(--mn-line-2); border-radius: 24px; background: rgba(255, 255, 255, 0.025); }
+html[data-look="midnight"] .bcheckout-head { padding: 14px 18px; background: rgba(255, 255, 255, 0.04); border-bottom-color: var(--mn-line); }
+html[data-look="midnight"] .bcheckout-title { color: var(--text); }
+html[data-look="midnight"] .bcheckout-title .icon { color: var(--tone-ok); }
+html[data-look="midnight"] .bcheckout-sim {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 11px; border-radius: 14px; line-height: 1.35;
+  background: rgba(255, 196, 107, 0.1); border: 1px solid rgba(255, 196, 107, 0.36); color: var(--tone-warn);
+}
+html[data-look="midnight"] .bcheckout-sim::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+html[data-look="midnight"] .bcheckout-body { gap: 18px; padding: 20px 18px; }
+html[data-look="midnight"] .mn-b4-sum,
+html[data-look="midnight"] .mn-b4-pay { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+html[data-look="midnight"] .bcheckout .brows { padding: 0; border: 0; border-radius: 0; background: none; }
+html[data-look="midnight"] .bcheckout-amount { padding: 14px 0 2px; border-top: 1px solid var(--mn-line); }
+html[data-look="midnight"] .bcheckout-amount > span { color: var(--text-muted); }
+html[data-look="midnight"] .bcheckout-amount strong { display: inline-flex; align-items: baseline; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; text-shadow: 0 0 36px rgba(100, 200, 255, 0.25); }
+
+html[data-look="midnight"] .bmethod-list { position: relative; gap: 10px; }
+html[data-look="midnight"] .bmethod-legend { color: var(--text-muted); }
+html[data-look="midnight"] .bmethod {
+  min-height: 98px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)); color: var(--text);
+}
+html[data-look="midnight"] .bmethod:hover { border-color: rgba(255, 255, 255, 0.22); background-color: rgba(255, 255, 255, 0.04); box-shadow: none; }
+html[data-look="midnight"] .bmethod.is-on { border-color: transparent; background: linear-gradient(180deg, rgba(143, 216, 255, 0.14), rgba(143, 216, 255, 0.04)); box-shadow: none; }
+html[data-look="midnight"] .bmethod-list:not(.has-glide) .bmethod.is-on { box-shadow: var(--mn-glow); }
+html[data-look="midnight"] .bmethod::after { background: radial-gradient(130px circle at var(--px, 50%) var(--py, 50%), rgba(143, 216, 255, 0.13), transparent 70%); }
+/* logos are drawn for light backgrounds: they sit on a small white plate */
+html[data-look="midnight"] .bmethod-mark {
+  height: 34px; min-width: 62px; max-width: 100%; padding: 0 9px; border-radius: 10px;
+  background: #FFFFFF; color: #4B0096; box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.8);
+}
+html[data-look="midnight"] .bmethod-name { color: var(--text); }
+html[data-look="midnight"] .bmethod-check { background: var(--mn-cyan); border-color: transparent; color: #06101F; }
+/* the glowing gradient edge that glides to the chosen tile (midnight.js glide) */
+html[data-look="midnight"] .mn-glide {
+  position: absolute; left: 0; top: 0; z-index: 2; border-radius: 18px; pointer-events: none; opacity: 0;
+  box-shadow: 0 0 0 1px rgba(143, 216, 255, 0.28), 0 0 28px -4px rgba(100, 200, 255, 0.6);
+}
+html[data-look="midnight"] .mn-glide.is-on { opacity: 1; }
+html[data-look="midnight"] .mn-glide.is-moving { transition: transform 0.55s cubic-bezier(0.3, 1.25, 0.4, 1), width 0.45s var(--ease), height 0.45s var(--ease); }
+html[data-look="midnight"] .mn-glide::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+html[data-look="midnight"] .bpaynote { border-radius: 20px; background: linear-gradient(135deg, rgba(107, 47, 208, 0.18), rgba(31, 79, 224, 0.08)); border: 1px solid rgba(184, 156, 255, 0.24); }
+html[data-look="midnight"] .bpaynote-icon { background: rgba(143, 216, 255, 0.12); color: var(--mn-cyan); box-shadow: none; }
+html[data-look="midnight"] .bpaynote-text { color: var(--mn-soft); }
+html[data-look="midnight"] .bpaynote-text strong { color: var(--text); }
+html[data-look="midnight"] .bdemo { border-radius: 18px; border: 1px dashed rgba(255, 196, 107, 0.45); background: rgba(255, 196, 107, 0.05); }
+html[data-look="midnight"] .bdemo-head { color: var(--text); }
+html[data-look="midnight"] .bdemo .seg { border-color: var(--mn-line-2); }
+html[data-look="midnight"] .bdemo .seg-btn { min-height: 44px; }
+html[data-look="midnight"] .bdemo-note { border: 1px dashed rgba(255, 196, 107, 0.4); border-radius: 16px; background: rgba(255, 196, 107, 0.05); color: var(--mn-soft); }
+
+/* =============================================================================================
+   B5 checking: glass pipeline. Midnight's own step keyframes end on a light-on-dark tint (the
+   Classic ones end on a solid --tone-ok fill with white text, which is unreadable once tone-ok is light).
+   ============================================================================================= */
+html[data-look="midnight"] .bpipe { padding: 6px 18px; border-radius: 20px; border-color: var(--mn-line); background: var(--mn-panel); }
+html[data-look="midnight"] .bpipe-step { min-height: 44px; color: var(--text-muted); }
+html[data-look="midnight"] .bpipe-step + .bpipe-step { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+html[data-look="midnight"] .bpipe-mark { width: 24px; height: 24px; border-radius: 50%; border-color: rgba(255, 255, 255, 0.24); }
+html[data-look="midnight"] .bpipe-step.is-done { color: var(--text); animation-name: mnb-step-text; }
+html[data-look="midnight"] .bpipe-step.is-done .bpipe-mark {
+  background: rgba(94, 230, 168, 0.16); border-color: var(--tone-ok); color: var(--tone-ok); box-shadow: 0 0 12px rgba(94, 230, 168, 0.4);
+  animation-name: mnb-step-mark;
+}
+@keyframes mnb-step-text { from { color: var(--text-muted); } to { color: var(--text); } }
+@keyframes mnb-step-mark {
+  from { background: transparent; border-color: rgba(255, 255, 255, 0.24); color: transparent; box-shadow: none; }
+  to { background: rgba(94, 230, 168, 0.16); border-color: var(--tone-ok); color: var(--tone-ok); box-shadow: 0 0 12px rgba(94, 230, 168, 0.4); }
+}
+html[data-look="midnight"] .bpipe-step.is-active { color: var(--text); }
+html[data-look="midnight"] .bpipe-step.is-active .bpipe-mark { border-color: var(--mn-cyan); border-right-color: transparent; box-shadow: 0 0 12px rgba(143, 216, 255, 0.45); }
+
+/* =============================================================================================
+   B8 payment confirmation: prints out of a glass slot (paper, zigzag bottom edge)
+   ============================================================================================= */
+html[data-look="midnight"] .mn-b8,
+html[data-look="midnight"] .mn-b8-side { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+html[data-look="midnight"] .mn-printer { position: relative; }
+html[data-look="midnight"] .mn-slot {
+  position: relative; z-index: 3; height: 32px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 16px 30px -14px rgba(0, 0, 0, 0.9);
+}
+html[data-look="midnight"] .mn-slot-slit { position: absolute; left: 16px; right: 24px; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: #01030A; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.1); }
+html[data-look="midnight"] .mn-slot-light { position: absolute; left: 26px; right: 34px; top: 50%; height: 2px; margin-top: -1px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--mn-cyan), transparent); box-shadow: 0 0 12px 1px rgba(143, 216, 255, 0.7); opacity: 0; }
+html[data-look="midnight"] .mn-slot-led { position: absolute; right: 9px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--tone-ok); box-shadow: 0 0 8px rgba(94, 230, 168, 0.8); }
+html[data-look="midnight"] .mn-printer.is-printing .mn-slot-light { animation: mnb-slot-light 2.4s ease-in-out both; }
+html[data-look="midnight"] .mn-printer.is-printing .mn-slot-led { animation: mnb-led 2.3s steps(1, end) both; }
+@keyframes mnb-slot-light { 0% { opacity: 0; } 8%, 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes mnb-led {
+  0%, 20%, 40%, 60%, 80% { background: var(--mn-cyan); box-shadow: 0 0 9px rgba(143, 216, 255, 0.95); }
+  10%, 30%, 50%, 70%, 90% { background: rgba(143, 216, 255, 0.3); box-shadow: none; }
+  100% { background: var(--tone-ok); box-shadow: 0 0 8px rgba(94, 230, 168, 0.8); }
+}
+html[data-look="midnight"] .mn-rc-win {
+  position: relative; z-index: 2; margin: -16px 12px 0; padding-bottom: 14px; overflow: hidden;
+  filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.5));
+}
+html[data-look="midnight"] .mn-rc-win::before { content: ''; position: absolute; left: 0; right: 0; top: 0; z-index: 1; height: 26px; pointer-events: none; background: linear-gradient(180deg, rgba(3, 6, 14, 0.4), rgba(3, 6, 14, 0)); }
+html[data-look="midnight"] .mn-printer.is-printing .breceipt { animation: mnb-print 2.1s linear 0.25s both; }
+/* the paper feeds out in steps, like a receipt printer */
+@keyframes mnb-print {
+  0% { transform: translateY(-100%); animation-timing-function: cubic-bezier(0.3, 0.7, 0.3, 1); }
+  13% { transform: translateY(-81%); }
+  19% { transform: translateY(-81%); animation-timing-function: cubic-bezier(0.3, 0.7, 0.3, 1); }
+  32% { transform: translateY(-60%); }
+  38% { transform: translateY(-60%); animation-timing-function: cubic-bezier(0.3, 0.7, 0.3, 1); }
+  51% { transform: translateY(-39%); }
+  57% { transform: translateY(-39%); animation-timing-function: cubic-bezier(0.3, 0.7, 0.3, 1); }
+  70% { transform: translateY(-19%); }
+  76% { transform: translateY(-19%); animation-timing-function: cubic-bezier(0.3, 0.7, 0.3, 1); }
+  92% { transform: translateY(0.6%); }
+  100% { transform: translateY(0); }
+}
+/* paper: local light tokens so chips, rows and amounts print in dark ink */
+html[data-look="midnight"] .bscreen .breceipt {
+  --text: #0B1020; --text-muted: #4F586C; --border: #DDE1EB; --border-strong: #C9CFDC;
+  --tone-ok: #07653D; --tone-ok-bg: #DDF5E9; --mn-dim: #4F586C; --zig: 7px;
+  margin: 0; padding: 20px 18px calc(16px + var(--zig)); border: 0; border-radius: 0;
+  color: #0B1020; background: linear-gradient(180deg, #FBFCFE 0%, #F1F4FA 100%) #F4F6FB; /* solid base: contrast tools read paper, not the night behind it */
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--zig) + 1px) no-repeat, conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0) bottom / calc(var(--zig) * 2) var(--zig) repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--zig) + 1px) no-repeat, conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0) bottom / calc(var(--zig) * 2) var(--zig) repeat-x;
+}
+html[data-look="midnight"] .bscreen .breceipt::after { display: none; }
+html[data-look="midnight"] .mn-rc-brand {
+  display: flex; align-items: center; gap: 9px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1.5px dashed #C9CFDC;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #0B1020;
+}
+html[data-look="midnight"] .mn-rc-logo { flex: none; width: 26px; height: 26px; background: url('../assets/mba_logo.svg') center / contain no-repeat; }
+html[data-look="midnight"] .breceipt-label { color: #4F586C; }
+html[data-look="midnight"] .breceipt-amount { display: flex; align-items: baseline; margin: 12px 0 14px; font-size: 40px; font-weight: 800; letter-spacing: -0.02em; color: #0B1020; }
+html[data-look="midnight"] .bscreen .breceipt .brows { padding: 0; border: 0; border-radius: 0; background: none; }
+html[data-look="midnight"] .bscreen .breceipt .brow { border-top: 1.5px dashed #C9CFDC; }
+html[data-look="midnight"] .bscreen .breceipt .brow:last-child { padding-bottom: 0; }
+html[data-look="midnight"] .bscreen .breceipt .chip { border-color: rgba(7, 101, 61, 0.25); }
+html[data-look="midnight"] .bscreen .breceipt .chip-dot { box-shadow: none; }
+
+html[data-look="midnight"] .bnext { gap: 14px; padding: 14px 16px; border-radius: 20px; background: var(--mn-panel); border-color: var(--mn-line); }
+html[data-look="midnight"] .bnext-icon { border-radius: 14px; background: rgba(143, 216, 255, 0.1); color: var(--mn-cyan); }
+html[data-look="midnight"] .bnext-label { color: var(--text-muted); }
+html[data-look="midnight"] .bnext-value { color: var(--mn-soft); }
+html[data-look="midnight"] .bnext-value strong { color: var(--text); }
+
+/* =============================================================================================
+   B9 settled
+   ============================================================================================= */
+html[data-look="midnight"] .bsettled {
+  padding: 22px; border-left: 0; border-radius: 22px;
+  background: radial-gradient(120% 120% at 0% 0%, rgba(94, 230, 168, 0.15), transparent 60%), var(--mn-panel);
+  border: 1px solid rgba(94, 230, 168, 0.3); box-shadow: 0 18px 50px -24px rgba(94, 230, 168, 0.5);
+}
+html[data-look="midnight"] .bsettled-label { color: var(--tone-ok); }
+html[data-look="midnight"] .bsettled-amount { display: flex; align-items: baseline; font-size: 48px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); text-shadow: 0 0 40px rgba(94, 230, 168, 0.3); }
+html[data-look="midnight"] .bsettled-sub { color: var(--mn-soft); }
+
+/* =============================================================================================
+   Support sheet (kit modal): dark glass, glass contact rows; a bottom sheet on phones
+   ============================================================================================= */
+html[data-look="midnight"] .modal[data-testid="support"] {
+  border-radius: 28px; border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(23, 33, 68, 0.97), rgba(9, 15, 34, 0.98));
+  box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+html[data-look="midnight"] .modal[data-testid="support"]::before { left: 28px; right: 28px; height: 1px; background: linear-gradient(90deg, transparent, rgba(143, 216, 255, 0.85), rgba(123, 75, 224, 0.9), transparent); }
+html[data-look="midnight"] .modal[data-testid="support"] .modal-title { text-transform: none; font-size: 20px; letter-spacing: 0; }
+html[data-look="midnight"] .modal[data-testid="support"] .modal-head .btn { flex: none; border-radius: 50%; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--border); }
+html[data-look="midnight"] .modal[data-testid="support"] .modal-body p { color: var(--mn-soft, #C9D0E0); }
+html[data-look="midnight"] .modal[data-testid="support"] .modal-body p.bsupport-extra { color: var(--text); }
+html[data-look="midnight"] .modal[data-testid="support"] .modal-foot { background: transparent; border-top-color: rgba(255, 255, 255, 0.08); }
+html[data-look="midnight"] .modal[data-testid="support"] .modal-foot .btn { min-width: 120px; text-transform: none; letter-spacing: 0.01em; font-size: 14px; }
+html[data-look="midnight"] .bcontact { border-radius: 18px; border-color: rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04); color: var(--text); }
+html[data-look="midnight"] .bcontact:hover { border-color: rgba(143, 216, 255, 0.4); background: rgba(255, 255, 255, 0.07); box-shadow: var(--mn-glow); color: var(--text); }
+html[data-look="midnight"] .bcontact-icon { border-radius: 14px; box-shadow: 0 8px 22px -10px rgba(123, 75, 224, 0.9); }
+html[data-look="midnight"] .bcontact-label { color: var(--text-muted); }
+html[data-look="midnight"] .bcontact-value { color: var(--text); }
+html[data-look="midnight"] .bsupport-note { color: var(--text-muted); }
+
+/* =============================================================================================
+   Entrance (on arrival only): the card's blocks rise in, one after another
+   ============================================================================================= */
+html[data-look="midnight"] .bscreen.mn-enter .bcard-body > :not(.mn-b3):not(.mn-b8),
+html[data-look="midnight"] .bscreen.mn-enter .mn-b3-main > *,
+html[data-look="midnight"] .bscreen.mn-enter .mn-b3-side > *,
+html[data-look="midnight"] .bscreen.mn-enter .mn-b8 > *,
+html[data-look="midnight"] .bscreen.mn-enter .mn-b8-side > * { animation: mnb-rise 0.6s var(--ease) both; animation-delay: calc(120ms + var(--k, 0) * 60ms); }
+html[data-look="midnight"] .bscreen.mn-enter .mn-b8 > .mn-b8-side { animation: none; }
+html[data-look="midnight"] .bscreen.mn-enter .mn-key { animation: mnb-rise 0.5s var(--ease) both; animation-delay: calc(320ms + var(--k, 0) * 26ms); }
+@keyframes mnb-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+html[data-look="midnight"] .bcard-body > :nth-child(2), html[data-look="midnight"] .mn-b3-main > :nth-child(2), html[data-look="midnight"] .mn-b3-side > :nth-child(2), html[data-look="midnight"] .mn-b8-side > :nth-child(1), html[data-look="midnight"] .mn-key:nth-child(2) { --k: 1; }
+html[data-look="midnight"] .bcard-body > :nth-child(3), html[data-look="midnight"] .mn-b3-main > :nth-child(3), html[data-look="midnight"] .mn-b3-side > :nth-child(3), html[data-look="midnight"] .mn-b8-side > :nth-child(2), html[data-look="midnight"] .mn-key:nth-child(3) { --k: 2; }
+html[data-look="midnight"] .bcard-body > :nth-child(4), html[data-look="midnight"] .mn-b3-side > :nth-child(4), html[data-look="midnight"] .mn-b8-side > :nth-child(3), html[data-look="midnight"] .mn-key:nth-child(4) { --k: 3; }
+html[data-look="midnight"] .bcard-body > :nth-child(5), html[data-look="midnight"] .mn-b8-side > :nth-child(4), html[data-look="midnight"] .mn-key:nth-child(5) { --k: 4; }
+html[data-look="midnight"] .mn-b8-side > :nth-child(n+5) { --k: 5; }
+html[data-look="midnight"] .bcard-body > :nth-child(6), html[data-look="midnight"] .mn-key:nth-child(6) { --k: 5; }
+html[data-look="midnight"] .bcard-body > :nth-child(7), html[data-look="midnight"] .mn-key:nth-child(7) { --k: 6; }
+html[data-look="midnight"] .bcard-body > :nth-child(n+8), html[data-look="midnight"] .mn-key:nth-child(8) { --k: 7; }
+html[data-look="midnight"] .mn-key:nth-child(9) { --k: 8; }
+html[data-look="midnight"] .mn-key:nth-child(10) { --k: 9; }
+html[data-look="midnight"] .mn-key:nth-child(11) { --k: 10; }
+html[data-look="midnight"] .mn-key:nth-child(12) { --k: 11; }
+
+/* =============================================================================================
+   Desktop: a wider glass card; B3 in two columns (same blocks, same order, same buttons)
+   ============================================================================================= */
+@media (min-width: 1100px) {
+  html[data-look="midnight"] .bcol { max-width: 560px; }
+  html[data-look="midnight"] .bcol:has(> .bscreen-B3) { max-width: 1060px; }
+  html[data-look="midnight"] .bcol:has(> .bscreen-B4) { max-width: 980px; }
+  /* B4 like a checkout page: what you're paying on the left, how to pay and Pay on the right */
+  html[data-look="midnight"] .bscreen-B4 .bcheckout-head { padding: 16px 24px; }
+  html[data-look="midnight"] .bscreen-B4 .bcheckout-body { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 28px; align-items: start; padding: 24px; }
+  html[data-look="midnight"] .bscreen-B4 .mn-b4-sum {
+    gap: 16px; padding: 20px 22px; border-radius: 22px;
+    background: linear-gradient(165deg, rgba(30, 42, 86, 0.75), rgba(10, 16, 34, 0.65)); border: 1px solid var(--mn-line-2);
+    box-shadow: 0 24px 50px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  html[data-look="midnight"] .bscreen-B4 .mn-b4-sum .brow { flex-direction: column; align-items: flex-start; gap: 4px; }
+  html[data-look="midnight"] .bscreen-B4 .mn-b4-sum .brow dt { max-width: none; }
+  html[data-look="midnight"] .bscreen-B4 .mn-b4-sum .brow dd { text-align: left; font-size: 15px; }
+  html[data-look="midnight"] .bscreen-B4 .bcheckout-amount { flex-direction: column; align-items: flex-start; gap: 12px; }
+  html[data-look="midnight"] .bscreen-B4 .bcheckout-amount strong { font-size: 54px; }
+  /* B8: the printed confirmation on the left, progress and actions beside it */
+  html[data-look="midnight"] .bcol:has(> .bscreen-B8) { max-width: 1000px; }
+  html[data-look="midnight"] .bcard-b8 .bcard-body { padding: 34px 40px 36px; }
+  html[data-look="midnight"] .mn-b8 { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  html[data-look="midnight"] .bcard-b3 .bcard-body { padding: 34px 40px 36px; }
+  html[data-look="midnight"] .bcard-b3 .bh1 { font-size: 40px; }
+  html[data-look="midnight"] .bcard-b3 .blead { font-size: 16px; }
+  html[data-look="midnight"] .mn-b3 { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(0, 1fr); gap: 34px; align-items: start; }
+  html[data-look="midnight"] .bcard-b3 .bdue.mn-notch { padding: 30px 28px 26px; }
+  html[data-look="midnight"] .bcard-b3 .bdue.mn-notch .bdue-amount { font-size: 66px; margin: 18px 0; }
+  html[data-look="midnight"] .bcard-b3 .mn-peek { font-size: 13px; padding: 9px 22px 0; }
+  html[data-look="midnight"] .bcard-b3 .mn-peek-1 { left: 16px; right: 16px; }
+  html[data-look="midnight"] .bcard-b3 .mn-peek-2 { left: 34px; right: 34px; }
+}
+
+/* =============================================================================================
+   Phones
+   ============================================================================================= */
+@media (max-width: 600px) {
+  html[data-look="midnight"] .bcard { border-radius: 24px; }
+  html[data-look="midnight"] .bscreen .bh1 { font-size: 27px; }
+  html[data-look="midnight"] .bscreen .bmark { width: 54px; height: 54px; }
+  /* the support sheet rises from the bottom edge */
+  html[data-look="midnight"] .modal-backdrop:has(> .modal[data-testid="support"]) { align-items: end; padding: 0; }
+  html[data-look="midnight"] .modal[data-testid="support"] { width: 100%; max-height: calc(100vh - 56px); border-radius: 30px 30px 0 0; border-bottom: 0; animation: mnb-sheet 0.45s var(--ease) both; }
+  html[data-look="midnight"] .modal[data-testid="support"]::after { content: ''; position: absolute; left: 50%; top: 9px; width: 40px; height: 5px; margin-left: -20px; border-radius: 999px; background: rgba(255, 255, 255, 0.25); }
+}
+@keyframes mnb-sheet { from { transform: translateY(48px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (max-width: 440px) {
+  html[data-look="midnight"] .otp-boxes,
+  html[data-look="midnight"] .mn-vcells { gap: 7px; }
+  html[data-look="midnight"] .otp-box,
+  html[data-look="midnight"] .mn-vcell { height: 58px; font-size: 26px; }
+  html[data-look="midnight"] .mn-pad { gap: 9px; }
+  html[data-look="midnight"] .mn-key { height: 56px; }
+  html[data-look="midnight"] .mn-peek { padding: 8px 14px 0; }
+  html[data-look="midnight"] .mn-peek-1 { left: 10px; right: 10px; }
+  html[data-look="midnight"] .mn-peek-2 { left: 22px; right: 22px; }
+  html[data-look="midnight"] .bdue.mn-notch { padding: 24px 18px 20px; }
+  html[data-look="midnight"] .bcheckout-body { padding: 18px 14px; }
+  html[data-look="midnight"] .bcheckout .brow { flex-direction: column; align-items: flex-start; gap: 3px; }
+  html[data-look="midnight"] .bcheckout .brow dt { max-width: none; }
+  html[data-look="midnight"] .bcheckout .brow dd { text-align: left; }
+  html[data-look="midnight"] .bpaynote { flex-direction: column; gap: 10px; }
+  html[data-look="midnight"] .bcheckout-amount strong { font-size: 34px; }
+  html[data-look="midnight"] .breceipt-amount { font-size: 34px; }
+  html[data-look="midnight"] .bsettled-amount { font-size: 40px; }
+  html[data-look="midnight"] .mn-rc-win { margin-left: 8px; margin-right: 8px; }
+  html[data-look="midnight"] .otp-resend { border-radius: 22px; }
+  /* schedule rows: the status chip drops under the date (as in Classic) */
+  html[data-look="midnight"] .bsched-item { grid-template-columns: 30px minmax(0, 1fr) auto; }
+}
+
+/* =============================================================================================
+   Reduced motion: calm, no movement
+   ============================================================================================= */
+/* Phones (user request 2026-11-26): centre the card's help footer and the help links; the
+   bank-receipt link breaks after its question ("Already paid at a bank?" / "Send us your receipt"). */
+@media (max-width: 600px) {
+  html[data-look="midnight"] .bcard-help { flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding-top: 10px; padding-bottom: 12px; }
+  html[data-look="midnight"] .bcard-help .btn-link { justify-content: center; }
+  html[data-look="midnight"] .blinks .btn-link { justify-content: center; text-align: center; }
+  html[data-look="midnight"] .blinks .btn-label-a,
+  html[data-look="midnight"] .blinks .btn-label-b { display: block; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="midnight"] .bcard::after,
+  html[data-look="midnight"] .mn-notch-glass::before,
+  html[data-look="midnight"] .bscreen .btn-primary.btn-lg:not(:disabled)::after,
+  html[data-look="midnight"] .bseg.is-current::after { animation: none; display: none; }
+  html[data-look="midnight"] .bscreen.mn-enter .bcard,
+  html[data-look="midnight"] .bscreen.mn-enter .bcard-body > :not(.mn-b3),
+  html[data-look="midnight"] .bscreen.mn-enter .mn-b3-main > *,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-b3-side > *,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-b8 > *,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-b8-side > *,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-key,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-peek-1,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-peek-2,
+  html[data-look="midnight"] .bscreen.mn-enter .bseg.is-paid,
+  html[data-look="midnight"] .bsched[open] .bsched-item,
+  html[data-look="midnight"] .bpipe-step.is-done,
+  html[data-look="midnight"] .bpipe-step.is-done .bpipe-mark,
+  html[data-look="midnight"] .mn-key.is-ink::after,
+  html[data-look="midnight"] .bscreen.mn-verified .otp-box,
+  html[data-look="midnight"] .bscreen.mn-verified .mn-vrow,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-ok-c,
+  html[data-look="midnight"] .bscreen.mn-enter .mn-ok-p,
+  html[data-look="midnight"] .mn-printer.is-printing .breceipt,
+  html[data-look="midnight"] .mn-printer.is-printing .mn-slot-light,
+  html[data-look="midnight"] .mn-printer.is-printing .mn-slot-led,
+  html[data-look="midnight"] .modal[data-testid="support"] { animation: none; }
+  html[data-look="midnight"] .otp-box,
+  html[data-look="midnight"] .mn-key,
+  html[data-look="midnight"] .mn-peek,
+  html[data-look="midnight"] .mn-glide.is-moving { transition: none; }
+  html[data-look="midnight"] .mn-key:active,
+  html[data-look="midnight"] .mn-stack:hover .mn-peek-1,
+  html[data-look="midnight"] .mn-stack:hover .mn-peek-2 { transform: none; }
+}

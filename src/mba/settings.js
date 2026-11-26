@@ -3,6 +3,7 @@
 // V3 reference and the "Assumption — awaiting MBA decision" tag. Live knobs were dropped (U8).
 // Also shows the role permission matrix the role switcher enforces (V3 §2), read-only.
 import { renderMbaLayout } from './layout.js';
+import { mnrIntro, mnrRise, mnrSpot } from './accounts.js'; // Midnight look helpers (2026-11-26)
 
 export function register(router, ctx) {
   router.on('/m/settings', () => renderMbaLayout(ctx, renderSettings(ctx), 'settings'));
@@ -69,7 +70,10 @@ function renderSettings(ctx) {
     }),
   });
 
-  return h('div', { class: 'page page-settings' },
+  // Midnight: the two read-only panels rise in once per visit.
+  if (mnrIntro(ctx)) mnrRise([policies, perms], { step: 90, base: 60 });
+
+  return mnrSpot(h('div', { class: 'page page-settings' },
     pageHeader({
       eyebrow: 'System',
       title: 'Settings',
@@ -80,5 +84,5 @@ function renderSettings(ctx) {
       notice('Every screen reads these values from one place, so changing a decision later changes the whole platform consistently. Nothing on this page can be edited in the mockup.', { tone: 'info', title: 'Read-only' }),
       policies,
       perms,
-      h('p', { class: 'muted set-foot' }, 'Permissions follow the V3 §2 proposed matrix. Disallowed actions stay visible but disabled across the back office, with a hint such as “Requires Supervisor”. Switch roles with “Viewing as” in the top bar.')));
+      h('p', { class: 'muted set-foot' }, 'Permissions follow the V3 §2 proposed matrix. Disallowed actions stay visible but disabled across the back office, with a hint such as “Requires Supervisor”. Switch roles with “Viewing as” in the top bar.'))));
 }

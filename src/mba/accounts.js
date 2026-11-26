@@ -11,6 +11,84 @@ import {
   maskMobile, maskEmail, maskTail,
 } from '../ui/kit.js';
 import { ROLE_LABELS } from '../core/permissions.js';
+import { isMidnight } from '../ui/look.js';
+import { reduced } from '../ui/fx.js';
+
+// =============================================================================================
+// Midnight look (2026-11-26) — small helpers shared by the record screens (accounts,
+// arrangements, creditors, portfolios, settings). Classic never reaches them: every caller checks
+// isMidnight() first; their styles live in styles/midnight-mba-records.css under
+// html[data-look="midnight"]. Figures always end on exactly the text the Classic look shows.
+
+const introSeen = new WeakSet();
+/**
+ * True for the first render of a route visit in Midnight. Any store change re-renders the whole
+ * page, so entrances and count-ups run once per visit: a tab, a filter or a role switch never
+ * replays them. (router.current() is a new object per hash change, the same one per re-render.)
+ */
+export function mnrIntro(ctx) {
+  const r = ctx.route;
+  if (!isMidnight() || !r || introSeen.has(r)) return false;
+  introSeen.add(r);
+  return true;
+}
+
+/** Staggered rise with the motion kit's classes (fx.css), started now rather than on scroll so
+ *  nothing below the fold is left waiting. Calm under reduced motion (fx.css + motion.css). */
+export function mnrRise(els, { step = 45, base = 0 } = {}) {
+  [...els].filter(Boolean).forEach((el, i) => {
+    el.style.setProperty('--fx-i', String(i));
+    el.style.setProperty('--fx-step', `${step}ms`);
+    el.style.setProperty('--fx-base', `${base}ms`);
+    el.classList.add('fx-rise', 'fx-on');
+  });
+  return els;
+}
+
+/**
+ * Eases paint(0 → 1) from now (+delay). Unlike fx.countUp it does not wait for the element to
+ * scroll into view, so a figure below the fold is already final when the user gets there (and in
+ * full-page captures). paint(1) is always the last call; reduced motion paints 1 at once.
+ */
+function tween(paint, { duration = 1100, delay = 0 } = {}) {
+  if (reduced() || typeof requestAnimationFrame !== 'function') { paint(1); return; }
+  paint(0);
+  const t0 = performance.now() + delay;
+  const step = (now) => {
+    const t = Math.max(0, Math.min(1, (now - t0) / duration));
+    paint(t >= 1 ? 1 : 1 - 2 ** (-10 * t)); // ease-out expo, as fx.js
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/**
+ * An oversized peso figure split for styling (₱ · whole · .cents, fx.money's markup). It counts up
+ * when `animate` (first render of a visit) and always ends on exactly formatPHP(centavos).
+ * `hidden` marks a visual copy of a value that is also in the page as text.
+ */
+export function mnrMoney(centavos, { animate = false, delay = 0, cls = '', hidden = false } = {}) {
+  const v = Math.round(Number(centavos) || 0);
+  if (v < 0) return h('span', { class: ['mc', 'mnr-mc', cls] }, formatPHP(v));
+  const whole = h('span', { class: 'mc-whole' });
+  const cents = h('span', { class: 'mc-cents' });
+  const el = h('span', { class: ['mc', 'mnr-mc', cls], attrs: { 'aria-label': hidden ? null : formatPHP(v), 'aria-hidden': hidden ? 'true' : null } },
+    h('span', { class: 'mc-sign' }, '₱'), whole, cents);
+  const paint = (k) => {
+    const c = k >= 1 ? v : Math.round(v * k);
+    whole.textContent = Math.floor(c / 100).toLocaleString('en-US');
+    cents.textContent = `.${String(c % 100).padStart(2, '0')}`;
+  };
+  if (animate) tween(paint, { delay }); else paint(1);
+  return el;
+}
+
+/** A count or percentage that counts up on the first render of a visit; ends on format(value). */
+export function mnrNum(value, format, { animate = false, delay = 0, cls = '' } = {}) {
+  const el = h('span', { class: ['mnr-num', cls] }, format(value));
+  if (animate) tween((k) => { el.textContent = format(k >= 1 ? value : value * k); }, { delay });
+  return el;
+}
 
 export function register(router, ctx) {
   router.on('/m/accounts', () => renderMbaLayout(ctx, renderList(ctx), 'accounts'));
@@ -52,11 +130,15 @@ function matches(a, f) {
 
 function renderList(ctx) {
   const state = ctx.store.get();
+  const mid = isMidnight();
+  const intro = mnrIntro(ctx);
   const all = Object.values(state.accounts);
   const rows = all.filter((a) => matches(a, filters));
   const balances = new Map(rows.map((a) => [a.id, ctx.selectors.accountBalance(state, a.id)]));
   const unassigned = all.filter((a) => !a.assigneeId).length;
   const disputed = all.filter((a) => a.status === 'disputed').length;
+  // Midnight: the two queue shortcuts carry a glowing tone dot (decoration; the text names them).
+  const dot = (tone) => (mid ? h('span', { class: ['mnr-dot', `tone-${tone}`], attrs: { 'aria-hidden': 'true' } }) : null);
 
   const bar = filterBar({
     testid: 'accounts-filter',
@@ -74,19 +156,7 @@ function renderList(ctx) {
     },
   });
 
-  return h('div', { class: 'page page-accounts', testid: 'accounts-list' },
-    pageHeader({
-      eyebrow: 'Collections',
-      title: 'Accounts',
-      subtitle: 'Every placed account, its status and who is working it. Open an account to log contact, send the payment link or review its history.',
-      meta: [
-        h('span', { class: 'acc-meta num' }, `${all.length.toLocaleString('en-US')} accounts`),
-        h('button', { type: 'button', class: 'acc-quick', testid: 'quick-unassigned', on: { click: () => { Object.assign(filters, { q: '', status: '', portfolioId: '', assigneeId: '__none' }); ctx.rerender(); } } }, `${unassigned} in the unassigned queue`),
-        h('button', { type: 'button', class: 'acc-quick', testid: 'quick-disputed', on: { click: () => { Object.assign(filters, { q: '', status: 'disputed', portfolioId: '', assigneeId: '' }); ctx.rerender(); } } }, `${disputed} disputed`),
-      ],
-    }),
-    bar,
-    table({
+  const tbl = table({
       testid: 'accounts-table',
       stateKey: 'accounts',
       pageSize: 20,
@@ -111,7 +181,22 @@ function renderList(ctx) {
         { key: 'status', label: 'Status', sortValue: (a) => ACCOUNT_STATUSES.indexOf(a.status), render: (a) => statusChip(a.status) },
         { key: 'assigneeId', label: 'Assignee', sortValue: (a) => agentName(state, a.assigneeId), render: (a) => (a.assigneeId ? agentName(state, a.assigneeId) : h('span', { class: 'muted' }, 'Unassigned')) },
       ],
-    }));
+    });
+  if (intro) mnrRise(tbl.querySelectorAll('tbody tr'), { step: 22, base: 80 });
+
+  return h('div', { class: 'page page-accounts', testid: 'accounts-list' },
+    pageHeader({
+      eyebrow: 'Collections',
+      title: 'Accounts',
+      subtitle: 'Every placed account, its status and who is working it. Open an account to log contact, send the payment link or review its history.',
+      meta: [
+        h('span', { class: 'acc-meta num' }, `${all.length.toLocaleString('en-US')} accounts`),
+        h('button', { type: 'button', class: 'acc-quick', testid: 'quick-unassigned', on: { click: () => { Object.assign(filters, { q: '', status: '', portfolioId: '', assigneeId: '__none' }); ctx.rerender(); } } }, dot('warn'), `${unassigned} in the unassigned queue`),
+        h('button', { type: 'button', class: 'acc-quick', testid: 'quick-disputed', on: { click: () => { Object.assign(filters, { q: '', status: 'disputed', portfolioId: '', assigneeId: '' }); ctx.rerender(); } } }, dot('danger'), `${disputed} disputed`),
+      ],
+    }),
+    bar,
+    tbl);
 }
 
 // =============================================================================================
@@ -129,10 +214,19 @@ function notFound(id) {
     card({ body: emptyState(`There is no account with the ID ${id}. It may have been removed by Reset demo.`, { title: 'Nothing here', action: h('a', { href: '#/m/accounts', class: 'btn btn-secondary btn-md' }, 'Back to accounts') }) }));
 }
 
+/** Midnight: every glass panel on a record page follows the pointer (ambient.js sets --px/--py). */
+export function mnrSpot(root) {
+  if (!isMidnight()) return root;
+  root.querySelectorAll('.card').forEach((c) => { if (!c.closest('.mnr-acc-hero')) c.classList.add('fx-spot', 'mnr-spot'); });
+  return root;
+}
+
 function renderDetail(ctx, id) {
   const state = ctx.store.get();
   const acc = state.accounts[id];
   if (!acc) return notFound(id);
+  const mid = isMidnight();
+  const intro = mnrIntro(ctx);
   const name = borrowerName(acc);
   const creditor = state.creditors[acc.creditorId];
   const portfolio = state.portfolios[acc.portfolioId];
@@ -189,6 +283,14 @@ function renderDetail(ctx, id) {
         }) : null,
         balBlock('Current balance', bal.current, 'bal-current', true))),
   });
+  if (mid) {
+    // Midnight: the current balance leads the balance column as the oversized figure, counting up
+    // once per visit. It is a visual copy (aria-hidden): the "Current balance" row keeps the exact
+    // text for screen readers and checks, visually hidden by midnight-mba-records.css.
+    summary.querySelector('.acc-bal')?.prepend(h('div', { class: 'mnr-bal-hero', attrs: { 'aria-hidden': 'true' } },
+      h('span', { class: 'mnr-bal-hero-label' }, 'Current balance'),
+      mnrMoney(bal.current, { animate: intro, delay: 120, cls: 'mnr-bal-fig', hidden: true })));
+  }
 
   const actionsBar = h('div', { class: 'acc-actions', testid: 'account-actions', attrs: { role: 'group', 'aria-label': 'Account actions' } },
     h('span', { class: 'acc-actions-label' }, 'Account actions'),
@@ -220,7 +322,7 @@ function renderDetail(ctx, id) {
   });
 
   const panels = {
-    overview: () => renderOverview(ctx, state, acc, arr, tok),
+    overview: () => renderOverview(ctx, state, acc, arr, tok, intro),
     contacts: () => renderContacts(ctx, state, acc),
     arrangement: () => renderArrangement(ctx, state, acc, arr),
     requests: () => renderRequests(ctx, state, acc),
@@ -228,13 +330,17 @@ function renderDetail(ctx, id) {
     audit: () => renderAudit(ctx, state, acc),
   };
 
-  return h('div', { class: 'page page-account', testid: 'account-detail', dataset: { account: id } },
-    header,
-    acc.status === 'disputed' ? notice('Collection contact and reminders are paused while the debt is under review (V3 §6). The borrower can still view their link and sees an “under review” notice.', { tone: 'danger', title: 'Disputed', testid: 'disputed-notice' }) : null,
-    summary,
-    actionsBar,
+  const disputedNote = acc.status === 'disputed' ? notice('Collection contact and reminders are paused while the debt is under review (V3 §6). The borrower can still view their link and sees an “under review” notice.', { tone: 'danger', title: 'Disputed', testid: 'disputed-notice' }) : null;
+  // Midnight: borrower, status, balances and the account actions share one glass header panel
+  // (the actions sit under the contact facts, beside the balance column).
+  if (mid) summary.querySelector('.acc-sum')?.append(actionsBar);
+  const top = mid ? [h('section', { class: 'mnr-acc-hero fx-spot', attrs: { 'aria-label': `${name}: account summary` } }, header, summary), disputedNote]
+    : [header, disputedNote, summary, actionsBar];
+
+  return mnrSpot(h('div', { class: 'page page-account', testid: 'account-detail', dataset: { account: id } },
+    top,
     h('div', { class: 'acc-tabs' }, tabBar,
-      h('div', { class: 'acc-panel', testid: `panel-${tab}`, attrs: { role: 'tabpanel' } }, (panels[tab] || panels.overview)())));
+      h('div', { class: 'acc-panel', testid: `panel-${tab}`, attrs: { role: 'tabpanel' } }, (panels[tab] || panels.overview)()))));
 }
 
 function balBlock(label, value, testid, strong = false, { minus = false, plus = false, qid = null, sub = null } = {}) {
@@ -247,7 +353,8 @@ function balBlock(label, value, testid, strong = false, { minus = false, plus = 
 // ---------------------------------------------------------------------------------------------
 // Tabs
 
-function renderOverview(ctx, state, acc, arr, tok) {
+function renderOverview(ctx, state, acc, arr, tok, intro = false) {
+  const mid = isMidnight();
   const items = ctx.selectors.accountTimeline(state, acc.id);
   const req = arr ? ctx.selectors.currentOpenRequest(state, arr.id) : null;
   const tokState = tok ? 'active' : Object.values(state.tokens).some((t) => t.accountId === acc.id) ? 'revoked' : null;
@@ -274,20 +381,26 @@ function renderOverview(ctx, state, acc, arr, tok) {
       eyebrow: `Version ${arr.version}`,
       title: 'Arrangement',
       testid: 'overview-arrangement',
+      cls: mid ? 'mnr-feature' : '',
       actions: btn('Schedule', { variant: 'ghost', size: 'sm', iconRight: 'chevronRight', onClick: () => { tabMemo[acc.id] = 'arrangement'; ctx.rerender(); } }),
       body: h('div', { class: 'stack' },
         h('div', { class: 'acc-prog-head' }, chip(arr.status), h('span', { class: 'num acc-prog-text' }, `${p.paidCount} of ${p.count} paid · ${formatPHP(p.paid)} of ${formatPHP(p.total)}`)),
         progress({ value: p.paid, max: p.total, label: 'Paid so far', tone: 'ok' }),
         p.next ? h('div', { class: 'acc-next' },
           h('span', { class: 'acc-bal-label' }, `Next · installment ${p.next.seq}`),
-          h('span', { class: 'acc-next-row' }, h('strong', { class: 'num' }, formatPHP(p.next.amount)), h('span', { class: 'muted' }, ` due ${fmtDate(p.next.dueDate)}`), chip(p.next.status))) : h('p', { class: 'muted' }, 'Nothing left to pay on this arrangement.')),
+          h('span', { class: 'acc-next-row' }, h('strong', { class: 'num' }, mid ? mnrMoney(p.next.amount, { animate: intro, delay: 260 }) : formatPHP(p.next.amount)), h('span', { class: 'muted' }, ` due ${fmtDate(p.next.dueDate)}`), chip(p.next.status))) : h('p', { class: 'muted' }, 'Nothing left to pay on this arrangement.')),
     });
   } else {
     arrCard = card({ title: 'Arrangement', testid: 'overview-arrangement', body: emptyState('No arrangement yet. Agree terms with the borrower, then create one.', { title: 'No arrangement', action: permBtn(ctx, 'arrangement.draft', 'Create arrangement', { variant: 'primary', icon: 'plus', testid: 'create-arrangement-ov', onClick: () => ctx.router.go(`#/m/arrangements/new?account=${acc.id}`) }) }) });
   }
 
+  const tl = timeline(items, { testid: 'account-timeline', empty: 'Nothing has happened on this account yet.' });
+  if (intro) {
+    mnrRise([arrCard, linkCard], { step: 80, base: 60 });
+    mnrRise(tl.querySelectorAll('.tl-item'), { step: 38, base: 140 });
+  }
   return h('div', { class: 'acc-ov' },
-    card({ eyebrow: 'Contacts, requests, payments and changes', title: 'Timeline', testid: 'overview-timeline', body: timeline(items, { testid: 'account-timeline', empty: 'Nothing has happened on this account yet.' }) }),
+    card({ eyebrow: 'Contacts, requests, payments and changes', title: 'Timeline', testid: 'overview-timeline', body: tl }),
     h('div', { class: 'stack' }, arrCard, linkCard));
 }
 
@@ -373,6 +486,8 @@ function renderArrangement(ctx, state, acc, arr) {
   const insts = ctx.selectors.installmentsOf(state, arr.id);
   const versions = ctx.selectors.arrangementsOf(state, acc.id).filter((a) => a.id !== arr.id);
   const pct = p.total ? Math.round((p.paid / p.total) * 100) : 0;
+  // Midnight marks the next installment's row (it glows; see midnight-mba-records.css).
+  const nextSeq = isMidnight() && p.next ? p.next.seq : null;
 
   return h('div', { class: 'stack' },
     card({
@@ -401,7 +516,7 @@ function renderArrangement(ctx, state, acc, arr) {
         pageSize: 60,
         rowTestid: (i) => `inst-row-${i.seq}`,
         columns: [
-          { key: 'seq', label: '#', render: (i) => h('span', { class: 'num' }, String(i.seq)) },
+          { key: 'seq', label: '#', render: (i) => h('span', { class: ['num', { 'mnr-next': i.seq === nextSeq }] }, String(i.seq)) },
           { key: 'dueDate', label: 'Due date', render: (i) => h('span', { class: 'num' }, fmtDate(i.dueDate)) },
           { key: 'amount', label: 'Amount', align: 'right', render: (i) => h('span', { class: 'num' }, formatPHP(i.amount)) },
           { key: 'status', label: 'Status', render: (i) => chip(i.status, { testid: `inst-status-${i.seq}` }) },

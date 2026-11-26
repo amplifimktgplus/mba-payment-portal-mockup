@@ -10,8 +10,11 @@ import {
   formatPHP, fmtDate, fmtDateTime,
 } from '../ui/kit.js';
 import { POLICIES, BRAND } from '../core/config.js';
+import { isMidnight } from '../ui/look.js';
 import { bui, bcard, bhead, bmark, openSupport, receiptHtml } from './parts.js';
 import { METHOD_MARKS, METHOD_ICONS } from './payLogos.js';
+// Midnight look (2026-11-26): extra parts built only when isMidnight() is true; Classic DOM is unchanged.
+import { entering, moving, moneyParts, bigMoney, keypad, okMark, dueStack, glide, printer } from './midnight.js';
 
 const EMPTY_DIGITS = () => ['', '', '', '', '', ''];
 const OTP_MS = POLICIES.otpExpiryMin * 60000;
@@ -162,6 +165,7 @@ function B1(ctx, d) {
 
 function B2(ctx, d) {
   const ui = bui();
+  const mn = isMidnight();
   const otp = d.otp || {};
   const refMode = !!ctx.store.get().borrower.ref;
   if (ui.otpFor !== otp.sentAt) {
@@ -182,6 +186,7 @@ function B2(ctx, d) {
     ui.digits = EMPTY_DIGITS();
     ui.otpNotice = null;
     const r = ctx.actions.verifyOtp(ctx.store, code); // wrong / expired / locked are shown from state
+    if (r.ok && isMidnight() && moving()) holdVerified(code);
     ctx.rerender();
     // A wrong code clears the boxes: put the cursor back in the first one (after the re-render).
     if (!r.ok) requestAnimationFrame(() => document.querySelector('[data-testid="otp-0"]')?.focus({ preventScroll: true }));
@@ -231,6 +236,15 @@ function B2(ctx, d) {
     });
     boxes.push(el);
   }
+  if (mn) {
+    // ' ' placeholder → :placeholder-shown styles empty boxes. On touch screens the glass keypad is
+    // the keyboard, so the phone's own keyboard stays down (typing and paste still work).
+    const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    for (const b of boxes) {
+      b.placeholder = ' ';
+      if (touch) b.setAttribute('inputmode', 'none');
+    }
+  }
 
   let err = null;
   if (d.error === 'wrong') {
@@ -251,6 +265,25 @@ function B2(ctx, d) {
     ctx.rerender();
   };
 
+  // Midnight: the verified moment. Core has already verified the code (verifyOtp above); this very
+  // screen stays up for a beat in its verified state (the boxes turn calm green, a check draws, the
+  // timer row becomes "Verified · Welcome back"), then borrower.js renders the next screen.
+  const vname = mn ? h('span', { class: 'mn-vname' }) : null;
+  const vrow = mn ? h('p', { class: 'mn-vrow', attrs: { role: 'status' } }, okMark({ size: 22, cls: 'mn-okmark-sm' }), h('span', { class: 'mn-vpill' }, 'Verified'), vname) : null;
+  const holdVerified = (code) => {
+    const root = boxes[0]?.closest('.bscreen');
+    if (!root || !vname) return;
+    const st = ctx.store.get();
+    const name = ctx.actions.borrowerScreen(st).data?.firstName;
+    vname.textContent = name ? `Welcome back, ${name}.` : 'Welcome back.';
+    boxes.forEach((b, i) => { b.value = code[i] || ''; b.disabled = true; });
+    root.querySelectorAll('.mn-key, [data-testid="otp-verify"], [data-testid="otp-resend"]').forEach((k) => { k.disabled = true; });
+    root.querySelector('[data-testid="otp-countdown"]')?.removeAttribute('data-deadline'); // the ticker lets go
+    root.classList.remove('mn-enter');
+    root.classList.add('mn-verified');
+    ui.mnVerified = { at: Date.now(), key: st.borrower.token || st.borrower.ref, root };
+  };
+
   return bcard(ctx, {
     step: 'verify',
     helpVariant: 'notyou',
@@ -265,12 +298,15 @@ function B2(ctx, d) {
       h('form', { class: 'bform', attrs: { novalidate: true }, on: { submit: (e) => { e.preventDefault(); submit(); } } },
         h('fieldset', { class: 'otp' },
           h('legend', { class: 'sr-only' }, 'One-time code'),
-          h('div', { class: 'otp-boxes', testid: 'otp-boxes' }, boxes)),
+          h('div', { class: ['otp-boxes', mn && err ? 'has-error' : ''], testid: 'otp-boxes' }, boxes)),
         err,
         expired
           ? null
-          : h('p', { class: 'otp-timer', testid: 'otp-timer' }, icon('clock', { size: 16 }), h('span', {}, 'Code expires in '),
+          : h('p', { class: 'otp-timer', testid: 'otp-timer', style: mn ? { '--mn-left': String(Math.max(0, Math.min(1, (deadline - Date.now()) / OTP_MS))) } : undefined },
+            icon('clock', { size: 16 }), h('span', {}, 'Code expires in '),
             h('strong', { class: 'num', testid: 'otp-countdown', dataset: { deadline } }, clockText(deadline - Date.now()))),
+        vrow,
+        mn ? keypad(boxes) : null,
         verifyBtn),
       h('div', { class: 'otp-resend' },
         h('span', {}, 'Didn’t get a code?'),
@@ -295,6 +331,7 @@ export function startOtpTicker(ctx) {
     for (const el of els) {
       const left = Number(el.dataset.deadline) - Date.now();
       el.textContent = clockText(left);
+      if (isMidnight()) el.closest('.otp-timer')?.style.setProperty('--mn-left', String(Math.max(0, Math.min(1, left / OTP_MS)))); // countdown ring
       if (left <= 0 && el.dataset.done !== '1') {
         el.dataset.done = '1';
         ctx.actions.expireOtpNow(ctx.store);
@@ -335,37 +372,56 @@ function B3(ctx, d) {
         c);
     })));
 
+  const mn = isMidnight();
+  const head = bhead({
+    eyebrow: `Hello, ${d.firstName}`,
+    title: 'Your payment arrangement',
+    lead: `Here’s your plan for ${d.creditorName} and what’s due now.`,
+  });
+  const amountCard = h('div', { class: ['bdue', { 'is-overdue': d.overdue }], testid: 'amount-due' },
+    h('div', { class: 'bdue-top' },
+      h('span', { class: 'bdue-label' }, 'Amount due now'),
+      d.installmentSeq ? h('span', { class: 'bdue-inst num' }, `Installment ${d.installmentSeq} of ${p.count}`) : null),
+    mn
+      // Midnight: the amount counts up on arrival. The exact figure stays in amount-due-value (read by
+      // screen readers and checks); the counting copy beside it is aria-hidden.
+      ? h('div', { class: 'bdue-amount num' }, h('span', { class: 'sr-only', testid: 'amount-due-value' }, formatPHP(d.amountDue)), bigMoney(d.amountDue, { count: entering('B3') }))
+      : h('div', { class: 'bdue-amount num', testid: 'amount-due-value' }, formatPHP(d.amountDue)),
+    h('div', { class: 'bdue-meta' }, badge),
+    d.overdue ? h('p', { class: 'bdue-note' }, 'This amount can still be paid through your link. Paying it brings your plan back up to date.') : null);
+  const payBlock = h('div', { class: 'bpay' },
+    btn(`Pay now ${formatPHP(d.amountDue)}`, { variant: 'primary', size: 'lg', block: true, icon: 'lock', testid: 'pay-now', onClick: pay }),
+    h('p', { class: 'bmethods', testid: 'methods' }, h('span', { class: 'bmethods-label' }, 'Pay with'), h('span', {}, d.methods.join(' · '))));
+  const prog = progressBlock(ctx, d, { title: `Installment ${d.installmentSeq ?? p.paidCount} of ${p.count} · ${formatPHP(p.paid)} paid of ${formatPHP(p.total)}`, currentSeq: d.installmentSeq });
+  const details = rows([
+    ['Creditor', d.creditorName, { testid: 'creditor' }],
+    ['Account', d.maskedAccount, { num: true }],
+    ['Agreed plan', `${d.plan.count} monthly payments of ${formatPHP(d.plan.installment)}`],
+    ['Remaining balance', formatPHP(d.remaining), { num: true, testid: 'remaining', cls: 'brow-strong' }],
+  ], { testid: 'arrangement-details' });
+  const links = h('div', { class: 'blinks' },
+    btn('Get help', { variant: 'link', icon: 'info', testid: 'get-help', onClick: () => openSupport('general') }),
+    // Midnight: two spans so phones can break the line after the question (user request 2026-11-26).
+    // Classic keeps the single string, so its rendering stays pixel-identical.
+    btn(isMidnight() ? [h('span', { class: 'btn-label-a' }, 'Already paid at a bank?'), ' ', h('span', { class: 'btn-label-b' }, 'Send us your receipt')] : 'Already paid at a bank? Send us your receipt', { variant: 'link', icon: 'file', testid: 'bank-receipt', onClick: () => openSupport('bank') }));
+
+  // Midnight: the amount card is notched glass with the next installments peeking above it (tap them
+  // for the full schedule). Same blocks, same order; on wide screens they sit in two columns.
+  const openSchedule = () => {
+    schedule.open = true;
+    schedule.scrollIntoView({ behavior: moving() ? 'smooth' : 'auto', block: 'nearest' });
+  };
   return bcard(ctx, {
     step: 'review',
     cls: 'bcard-b3',
-    body: [
-      bhead({
-        eyebrow: `Hello, ${d.firstName}`,
-        title: 'Your payment arrangement',
-        lead: `Here’s your plan for ${d.creditorName} and what’s due now.`,
-      }),
-      h('div', { class: ['bdue', { 'is-overdue': d.overdue }], testid: 'amount-due' },
-        h('div', { class: 'bdue-top' },
-          h('span', { class: 'bdue-label' }, 'Amount due now'),
-          d.installmentSeq ? h('span', { class: 'bdue-inst num' }, `Installment ${d.installmentSeq} of ${p.count}`) : null),
-        h('div', { class: 'bdue-amount num', testid: 'amount-due-value' }, formatPHP(d.amountDue)),
-        h('div', { class: 'bdue-meta' }, badge),
-        d.overdue ? h('p', { class: 'bdue-note' }, 'This amount can still be paid through your link. Paying it brings your plan back up to date.') : null),
-      h('div', { class: 'bpay' },
-        btn(`Pay now ${formatPHP(d.amountDue)}`, { variant: 'primary', size: 'lg', block: true, icon: 'lock', testid: 'pay-now', onClick: pay }),
-        h('p', { class: 'bmethods', testid: 'methods' }, h('span', { class: 'bmethods-label' }, 'Pay with'), h('span', {}, d.methods.join(' · ')))),
-      progressBlock(ctx, d, { title: `Installment ${d.installmentSeq ?? p.paidCount} of ${p.count} · ${formatPHP(p.paid)} paid of ${formatPHP(p.total)}`, currentSeq: d.installmentSeq }),
-      rows([
-        ['Creditor', d.creditorName, { testid: 'creditor' }],
-        ['Account', d.maskedAccount, { num: true }],
-        ['Agreed plan', `${d.plan.count} monthly payments of ${formatPHP(d.plan.installment)}`],
-        ['Remaining balance', formatPHP(d.remaining), { num: true, testid: 'remaining', cls: 'brow-strong' }],
-      ], { testid: 'arrangement-details' }),
-      schedule,
-      h('div', { class: 'blinks' },
-        btn('Get help', { variant: 'link', icon: 'info', testid: 'get-help', onClick: () => openSupport('general') }),
-        btn('Already paid at a bank? Send us your receipt', { variant: 'link', icon: 'file', testid: 'bank-receipt', onClick: () => openSupport('bank') })),
-    ],
+    body: mn
+      ? [head, h('div', { class: 'mn-b3' },
+        h('div', { class: 'mn-b3-main' },
+          dueStack(amountCard, insts, d.installmentSeq, { onPeek: openSchedule }),
+          payBlock,
+          h('p', { class: 'mn-payee' }, icon('shield', { size: 16 }), h('span', {}, 'Paying ', h('strong', {}, d.payee)))),
+        h('div', { class: 'mn-b3-side' }, prog, details, schedule, links))]
+      : [head, amountCard, payBlock, prog, details, schedule, links],
   });
 }
 
@@ -375,6 +431,7 @@ function B3(ctx, d) {
 
 function B4(ctx, d) {
   const ui = bui();
+  const mn = isMidnight();
   if (ui.methodFor !== d.requestId) {
     ui.methodFor = d.requestId;
     ui.method = d.methods[0];
@@ -397,6 +454,7 @@ function B4(ctx, d) {
             : icon(METHOD_ICONS[m] || 'bank', { size: 28 })),
         h('span', { class: 'bmethod-name' }, m, m === 'Card' ? h('span', { class: 'sr-only' }, ' (Visa or Mastercard)') : null));
     }));
+  if (mn) glide(methods); // Midnight: one glowing edge glides to the chosen tile
 
   // MBA's version of the "you finish on the provider's page" reassurance. The last sentence is what
   // startCheckout guarantees: one active checkout per account, so a second payment is refused
@@ -427,6 +485,21 @@ function B4(ctx, d) {
     else markStarted(r.attemptId);
   };
 
+  const summary = [
+    rows([
+      ['Paying', d.payee, { testid: 'payee' }],
+      ['Installment', d.installmentSeq ? `${d.installmentSeq} of ${d.progress.count}` : '—', { num: true }],
+    ]),
+    h('div', { class: 'bcheckout-amount' }, h('span', {}, 'Amount'), h('strong', { class: 'num', testid: 'checkout-amount' }, mn ? moneyParts(d.amountDue) : formatPHP(d.amountDue))),
+  ];
+  const paying = [
+    methods,
+    providerNote,
+    outcome,
+    btn(`Pay ${formatPHP(d.amountDue)}`, { variant: 'primary', size: 'lg', block: true, icon: 'lock', testid: 'checkout-pay', onClick: pay }),
+    h('p', { class: 'bsmall bcenter' }, 'No card, wallet or bank details are entered in this demo.'),
+  ];
+
   return bcard(ctx, {
     step: 'pay',
     body: [
@@ -435,17 +508,10 @@ function B4(ctx, d) {
         h('header', { class: 'bcheckout-head' },
           h('span', { class: 'bcheckout-title' }, icon('lock', { size: 16 }), 'Secure checkout'),
           h('span', { class: 'bcheckout-sim' }, 'Simulated — PayMongo test-mode placeholder')),
+        // Midnight groups the same blocks, in the same order, into "what you're paying" and "how";
+        // on wide screens they sit side by side (summary left, methods and Pay right).
         h('div', { class: 'bcheckout-body' },
-          rows([
-            ['Paying', d.payee, { testid: 'payee' }],
-            ['Installment', d.installmentSeq ? `${d.installmentSeq} of ${d.progress.count}` : '—', { num: true }],
-          ]),
-          h('div', { class: 'bcheckout-amount' }, h('span', {}, 'Amount'), h('strong', { class: 'num', testid: 'checkout-amount' }, formatPHP(d.amountDue))),
-          methods,
-          providerNote,
-          outcome,
-          btn(`Pay ${formatPHP(d.amountDue)}`, { variant: 'primary', size: 'lg', block: true, icon: 'lock', testid: 'checkout-pay', onClick: pay }),
-          h('p', { class: 'bsmall bcenter' }, 'No card, wallet or bank details are entered in this demo.'))),
+          mn ? [h('div', { class: 'mn-b4-sum' }, summary), h('div', { class: 'mn-b4-pay' }, paying)] : [...summary, ...paying])),
       btn('Back to my arrangement', { variant: 'ghost', icon: 'arrowLeft', testid: 'checkout-cancel', onClick: () => ctx.actions.cancelCheckout(ctx.store) }),
     ],
   });
@@ -577,42 +643,51 @@ function B8(ctx, d) {
   const a = d.attempt || {};
   const p = d.progress;
   const download = () => downloadFile(`MBA-receipt-${a.attemptId}.html`, 'text/html', receiptHtml(d));
+  const mn = isMidnight();
+  const receipt = h('div', { class: 'breceipt', testid: 'receipt' },
+    mn ? h('div', { class: 'mn-rc-brand', attrs: { 'aria-hidden': 'true' } }, h('span', { class: 'mn-rc-logo' }), h('span', {}, BRAND)) : null,
+    h('div', { class: 'breceipt-head' },
+      h('span', { class: 'breceipt-label' }, 'Amount paid'),
+      chip('paid', { label: 'Verified', testid: 'receipt-status' })),
+    h('div', { class: 'breceipt-amount num', testid: 'receipt-amount' }, mn ? moneyParts(a.amount ?? 0) : formatPHP(a.amount ?? 0)),
+    rows([
+      ['Paid to', d.payee, { testid: 'receipt-payee' }],
+      ['Method', a.method],
+      ['Date and time', a.paidAt ? `${fmtDateTime(a.paidAt)} PHT` : '—', { num: true }],
+      ['Reference', a.attemptId, { num: true, testid: 'receipt-ref', cls: 'brow-strong' }],
+      ['Provider reference', h('span', { class: 'bprov' }, h('span', { class: 'num' }, a.providerRef || '—'), h('span', { class: 'bprov-sim' }, 'simulated')), { testid: 'receipt-provider' }],
+    ], { cls: 'brows-receipt' }));
+  const head = bhead({
+    mark: mn ? okMark() : bmark('check', 'ok'),
+    eyebrow: 'Payment verified',
+    title: 'Payment confirmation',
+    lead: `Thank you, ${d.firstName}. Your payment has been received and verified.`,
+  });
+  const after = [
+    progressBlock(ctx, d, { title: 'Your progress', right: `${formatPHP(p.paid)} of ${formatPHP(p.total)} paid`, testid: 'b8-progress' }),
+    p.next
+      ? h('div', { class: 'bnext', testid: 'next-installment' },
+        h('span', { class: 'bnext-icon' }, icon('arrangements', { size: 20 })),
+        h('div', { class: 'bnext-text' },
+          h('span', { class: 'bnext-label' }, 'Next installment'),
+          h('span', { class: 'bnext-value' }, h('strong', { class: 'num' }, formatPHP(p.next.amount)), ` due ${fmtDate(p.next.dueDate)}`)))
+      : null,
+    notice(h('span', {}, `A confirmation was sent to your registered mobile ${d.maskedMobile}. `, tag('Simulated', { tone: 'neutral' })), { tone: 'ok', testid: 'sms-confirmation' }),
+    h('div', { class: 'bactions' },
+      btn('Download receipt', { variant: 'primary', size: 'lg', block: true, icon: 'download', testid: 'download-receipt', onClick: download }),
+      btn('Back to my arrangement', { variant: 'secondary', size: 'lg', block: true, testid: 'back-to-arrangement', onClick: () => ctx.actions.clearScreenOverride(ctx.store) })),
+    h('p', { class: 'bsmall bcenter' }, 'This is a payment confirmation, not an official receipt.'),
+  ];
   return bcard(ctx, {
     step: 'done',
     cls: 'bcard-b8',
-    body: [
-      bhead({
-        mark: bmark('check', 'ok'),
-        eyebrow: 'Payment verified',
-        title: 'Payment confirmation',
-        lead: `Thank you, ${d.firstName}. Your payment has been received and verified.`,
-      }),
-      h('div', { class: 'breceipt', testid: 'receipt' },
-        h('div', { class: 'breceipt-head' },
-          h('span', { class: 'breceipt-label' }, 'Amount paid'),
-          chip('paid', { label: 'Verified', testid: 'receipt-status' })),
-        h('div', { class: 'breceipt-amount num', testid: 'receipt-amount' }, formatPHP(a.amount ?? 0)),
-        rows([
-          ['Paid to', d.payee, { testid: 'receipt-payee' }],
-          ['Method', a.method],
-          ['Date and time', a.paidAt ? `${fmtDateTime(a.paidAt)} PHT` : '—', { num: true }],
-          ['Reference', a.attemptId, { num: true, testid: 'receipt-ref', cls: 'brow-strong' }],
-          ['Provider reference', h('span', { class: 'bprov' }, h('span', { class: 'num' }, a.providerRef || '—'), h('span', { class: 'bprov-sim' }, 'simulated')), { testid: 'receipt-provider' }],
-        ], { cls: 'brows-receipt' })),
-      progressBlock(ctx, d, { title: 'Your progress', right: `${formatPHP(p.paid)} of ${formatPHP(p.total)} paid`, testid: 'b8-progress' }),
-      p.next
-        ? h('div', { class: 'bnext', testid: 'next-installment' },
-          h('span', { class: 'bnext-icon' }, icon('arrangements', { size: 20 })),
-          h('div', { class: 'bnext-text' },
-            h('span', { class: 'bnext-label' }, 'Next installment'),
-            h('span', { class: 'bnext-value' }, h('strong', { class: 'num' }, formatPHP(p.next.amount)), ` due ${fmtDate(p.next.dueDate)}`)))
-        : null,
-      notice(h('span', {}, `A confirmation was sent to your registered mobile ${d.maskedMobile}. `, tag('Simulated', { tone: 'neutral' })), { tone: 'ok', testid: 'sms-confirmation' }),
-      h('div', { class: 'bactions' },
-        btn('Download receipt', { variant: 'primary', size: 'lg', block: true, icon: 'download', testid: 'download-receipt', onClick: download }),
-        btn('Back to my arrangement', { variant: 'secondary', size: 'lg', block: true, testid: 'back-to-arrangement', onClick: () => ctx.actions.clearScreenOverride(ctx.store) })),
-      h('p', { class: 'bsmall bcenter' }, 'This is a payment confirmation, not an official receipt.'),
-    ],
+    // Midnight: the confirmation feeds out of a glass slot on arrival (still paper under reduced
+    // motion). Same blocks, same order; on wide screens the paper sits left of progress and actions.
+    body: mn
+      ? [head, h('div', { class: 'mn-b8' },
+        h('div', { class: 'mn-b8-paper' }, printer(receipt, { print: entering('B8') && moving() })),
+        h('div', { class: 'mn-b8-side' }, after))]
+      : [head, receipt, ...after],
   });
 }
 
@@ -622,19 +697,20 @@ function B8(ctx, d) {
 function B9(ctx, d) {
   const a = d.attempt;
   const p = d.progress;
+  const mn = isMidnight();
   return bcard(ctx, {
     step: 'done',
     tone: 'ok',
     body: [
       bhead({
-        mark: bmark('check', 'ok'),
+        mark: mn ? okMark() : bmark('check', 'ok'),
         eyebrow: 'Arrangement complete',
         title: 'Your arrangement is complete',
         lead: `Thank you, ${d.firstName}. Every payment in your plan has been received and verified. There’s nothing more to pay.`,
       }),
       h('div', { class: 'bsettled', testid: 'settled' },
         h('div', { class: 'bsettled-top' }, h('span', { class: 'bsettled-label' }, 'Total paid'), chip('settled', { label: 'Settled', size: 'lg', testid: 'settled-chip' })),
-        h('div', { class: 'bsettled-amount num' }, formatPHP(p.paid)),
+        h('div', { class: 'bsettled-amount num' }, mn ? moneyParts(p.paid) : formatPHP(p.paid)),
         h('div', { class: 'bsettled-sub' }, `${p.paidCount} of ${p.count} installments paid · ${d.creditorName}`)),
       a ? rows([
         ['Final payment', formatPHP(a.amount), { num: true }],

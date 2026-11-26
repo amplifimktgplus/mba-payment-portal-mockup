@@ -1,0 +1,266 @@
+/* theme-midnight.css — the "Midnight" look (2026-11-26). The product owner picked design option A
+   from dist/options.html and asked for it across the whole working demo.
+
+   Mood: a private bank at night. Deep navy, slow aurora light in MBA purple and light blue behind
+   frosted dark glass, light pill buttons for the main action, oversized figures, thin glowing
+   brand-gradient edges on what's selected or featured.
+
+   EVERYTHING here is scoped under html[data-look="midnight"] (set by src/ui/look.js), so the
+   previous design ("Classic", tokens.css + theme-glass.css) renders exactly as before when Demo
+   tools → Look → Classic is chosen.
+
+   Layering (index.css): tokens → … → theme-glass → fx → theme-midnight (this file) → the
+   per-area midnight-*.css files. This file holds the token remap, the scene, the shell chrome and
+   the shared components; screen-specific refinements live in the area files.
+
+   Colour rules (contrast measured on the navy scene and on --glass over the aurora):
+   - text #F4F6FB 17:1 · muted #B8C0D4 9.6:1 (≥ 6:1 on glass over aurora) · cyan #8FD8FF 12:1
+   - --mba-purple becomes lilac #B89CFF so the ~60 places that use it for TEXT, icons and lines stay
+     readable (8.3:1). FILLS that carry white text use --mn-fill (#5B21D6, 7:1 with white) instead;
+     those selectors are listed under "Fills behind white text".
+   - status tones are the light variants on dark tints; the text still names the status. */
+
+html[data-look="midnight"] {
+  color-scheme: dark;
+  --mba-purple: #B89CFF;
+  --mn-fill: #5B21D6;
+  --mn-fill-2: #3D1FA8;
+  --mn-bg: #050A16;
+  --mn-bg-2: #081022;
+  --mn-cyan: #8FD8FF;
+  --mn-lilac: #C4A8FF;
+  --mn-pill: #F4F6FB;
+  --mn-pill-ink: #070D1C;
+  --mn-edge: linear-gradient(135deg, rgba(143, 216, 255, 0.85), rgba(107, 47, 208, 0.85) 55%, rgba(100, 200, 255, 0.2));
+  --mn-glow: 0 0 0 1px rgba(143, 216, 255, 0.25), 0 18px 50px -18px rgba(100, 200, 255, 0.45);
+
+  --surface: #0E1730;
+  --surface-2: #131E3A;
+  --surface-3: #1A2747;
+  --text: #F4F6FB;
+  --text-muted: #B8C0D4;
+  --text-on-dark: #FFFFFF;
+  --text-on-dark-muted: #C3CADB;
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --focus: #8FD8FF;
+
+  --tone-ok: #5EE6A8;      --tone-ok-bg: rgba(94, 230, 168, 0.13);
+  --tone-warn: #FFC46B;    --tone-warn-bg: rgba(255, 196, 107, 0.13);
+  --tone-danger: #FF8A80;  --tone-danger-bg: rgba(255, 138, 128, 0.14);
+  --tone-info: #8FD8FF;    --tone-info-bg: rgba(143, 216, 255, 0.13);
+  --tone-neutral: #C7CDDB; --tone-neutral-bg: rgba(255, 255, 255, 0.08);
+  --tone-brand: #C4A8FF;   --tone-brand-bg: rgba(155, 110, 255, 0.16);
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 32px -20px rgba(0, 0, 0, 0.85);
+  --shadow-2: 0 20px 50px -24px rgba(0, 0, 0, 0.9);
+  --shadow-modal: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --glow-brand: var(--mn-glow);
+  --glass: rgba(13, 21, 42, 0.74);
+  --glass-strong: rgba(11, 18, 36, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-line: rgba(255, 255, 255, 0.09);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --scene-light: var(--mn-bg);
+  --cta-gradient: linear-gradient(110deg, #5B21D6 0%, #3B23B8 45%, #1F4FE0 100%);
+}
+
+/* =============================================================================================
+   Scene: deep navy with slow aurora light (fixed behind everything)
+   ============================================================================================= */
+html[data-look="midnight"] body { background: var(--mn-bg); color: var(--text); }
+html[data-look="midnight"] body::before {
+  content: ''; position: fixed; inset: -18%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38% 34% at 14% 8%, rgba(75, 0, 150, 0.55), transparent 70%),
+    radial-gradient(34% 30% at 86% 14%, rgba(31, 79, 224, 0.36), transparent 70%),
+    radial-gradient(30% 28% at 70% 88%, rgba(100, 200, 255, 0.16), transparent 70%),
+    radial-gradient(40% 36% at 8% 92%, rgba(59, 35, 184, 0.3), transparent 72%);
+  filter: blur(40px);
+  animation: mn-aurora 38s ease-in-out infinite alternate;
+}
+html[data-look="midnight"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--grain-dark); opacity: 0.5; mix-blend-mode: overlay;
+}
+@keyframes mn-aurora {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(3%, -2%, 0) scale(1.06) rotate(2deg); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.02) rotate(-2deg); }
+}
+html[data-look="midnight"] .view-mba,
+html[data-look="midnight"] .view-borrower { background: transparent; }
+html[data-look="midnight"] .mlayout { background: transparent; }
+
+/* =============================================================================================
+   Shell chrome: banner, header, view toggle, MBA nav and top bar
+   ============================================================================================= */
+html[data-look="midnight"] .hdr { background: rgba(5, 10, 22, 0.62); border-bottom-color: rgba(255, 255, 255, 0.07); }
+html[data-look="midnight"] .seg { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.12); }
+html[data-look="midnight"] .seg-btn { color: var(--text-muted); }
+html[data-look="midnight"] .seg-btn:hover:not(.is-on) { color: var(--text); background: rgba(255, 255, 255, 0.07); }
+html[data-look="midnight"] .seg-light .seg-btn.is-on,
+html[data-look="midnight"] .seg-dark .seg-btn.is-on { background: var(--mn-pill); color: var(--mn-pill-ink); box-shadow: 0 8px 22px -10px rgba(143, 216, 255, 0.6); }
+html[data-look="midnight"] .bdemo .seg { background: rgba(255, 255, 255, 0.06); }
+html[data-look="midnight"] .hero-view.is-mba { background: var(--mn-fill); border-color: var(--mn-fill); }
+
+html[data-look="midnight"] .mnav {
+  background: linear-gradient(180deg, rgba(14, 22, 46, 0.78), rgba(6, 11, 24, 0.84));
+  backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border-right: 1px solid var(--glass-line);
+}
+html[data-look="midnight"] .mnav-item { color: var(--text-muted); }
+html[data-look="midnight"] .mnav-item:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+html[data-look="midnight"] .mnav-item.is-on { color: var(--text); background: linear-gradient(90deg, rgba(91, 33, 214, 0.55), rgba(31, 79, 224, 0.18)); box-shadow: inset 0 0 0 1px rgba(143, 216, 255, 0.16), 0 10px 26px -14px rgba(100, 200, 255, 0.5); }
+html[data-look="midnight"] .mnav-item.is-on .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .mnav-count { background: var(--mn-fill); color: #fff; }
+
+html[data-look="midnight"] .mtop {
+  background: rgba(5, 10, 22, 0.6);
+  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-bottom-color: var(--glass-line);
+}
+html[data-look="midnight"] .gsearch-input,
+html[data-look="midnight"] .iconbtn { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.12); color: var(--text); }
+html[data-look="midnight"] .gsearch-input:focus { border-color: var(--mn-cyan); box-shadow: 0 0 0 4px rgba(143, 216, 255, 0.14); background: rgba(255, 255, 255, 0.08); }
+html[data-look="midnight"] .iconbtn:hover, html[data-look="midnight"] .iconbtn.is-on { background: rgba(255, 255, 255, 0.12); box-shadow: var(--mn-glow); }
+html[data-look="midnight"] .notif-count { background: var(--mn-fill); box-shadow: 0 0 0 2px var(--mn-bg); }
+html[data-look="midnight"] .gsearch-panel,
+html[data-look="midnight"] .notif-panel { background: rgba(11, 18, 36, 0.96); border-color: var(--glass-line); }
+html[data-look="midnight"] .skip { background: var(--mn-fill); }
+
+/* =============================================================================================
+   Text, links, headings
+   ============================================================================================= */
+html[data-look="midnight"] a { color: var(--mn-cyan); }
+html[data-look="midnight"] .eyebrow { color: var(--mn-cyan); }
+/* Sentence-case headings, as in the Midnight concept (Classic keeps the site's uppercase). Small
+   labels (eyebrows, KPI labels, field labels) stay uppercase through their own classes. */
+html[data-look="midnight"] :is(h1, h2, h3, h4) { text-transform: none; letter-spacing: -0.005em; }
+html[data-look="midnight"] .page-title { color: var(--text); letter-spacing: -0.015em; }
+html[data-look="midnight"] .kpi-value { color: var(--text); letter-spacing: -0.01em; }
+html[data-look="midnight"] ::selection { background: rgba(143, 216, 255, 0.3); color: #fff; }
+
+/* =============================================================================================
+   Surfaces: glass cards, KPIs, filters, tables
+   ============================================================================================= */
+html[data-look="midnight"] .card,
+html[data-look="midnight"] .kpi,
+html[data-look="midnight"] .filterbar {
+  background: linear-gradient(180deg, rgba(20, 30, 58, 0.72), rgba(11, 18, 36, 0.78));
+  border-color: var(--glass-line);
+  box-shadow: var(--glass-edge), var(--shadow-1);
+}
+html[data-look="midnight"] .card-foot { background: rgba(255, 255, 255, 0.03); border-top-color: var(--glass-line); }
+html[data-look="midnight"] .kpi::after { background: radial-gradient(240px circle at var(--px, 50%) var(--py, 0%), rgba(143, 216, 255, 0.10), transparent 70%); }
+html[data-look="midnight"] .kpi:hover { border-color: rgba(143, 216, 255, 0.22); }
+html[data-look="midnight"] .tbl { background: rgba(11, 18, 36, 0.6); border-color: var(--glass-line); }
+html[data-look="midnight"] .card .tbl, html[data-look="midnight"] .card-flush .tbl { background: transparent; }
+html[data-look="midnight"] .tbl th { background: rgba(255, 255, 255, 0.035); color: var(--text-muted); border-bottom-color: var(--glass-line); }
+html[data-look="midnight"] .tbl td { border-bottom-color: rgba(255, 255, 255, 0.06); }
+html[data-look="midnight"] .tbl tr.is-clickable:hover { background: rgba(143, 216, 255, 0.05); box-shadow: inset 3px 0 0 var(--mn-cyan); }
+html[data-look="midnight"] .tbl tr.is-clickable:focus-visible { outline-color: var(--mn-cyan); }
+
+/* =============================================================================================
+   Buttons: one light pill for the main action; glass pills for the rest
+   ============================================================================================= */
+html[data-look="midnight"] .btn { border-radius: var(--radius-pill); }
+html[data-look="midnight"] .btn-primary,
+html[data-look="midnight"] .btn-primary:hover:not(:disabled) {
+  background: var(--mn-pill); color: var(--mn-pill-ink);
+  box-shadow: 0 12px 30px -14px rgba(143, 216, 255, 0.65);
+}
+html[data-look="midnight"] .btn-primary:hover:not(:disabled) { box-shadow: 0 16px 40px -12px rgba(143, 216, 255, 0.85); transform: translateY(-1px); }
+html[data-look="midnight"] .btn-primary .icon { color: inherit; }
+html[data-look="midnight"] .btn-primary::before { background: radial-gradient(140px circle at var(--px, 50%) var(--py, 50%), rgba(143, 216, 255, 0.35), transparent 62%); }
+html[data-look="midnight"] .btn-primary::after { display: none; }
+/* Disabled and role-locked (fixed 2026-11-26 after the builders' review): components.css dims disabled
+   buttons to 0.45, which left the light pill unreadable, and the light-pill rule above out-ranked the
+   dashed "locked by role" style, so a button the role can't use looked enabled. */
+html[data-look="midnight"] .btn:disabled:not(.is-locked) { opacity: 1; cursor: not-allowed; }
+html[data-look="midnight"] .btn-primary:disabled:not(.is-locked) { background: rgba(255, 255, 255, 0.10); color: #AEB6CB; border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: none; transform: none; }
+html[data-look="midnight"] .btn-secondary:disabled:not(.is-locked),
+html[data-look="midnight"] .btn-ghost:disabled:not(.is-locked),
+html[data-look="midnight"] .btn-danger:disabled:not(.is-locked) { background: rgba(255, 255, 255, 0.03); color: #8A93AB; border-color: rgba(255, 255, 255, 0.10); box-shadow: none; transform: none; }
+html[data-look="midnight"] .btn.is-locked,
+html[data-look="midnight"] .btn-primary.is-locked,
+html[data-look="midnight"] .btn-primary.is-locked:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px dashed rgba(255, 255, 255, 0.24); box-shadow: none; transform: none; }
+html[data-look="midnight"] .btn-secondary { background: rgba(255, 255, 255, 0.07); color: var(--text); border-color: rgba(255, 255, 255, 0.18); }
+html[data-look="midnight"] .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: rgba(143, 216, 255, 0.35); box-shadow: var(--mn-glow); }
+html[data-look="midnight"] .btn-ghost { color: var(--text); }
+html[data-look="midnight"] .btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); }
+html[data-look="midnight"] .btn-danger { background: rgba(255, 138, 128, 0.14); color: #FFB4AB; border: 1px solid rgba(255, 138, 128, 0.4); }
+html[data-look="midnight"] .btn-danger:hover:not(:disabled) { background: rgba(255, 138, 128, 0.22); box-shadow: 0 10px 26px -14px rgba(255, 138, 128, 0.6); }
+html[data-look="midnight"] .btn-link { color: var(--mn-cyan); }
+html[data-look="midnight"] .btn:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 3px; }
+
+/* =============================================================================================
+   Forms
+   ============================================================================================= */
+/* background-color only: the .select chevron is a background-image (fixed 2026-11-26, reported by the shell builder) */
+html[data-look="midnight"] .input,
+html[data-look="midnight"] select.input,
+html[data-look="midnight"] textarea.input { background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.16); color: var(--text); }
+/* theme-glass's `.input { background: … }` shorthand resets the chevron's image, repeat and position
+   on every select (a Classic issue since the glass refresh, left alone there); Midnight restores all three. */
+html[data-look="midnight"] .select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23B8C0D4' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+html[data-look="midnight"] .input:hover { border-color: rgba(255, 255, 255, 0.26); }
+html[data-look="midnight"] .input:focus { background-color: rgba(255, 255, 255, 0.08); border-color: var(--mn-cyan); box-shadow: 0 0 0 4px rgba(143, 216, 255, 0.14); }
+html[data-look="midnight"] .input::placeholder { color: #9AA3BA; opacity: 1; }
+html[data-look="midnight"] select.input option { background: #0E1730; color: var(--text); }
+html[data-look="midnight"] .field-label { color: var(--text-muted); }
+
+/* =============================================================================================
+   Tabs, chips, tags, notices, timeline, progress, empty states
+   ============================================================================================= */
+html[data-look="midnight"] .tabs { border-bottom-color: var(--glass-line); }
+html[data-look="midnight"] .tab { color: var(--text-muted); }
+html[data-look="midnight"] .tab.is-on { color: var(--text); border-bottom-color: var(--mn-cyan); }
+html[data-look="midnight"] .tab-count { background: rgba(255, 255, 255, 0.08); color: var(--text-muted); }
+html[data-look="midnight"] .tab.is-on .tab-count { background: rgba(143, 216, 255, 0.16); color: var(--mn-cyan); }
+html[data-look="midnight"] .tag { background: rgba(255, 255, 255, 0.06); }
+html[data-look="midnight"] .tl-dot { box-shadow: 0 0 0 3px rgba(11, 18, 36, 0.9), 0 0 12px var(--t); }
+html[data-look="midnight"] .progress { background: rgba(255, 255, 255, 0.08); }
+html[data-look="midnight"] .progress-fill { background: linear-gradient(90deg, #6B2FD0, #64C8FF); box-shadow: 0 0 16px rgba(100, 200, 255, 0.5); }
+html[data-look="midnight"] .empty-icon { background: rgba(155, 110, 255, 0.16); color: var(--mn-lilac); }
+
+/* =============================================================================================
+   Overlays: modal, toast, drawer
+   ============================================================================================= */
+html[data-look="midnight"] .modal-backdrop { background: rgba(2, 5, 12, 0.62); }
+html[data-look="midnight"] .modal { background: rgba(12, 19, 38, 0.95); border-color: rgba(255, 255, 255, 0.1); color: var(--text); }
+html[data-look="midnight"] .modal-foot { background: rgba(255, 255, 255, 0.03); border-top-color: var(--glass-line); }
+html[data-look="midnight"] .toast { background: rgba(12, 19, 38, 0.94); color: var(--text); border-top-color: var(--glass-line); border-right-color: var(--glass-line); border-bottom-color: var(--glass-line); }
+
+/* =============================================================================================
+   Fills behind white text (they would be lilac otherwise)
+   ============================================================================================= */
+html[data-look="midnight"] .bstep.is-current .bstep-mark,
+html[data-look="midnight"] .bcontact-icon,
+html[data-look="midnight"] .bmethod-check { background: var(--mn-fill); border-color: var(--mn-fill); color: #fff; }
+html[data-look="midnight"] .lp-step-n,
+html[data-look="midnight"] .pf-step.is-on .pf-step-n { background: var(--mn-fill); border-color: var(--mn-fill); color: #fff; }
+html[data-look="midnight"] .lp-done-icon { background: rgba(94, 230, 168, 0.16); color: var(--tone-ok); }
+
+/* =============================================================================================
+   Borrower base (the borrower area file refines the screens)
+   ============================================================================================= */
+html[data-look="midnight"] .bframe { background: transparent; }
+html[data-look="midnight"] .bframe-deco { background: radial-gradient(560px 420px at var(--mx, 72%) var(--my, 18%), rgba(100, 200, 255, 0.10), transparent 70%); }
+html[data-look="midnight"] .bframe-deco::before { opacity: 0.8; }
+html[data-look="midnight"] .bcard {
+  background: linear-gradient(180deg, rgba(20, 30, 58, 0.78), rgba(10, 16, 34, 0.86));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: var(--text);
+  box-shadow: 0 40px 90px -34px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* =============================================================================================
+   Reduced motion
+   ============================================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="midnight"] body::before { animation: none; }
+}

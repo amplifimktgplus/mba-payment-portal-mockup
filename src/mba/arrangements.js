@@ -5,6 +5,10 @@
 import { renderMbaLayout } from './layout.js';
 import { openDocViewer } from './docViewer.js';
 import { fmtSize } from '../core/format.js';
+import { isMidnight } from '../ui/look.js';
+import { mnrIntro, mnrRise, mnrMoney, mnrNum, mnrSpot } from './accounts.js'; // Midnight look helpers (2026-11-26)
+
+const fmtCount = (n) => Math.round(n).toLocaleString('en-US');
 
 const STATUSES = ['draft', 'pending_approval', 'active', 'partially_paid', 'completed', 'defaulted', 'cancelled', 'superseded'];
 const IN_PROGRESS = ['draft', 'pending_approval', 'active', 'partially_paid'];
@@ -79,6 +83,11 @@ function listPage(ctx) {
   const { h } = k;
   const s = ctx.store.get();
   const ui = k.memo('arr.list', () => ({ status: '', q: '', portfolioId: '' }));
+  const mid = isMidnight();
+  const intro = mnrIntro(ctx);
+  // Midnight: tile counts count up once per visit; tiles follow the pointer (ambient.js).
+  const tileCount = (n) => (mid ? mnrNum(n, fmtCount, { animate: intro }) : String(n));
+  const tileSpot = mid ? 'fx-spot' : null;
 
   // Needs-attention first (pending approval, then drafts), then newest first.
   const rank = (st) => (st === 'pending_approval' ? 0 : st === 'draft' ? 1 : 2);
@@ -95,13 +104,13 @@ function listPage(ctx) {
   const setStatus = (st) => { ui.status = st; ctx.rerender(); };
   const tiles = h('div', { class: 'arr-tiles', testid: 'arr-status-tiles', attrs: { role: 'group', 'aria-label': 'Filter by status' } },
     h('button', {
-      type: 'button', class: ['arr-tile', 'arr-tile-all', { 'is-on': !ui.status }], testid: 'arr-tile-all',
+      type: 'button', class: ['arr-tile', 'arr-tile-all', { 'is-on': !ui.status }, tileSpot], testid: 'arr-tile-all',
       attrs: { 'aria-pressed': !ui.status ? 'true' : 'false' }, on: { click: () => setStatus('') },
-    }, h('span', { class: 'arr-tile-label' }, 'All'), h('span', { class: 'arr-tile-count num' }, String(all.length))),
+    }, h('span', { class: 'arr-tile-label' }, 'All'), h('span', { class: 'arr-tile-count num' }, tileCount(all.length))),
     STATUSES.map((st) => h('button', {
-      type: 'button', class: ['arr-tile', `tone-${ctx.format.STATUS_TONE[st] || 'neutral'}`, { 'is-on': ui.status === st }], testid: `arr-tile-${st}`,
+      type: 'button', class: ['arr-tile', `tone-${ctx.format.STATUS_TONE[st] || 'neutral'}`, { 'is-on': ui.status === st }, tileSpot], testid: `arr-tile-${st}`,
       attrs: { 'aria-pressed': ui.status === st ? 'true' : 'false' }, on: { click: () => setStatus(ui.status === st ? '' : st) },
-    }, h('span', { class: 'arr-tile-label' }, h('span', { class: 'arr-tile-dot', attrs: { 'aria-hidden': 'true' } }), k.humanize(st)), h('span', { class: 'arr-tile-count num' }, String(counts[st] || 0)))));
+    }, h('span', { class: 'arr-tile-label' }, h('span', { class: 'arr-tile-dot', attrs: { 'aria-hidden': 'true' } }), k.humanize(st)), h('span', { class: 'arr-tile-count num' }, tileCount(counts[st] || 0)))));
 
   const filters = k.filterBar({
     testid: 'arr-filter',
@@ -137,6 +146,7 @@ function listPage(ctx) {
       { key: 'status', label: 'Status', render: (r) => k.chip(r.status) },
     ],
   });
+  if (intro) mnrRise(tbl.querySelectorAll('tbody tr'), { step: 22, base: 120 });
 
   return h('div', { class: 'page page-arrangements' },
     k.pageHeader({
@@ -225,11 +235,11 @@ function createPage(ctx, query) {
   });
 
   if (!acc) {
-    return h('div', { class: 'page page-arrangements' }, head,
+    return mnrSpot(h('div', { class: 'page page-arrangements' }, head,
       k.card({
         title: 'Choose the account', eyebrow: 'Step 1',
         body: [accountId ? k.notice(`No account with ID ${accountId}.`, { tone: 'warn' }) : null, h('div', { class: 'arr-picker' }, picker)],
-      }));
+      })));
   }
 
   const bal = ctx.selectors.accountBalance(s, acc.id);
@@ -262,8 +272,8 @@ function createPage(ctx, query) {
       { tone: 'info', title: 'Arrangement in progress', testid: 'arr-new-blocked' });
   }
   if (blocker) {
-    return h('div', { class: 'page page-arrangements' }, head,
-      h('div', { class: 'arr-layout' }, h('div', { class: 'stack' }, blocker, k.card({ title: 'Choose another account', body: h('div', { class: 'arr-picker' }, picker) })), accountCard));
+    return mnrSpot(h('div', { class: 'page page-arrangements' }, head,
+      h('div', { class: 'arr-layout' }, h('div', { class: 'stack' }, blocker, k.card({ title: 'Choose another account', body: h('div', { class: 'arr-picker' }, picker) })), accountCard)));
   }
 
   const f = k.memo(`arr.new.${acc.id}`, () => ({ total: pesosInput(bal.current > 0 ? bal.current : acc.placedBalance), count: '6', firstDue: ctx.clock.addDays(ctx.clock.DEMO_TODAY, 14).slice(0, 10), error: null }));
@@ -313,10 +323,10 @@ function createPage(ctx, query) {
     ],
   });
 
-  return h('div', { class: 'page page-arrangements' }, head,
+  return mnrSpot(h('div', { class: 'page page-arrangements' }, head,
     h('div', { class: 'arr-layout' },
-      h('div', { class: 'stack' }, form, k.card({ title: 'Schedule preview', eyebrow: 'Live', body: previewSlot })),
-      h('div', { class: 'stack' }, accountCard, k.card({ title: 'Choose another account', body: h('div', { class: 'arr-picker' }, picker) }))));
+      h('div', { class: 'stack' }, form, k.card({ title: 'Schedule preview', eyebrow: 'Live', body: previewSlot, cls: isMidnight() ? 'mnr-feature' : '' })),
+      h('div', { class: 'stack' }, accountCard, k.card({ title: 'Choose another account', body: h('div', { class: 'arr-picker' }, picker) })))));
 }
 
 // ------------------------------------------------------------------------------------------
@@ -341,6 +351,11 @@ function detailPage(ctx, id) {
   const openReq = ctx.selectors.currentOpenRequest(s, a.id);
   const versions = Object.values(s.arrangements).filter((x) => x.lineageId === a.lineageId).sort((x, y) => y.version - x.version);
   const latest = versions.find((x) => x.status !== 'superseded');
+  const mid = isMidnight();
+  const intro = mnrIntro(ctx);
+  // Midnight: KPI amounts are oversized figures that count up once per visit (same final text).
+  const kpiMoney = (c, delay = 0) => (mid ? mnrMoney(c, { animate: intro, delay }) : k.formatPHP(c));
+  const nextSeq = mid && pr.next && IN_PROGRESS.includes(a.status) ? pr.next.seq : null;
 
   // ---- actions (status-applicable; permission via permBtn) ----
   const acts = [];
@@ -375,11 +390,12 @@ function detailPage(ctx, id) {
   // ---- summary ----
   const summary = k.card({
     testid: 'arr-summary',
+    cls: mid ? 'mnr-feature' : '',
     body: [
       h('div', { class: 'arr-kpis' },
-        k.kpi({ label: 'Total', value: k.formatPHP(a.total), sub: `${a.count} monthly installments`, tone: 'brand', testid: 'arr-kpi-total' }),
-        k.kpi({ label: 'Paid to date', value: k.formatPHP(pr.paid), sub: `${pr.paidCount} of ${pr.count} installments`, tone: 'ok', testid: 'arr-kpi-paid' }),
-        k.kpi({ label: 'Remaining', value: k.formatPHP(pr.remaining), sub: pr.remaining > 0 ? 'Still to collect' : 'Nothing left to pay', tone: 'info', testid: 'arr-kpi-remaining' }),
+        k.kpi({ label: 'Total', value: kpiMoney(a.total), sub: `${a.count} monthly installments`, tone: 'brand', testid: 'arr-kpi-total' }),
+        k.kpi({ label: 'Paid to date', value: kpiMoney(pr.paid, 80), sub: `${pr.paidCount} of ${pr.count} installments`, tone: 'ok', testid: 'arr-kpi-paid' }),
+        k.kpi({ label: 'Remaining', value: kpiMoney(pr.remaining, 160), sub: pr.remaining > 0 ? 'Still to collect' : 'Nothing left to pay', tone: 'info', testid: 'arr-kpi-remaining' }),
         k.kpi({ label: 'Next due', value: pr.next && IN_PROGRESS.includes(a.status) ? k.fmtDate(pr.next.dueDate) : '—', sub: pr.next && IN_PROGRESS.includes(a.status) ? `Installment ${pr.next.seq} · ${k.formatPHP(pr.next.amount)}${pr.next.status === 'overdue' ? ' · overdue' : ''}` : 'No installment due', tone: pr.next?.status === 'overdue' ? 'warn' : 'neutral', testid: 'arr-kpi-next' })),
       k.progress({ value: pr.paid, max: a.total, label: `${k.formatPHP(pr.paid)} paid of ${k.formatPHP(a.total)}`, tone: a.status === 'completed' ? 'ok' : 'brand', testid: 'arr-progress' }),
       h('div', { class: 'arr-progress-cap cell-sub num' }, `${k.formatPHP(pr.paid)} paid of ${k.formatPHP(a.total)}`),
@@ -394,7 +410,7 @@ function detailPage(ctx, id) {
       rows: insts,
       rowTestid: (r) => `arr-inst-${r.seq}`,
       columns: [
-        { key: 'seq', label: '#', render: (r) => h('span', { class: 'num' }, String(r.seq)) },
+        { key: 'seq', label: '#', render: (r) => h('span', { class: ['num', { 'mnr-next': r.seq === nextSeq }] }, String(r.seq)) },
         { key: 'dueDate', label: 'Due date', render: (r) => h('span', { class: 'num' }, k.fmtDate(r.dueDate)) },
         { key: 'amount', label: 'Amount', align: 'right', render: (r) => k.money(r.amount) },
         { key: 'status', label: 'Status', render: (r) => k.chip(r.status) },
@@ -484,13 +500,18 @@ function detailPage(ctx, id) {
     }
   }
   hist.sort((x, y) => (x.at < y.at ? 1 : x.at > y.at ? -1 : 0));
-  const history = k.card({ title: 'Approval history', eyebrow: 'Audit', testid: 'arr-history', body: k.timeline(hist, { testid: 'arr-history-list', empty: 'No approval events yet.' }) });
+  const histList = k.timeline(hist, { testid: 'arr-history-list', empty: 'No approval events yet.' });
+  const history = k.card({ title: 'Approval history', eyebrow: 'Audit', testid: 'arr-history', body: histList });
+  if (intro) {
+    mnrRise(summary.querySelectorAll('.kpi'), { step: 70, base: 40 });
+    mnrRise(histList.querySelectorAll('.tl-item'), { step: 60, base: 220 });
+  }
 
-  return h('div', { class: 'page page-arrangements', testid: 'arr-detail', dataset: { status: a.status } },
+  return mnrSpot(h('div', { class: 'page page-arrangements', testid: 'arr-detail', dataset: { status: a.status } },
     head,
     h('div', { class: 'arr-layout' },
       h('div', { class: 'stack' }, statusNote, summary, schedule, attachments),
-      h('div', { class: 'stack' }, terms, versionsCard, history)));
+      h('div', { class: 'stack' }, terms, versionsCard, history))));
 }
 
 /** Runs an action, toasts the result, re-renders. */

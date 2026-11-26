@@ -21,6 +21,17 @@ open dist/index.html
 
 Demo changes are saved in your browser. To start over, use **Demo tools → Reset demo**.
 
+**Two looks.** The demo opens in **Midnight**: deep navy, frosted glass and slow aurora light. **Classic**, the earlier MBA-site look, is one click away under **Demo tools → Look**. Your browser remembers the choice, and adding `?look=classic` or `?look=midnight` to the address overrides it for one visit.
+
+## Design options (concepts)
+
+`dist/options.html` is a separate page that compares today's design with two new directions: **A · Midnight**, which is dark and immersive, and **B · Daylight**, which is light and bold. Each direction shows live concept screens: the Borrower view on a phone and a desktop, and the MBA back office on a desktop and a phone. The screens use the demo's own figures. The demo itself doesn't change.
+
+```bash
+npm run build:options   # writes dist/options.html
+npm run check:options   # renders every screen headless and checks it
+```
+
 ## Checks
 
 ```bash

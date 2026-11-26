@@ -2,9 +2,13 @@
 // Summary (matched + exceptions by the 8 V3 types) → exception queue → detail → Resolve (Finance,
 // note required). "Run daily reconciliation" matches verified payments. Payouts tab: PayMongo
 // payout vs bank deposit, net of fees and refunds. All figures come from core/reports.js.
+// Midnight look (2026-11-26): count-up KPI figures and method marks in the payout breakdown are
+// drawn only when isMidnight(); the rest is CSS (midnight-mba-ops.css). Classic is unchanged.
 import { renderMbaLayout } from './layout.js';
 import { EXCEPTION_TYPES, exceptionLabel, reconOverview, payoutRows } from '../core/reports.js';
 import { auditTitle } from '../core/selectors.js';
+import { isMidnight } from '../ui/look.js';
+import { countKpis, methodPlate } from './transactions.js';
 
 export function register(router, ctx) {
   router.on('/m/reconciliation', (params, query) => renderMbaLayout(ctx, renderList(ctx, query), 'reconciliation'));
@@ -155,7 +159,7 @@ function renderList(ctx, query = {}) {
     }));
 
   const lastRun = [...(state.audit || [])].reverse().find((a) => a.action === 'recon.run');
-  return h('div', { class: 'page page-reconciliation' },
+  return countKpis(ctx, h('div', { class: 'page page-reconciliation' },
     pageHeader({
       eyebrow: 'Finance',
       title: 'Reconciliation',
@@ -172,7 +176,7 @@ function renderList(ctx, query = {}) {
           items: [{ id: 'queue', label: 'Exception queue', count: unresolved }, { id: 'payouts', label: 'Payouts', count: payouts.length }],
           onChange: (id) => { ui.tab = id; ctx.rerender(); },
         }),
-        h('div', { class: 'recon-tabpanel', attrs: { role: 'tabpanel' } }, ui.tab === 'payouts' ? payoutView : queue))));
+        h('div', { class: 'recon-tabpanel', attrs: { role: 'tabpanel' } }, ui.tab === 'payouts' ? payoutView : queue)))));
 }
 
 function openPayout(ctx, po) {
@@ -201,7 +205,7 @@ function openPayout(ctx, po) {
         columns: [
           { key: 'attemptId', label: 'Transaction', render: (p) => link(p.attemptId, `#/m/transactions/${p.attemptId}`, { cls: 'num recon-nw' }) },
           { key: 'borrower', label: 'Borrower', sortValue: (p) => borrowerName(state.accounts[p.accountId]), render: (p) => borrowerName(state.accounts[p.accountId]) },
-          { key: 'method', label: 'Method' },
+          isMidnight() ? { key: 'method', label: 'Method', render: (p) => methodPlate(ctx, p.method, { size: 'sm' }) } : { key: 'method', label: 'Method' },
           { key: 'paidAt', label: 'Verified', render: (p) => h('span', { class: 'recon-nw' }, fmtDate(p.paidAt)) },
           { key: 'gross', label: 'Gross', align: 'right', render: (p) => h('span', { class: 'num recon-nw' }, formatPHP(p.gross)) },
           { key: 'net', label: 'Net', align: 'right', render: (p) => h('span', { class: 'num recon-nw' }, formatPHP(p.net)) },

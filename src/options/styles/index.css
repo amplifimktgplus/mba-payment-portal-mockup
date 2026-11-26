@@ -1,0 +1,12 @@
+/* Design-options page stylesheet entry (2026-11-26). Order: brand tokens + font → page shell →
+   option A → option B → today's screenshots. Option files are scoped under .opt-a / .opt-b. */
+@import '../../styles/tokens.css';
+@import '../../styles/fx.css';
+@import './shell.css';
+@import '../a/tokens.css';
+@import '../a/borrower.css';
+@import '../a/mba.css';
+@import '../b/tokens.css';
+@import '../b/borrower.css';
+@import '../b/mba.css';
+@import '../today/today.css';

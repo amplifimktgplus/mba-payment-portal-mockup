@@ -5,7 +5,11 @@
 // Actions: Resend the arrangement link (request.send, cooldown), Cancel (request.cancel),
 // Expire now (demo) → request Expired → installment Overdue → replacement request.
 // Domain logic lives in src/core (actions/selectors); this file only renders and dispatches.
+// Midnight look (2026-11-26): count-up KPI figures, method marks in the attempts table and the QR
+// on its own white plate (so it still scans) are drawn only when isMidnight(); Classic is unchanged.
 import { renderMbaLayout } from './layout.js';
+import { isMidnight } from '../ui/look.js';
+import { countKpis, methodPlate } from './transactions.js';
 
 const STATUSES = ['created', 'sent', 'opened', 'paid', 'expired', 'cancelled'];
 const OPEN = ['created', 'sent', 'opened'];
@@ -122,7 +126,7 @@ function renderList(ctx, query) {
 
   const portfolios = vals(state.portfolios).map((p) => ({ value: p.id, label: p.name }));
 
-  return h('div', { class: 'page page-requests', testid: 'requests-page' },
+  return countKpis(ctx, h('div', { class: 'page page-requests', testid: 'requests-page' },
     pageHeader({
       eyebrow: 'Collections',
       title: 'Payment requests',
@@ -167,7 +171,7 @@ function renderList(ctx, query) {
           { key: 'status', label: 'Status', render: statusCell, sortValue: (row) => STATUSES.indexOf(row.status) },
         ],
       }),
-    }));
+    })));
 }
 
 // --------------------------------------------------------------------------------------------
@@ -292,6 +296,9 @@ function renderDetail(ctx, id) {
   }
 
   const deliveryRows = (r.deliveries || []).map((d, i) => ({ ...d, i, channelLabel: CHANNEL[d.channel] })).reverse();
+  // Midnight: the QR keeps a white plate of its own (it must scan on a dark page).
+  const mn = isMidnight();
+  const qr = url ? qrSvg(url, 112, { testid: 'rq-qr' }) : null;
 
   const main = h('div', { class: 'stack' },
     chain,
@@ -315,7 +322,7 @@ function renderDetail(ctx, id) {
       testid: 'rq-delivery',
       body: [
         h('div', { class: 'rq-link' },
-          url ? qrSvg(url, 112, { testid: 'rq-qr' }) : null,
+          qr && mn ? h('div', { class: 'mn-qr-plate' }, qr) : qr,
           h('div', { class: 'rq-link-text' },
             h('p', { class: 'rq-link-lead' }, 'The link and QR belong to the arrangement, not to this request. Every request on this arrangement — including overdue replacements — is paid through the same link.'),
             url ? h('div', { class: 'rq-url mono', testid: 'rq-url' }, url) : h('div', { class: 'muted' }, 'No link has been issued for this arrangement yet.'),
@@ -346,7 +353,7 @@ function renderDetail(ctx, id) {
         onRowClick: (a) => ctx.router.go(`#/m/transactions/${a.id}`),
         columns: [
           { key: 'id', label: 'Transaction', render: (a) => link(a.id, `#/m/transactions/${a.id}`, { cls: 'mono' }) },
-          { key: 'method', label: 'Method' },
+          mn ? { key: 'method', label: 'Method', render: (a) => methodPlate(ctx, a.method, { size: 'sm' }) } : { key: 'method', label: 'Method' },
           { key: 'amount', label: 'Amount', align: 'right', render: (a) => kit.money(a.amount) },
           { key: 'createdAt', label: 'Started', render: (a) => h('span', { class: 'num' }, fmtDateTime(a.createdAt)) },
           { key: 'status', label: 'Status', render: (a) => chip(a.status) },

@@ -1,0 +1,869 @@
+/* midnight-mba-records.css — Midnight look, mba-records area (2026-11-26). Every rule scoped under html[data-look="midnight"].
+   Screens: Accounts (list, detail, its tabs and modals incl. Send payment link), Arrangements (list,
+   detail, create, revise), Creditors, Portfolios (incl. the import wizard) and Settings.
+   Builds on theme-midnight.css (token remap + shared components) and the Option A concept
+   (src/options/a): glass panels that follow the pointer, oversized tabular figures that count up,
+   thin glowing brand-gradient edges on featured or selected items, light pill primary buttons,
+   glowing progress bars and staggered entrances (fx.css classes, started by the screen modules).
+   Local classes are prefixed mnr- (Midnight records) so they cannot collide with other areas.
+   Colour rules (theme-midnight.css header): --mba-purple is lilac for TEXT; fills behind white text
+   use --mn-fill; tones are light-on-dark. Text measured ≥ 4.5:1 on the darkest and the lightest
+   glass these screens use (#0B1226 … #1A2747): text 15:1+, muted #B8C0D4 8:1+, cyan 10:1+,
+   lilac 6.4:1+, tone inks 6:1+. Hover lifts use `translate`, never `transform`, so they still work
+   on elements whose fx-rise entrance holds transform. */
+
+/* =============================================================================================
+   Shared primitives for the record screens
+   ============================================================================================= */
+/* Pointer spotlight on glass panels (ambient.js writes --px/--py on .fx-spot). */
+html[data-look="midnight"] .mnr-spot { position: relative; }
+html[data-look="midnight"] .mnr-spot::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(460px circle at var(--px, 50%) var(--py, 0%), rgba(143, 216, 255, 0.075), transparent 65%);
+  opacity: 0; transition: opacity 0.45s var(--ease);
+}
+html[data-look="midnight"] .mnr-spot:hover::after { opacity: 1; }
+
+/* A thin brand-gradient edge + soft glow for what is featured or selected. */
+html[data-look="midnight"] .mnr-feature { position: relative; border-color: transparent; box-shadow: var(--glass-edge), 0 30px 70px -42px rgba(100, 200, 255, 0.55); }
+html[data-look="midnight"] .mnr-feature::before,
+html[data-look="midnight"] .mnr-acc-hero::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+/* Oversized figures: fx.money markup (.mc > .mc-sign .mc-whole .mc-cents). */
+html[data-look="midnight"] .mnr-mc { display: inline-flex; align-items: baseline; font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; white-space: nowrap; }
+html[data-look="midnight"] .mnr-mc .mc-sign { font-size: 0.62em; font-weight: 600; color: var(--text-muted); margin-right: 0.1em; }
+html[data-look="midnight"] .mnr-mc .mc-cents { font-size: 0.62em; font-weight: 600; color: var(--text-muted); }
+html[data-look="midnight"] .mnr-num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
+/* Glowing tone dot (decoration next to text that names the state). */
+html[data-look="midnight"] .mnr-dot { display: inline-block; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--t); box-shadow: 0 0 10px var(--t); }
+
+/* Status chips on the record screens: a hairline in the tone (inset, so no size change), as on the
+   operations screens and the concept's status pills. */
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings, .lp, .modal) .chip {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t) 34%, transparent);
+  border-radius: 999px;
+}
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios) .chip-dot { box-shadow: 0 0 8px var(--t); }
+
+/* Glowing progress (record screens): rounded, brand gradient, light at the leading edge. */
+html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios) .progress { background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: visible; }
+html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios) .progress-fill {
+  position: relative; border-radius: 999px;
+  background: linear-gradient(90deg, #6B2FD0, #64C8FF);
+  box-shadow: 0 0 14px rgba(100, 200, 255, 0.45);
+}
+html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios) .progress.tone-ok .progress-fill { background: linear-gradient(90deg, #2F9E7A, #5EE6A8); box-shadow: 0 0 14px rgba(94, 230, 168, 0.45); }
+html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios) .progress.tone-danger .progress-fill { background: linear-gradient(90deg, #B24A5C, #FF8A80); box-shadow: 0 0 14px rgba(255, 138, 128, 0.45); }
+
+/* Glowing timeline (account history, approval history). */
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .timeline::before {
+  left: 4px; width: 2px; border-radius: 2px;
+  background: linear-gradient(180deg, rgba(143, 216, 255, 0.55), rgba(155, 110, 255, 0.35) 45%, rgba(255, 255, 255, 0.06));
+}
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-dot {
+  width: 10px; height: 10px; margin-top: 5px;
+  box-shadow: 0 0 0 3px rgba(9, 15, 33, 0.95), 0 0 0 4px color-mix(in srgb, var(--t) 45%, transparent), 0 0 14px var(--t);
+}
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-item:first-child .tl-dot::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--t); opacity: 0.6;
+  animation: mnr-ping 2.8s var(--ease) infinite;
+}
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-dot { position: relative; }
+@keyframes mnr-ping { 0% { transform: scale(0.6); opacity: 0.7; } 70%, 100% { transform: scale(1.6); opacity: 0; } }
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-item { border-radius: 12px; transition: background-color 0.25s var(--ease); }
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-title { color: var(--text); }
+html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-time { color: var(--text-muted); }
+
+/* Pill tabs (account detail, portfolio detail): the concept's segmented control. */
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tabs {
+  display: inline-flex; flex-wrap: nowrap; gap: 4px; max-width: 100%;
+  padding: 5px; border: 1px solid var(--glass-line); border-radius: 999px;
+  background: rgba(9, 16, 37, 0.74);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  overflow-x: auto; scrollbar-width: none;
+}
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tabs::-webkit-scrollbar { display: none; }
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab {
+  flex: none; min-height: 40px; margin: 0; padding: 0 16px; gap: 8px;
+  border: 0; border-radius: 999px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none;
+  color: var(--text-muted);
+  transition: background-color 0.25s var(--ease), color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab:hover:not(.is-on) { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab.is-on {
+  background: var(--mn-pill); color: var(--mn-pill-ink);
+  box-shadow: 0 10px 26px -12px rgba(143, 216, 255, 0.7);
+}
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 2px; }
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab-count {
+  display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px;
+  border-radius: 999px; background: rgba(255, 255, 255, 0.1); color: var(--text);
+  font-size: 12px; font-weight: 700; line-height: 1;
+}
+html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab.is-on .tab-count { background: rgba(7, 13, 28, 0.12); color: var(--mn-pill-ink); }
+
+/* Tables on the record screens: calmer header, roomy rows, cyan links. */
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings) .tbl th { background: rgba(255, 255, 255, 0.03); letter-spacing: 0.08em; }
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings) .tbl td a { color: var(--mn-cyan); text-decoration-color: rgba(143, 216, 255, 0.4); text-underline-offset: 3px; }
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings) .tbl td a:hover { text-decoration-color: var(--mn-cyan); }
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings) .tbl-foot { border-top-color: var(--glass-line); }
+html[data-look="midnight"] :is(.page-arrangements, .page-creditors, .page-portfolios, .arr-preview, .modal) .cell-sub { color: var(--text-muted); }
+
+/* Unavailable actions stay readable (muted text 8:1): glass, dashed edge — Classic's "locked"
+   language. (The theme's disabled light pill is ~2.4:1, and its 0.45 opacity lowers it further.) */
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings, [data-testid="send-link-modal"], [data-testid="arr-revise-modal"], [data-testid="arr-reject-modal"]) .btn:disabled {
+  opacity: 1; background: rgba(255, 255, 255, 0.04); color: var(--text-muted);
+  border: 1px dashed rgba(255, 255, 255, 0.26); box-shadow: none; transform: none;
+}
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings, [data-testid="send-link-modal"], [data-testid="arr-revise-modal"], [data-testid="arr-reject-modal"]) .btn:disabled .icon { color: var(--text-muted); }
+html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings, [data-testid="send-link-modal"], [data-testid="arr-revise-modal"], [data-testid="arr-reject-modal"]) .btn:disabled::before { display: none; }
+
+/* Notices on the record screens: tinted glass with a glowing tone edge. */
+html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings, .modal) .notice {
+  border: 1px solid color-mix(in srgb, var(--t) 26%, transparent);
+  border-left: 3px solid var(--t);
+  border-radius: 14px;
+  box-shadow: -6px 0 18px -10px var(--t);
+}
+html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios, .page-settings, .modal) .notice .notice-title { color: var(--text); }
+
+/* =============================================================================================
+   Accounts — list
+   ============================================================================================= */
+html[data-look="midnight"] .page-accounts .acc-meta { color: var(--text-muted); }
+html[data-look="midnight"] .acc-quick {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 34px; padding: 0 14px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.16); color: var(--text);
+  font-size: 13px; letter-spacing: 0.01em;
+  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s var(--ease);
+}
+html[data-look="midnight"] .acc-quick:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(143, 216, 255, 0.4); color: var(--text); box-shadow: var(--mn-glow); }
+html[data-look="midnight"] .acc-who-name { font-weight: 700; }
+html[data-look="midnight"] .acc-who-ref,
+html[data-look="midnight"] .acc-pf-cr { color: var(--text-muted); }
+@media (min-width: 601px) {
+  html[data-look="midnight"] .page-accounts .tbl td { padding-top: 15px; padding-bottom: 15px; }
+}
+
+/* =============================================================================================
+   Accounts — detail: one glass header panel (borrower, status, actions, balances)
+   ============================================================================================= */
+html[data-look="midnight"] .page-account > * + * { margin-top: 22px; }
+html[data-look="midnight"] .mnr-acc-hero {
+  position: relative; isolation: isolate;
+  padding: 26px 30px 26px;
+  border: 1px solid transparent; border-radius: 26px;
+  background:
+    radial-gradient(120% 150% at 0% 0%, rgba(91, 33, 214, 0.24), transparent 55%),
+    radial-gradient(80% 120% at 100% 100%, rgba(31, 79, 224, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(20, 30, 62, 0.86), rgba(9, 16, 38, 0.84));
+  backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 40px 90px -42px rgba(0, 0, 0, 0.9), 0 34px 80px -46px rgba(100, 200, 255, 0.5);
+}
+html[data-look="midnight"] .mnr-acc-hero::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(520px circle at var(--px, 70%) var(--py, 10%), rgba(143, 216, 255, 0.09), transparent 65%);
+  opacity: 0; transition: opacity 0.5s var(--ease);
+}
+html[data-look="midnight"] .mnr-acc-hero:hover::after { opacity: 1; }
+html[data-look="midnight"] .mnr-acc-hero .page-head { margin-bottom: 0; }
+html[data-look="midnight"] .mnr-acc-hero .page-meta { gap: 10px 16px; }
+html[data-look="midnight"] .mnr-acc-hero .acc-meta { color: var(--text-muted); }
+html[data-look="midnight"] .mnr-acc-hero .acc-meta .icon { color: var(--mn-cyan); }
+/* The summary card melts into the panel. */
+html[data-look="midnight"] .mnr-acc-hero .acc-summary {
+  margin-top: 22px; padding-top: 22px;
+  background: none; border: 0; border-top: 1px solid var(--glass-line); border-radius: 0;
+  box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-look="midnight"] .mnr-acc-hero .acc-summary > .card-body { padding: 0; }
+html[data-look="midnight"] .mnr-acc-hero .acc-sum {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+  grid-template-areas: "facts bal" "acts bal";
+  grid-template-rows: auto 1fr;
+  gap: 26px 34px; align-items: start;
+}
+html[data-look="midnight"] .mnr-acc-hero .acc-sum > .dl { grid-area: facts; }
+html[data-look="midnight"] .mnr-acc-hero .acc-sum > .acc-bal { grid-area: bal; }
+html[data-look="midnight"] .mnr-acc-hero .acc-sum > .acc-actions { grid-area: acts; align-self: end; }
+html[data-look="midnight"] .mnr-acc-hero .dl { gap: 20px 28px; align-content: start; }
+html[data-look="midnight"] .mnr-acc-hero .dl dd { font-size: 16px; }
+html[data-look="midnight"] .mnr-acc-hero .dl dd a { color: var(--mn-cyan); }
+/* Balance column: the current balance as the oversized figure, then the breakdown. */
+html[data-look="midnight"] .mnr-acc-hero .acc-bal {
+  position: relative; justify-content: flex-start; gap: 12px; min-width: 0;
+  padding: 0 0 0 30px; border-left: 1px solid var(--glass-line);
+}
+html[data-look="midnight"] .mnr-bal-hero { display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px; margin-bottom: 2px; border-bottom: 1px solid var(--glass-line); }
+html[data-look="midnight"] .mnr-bal-hero-label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mn-cyan); }
+html[data-look="midnight"] .mnr-bal-fig { font-size: 50px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--text); text-shadow: 0 0 34px rgba(143, 216, 255, 0.28); }
+html[data-look="midnight"] .mnr-bal-fig .mc-sign { font-size: 0.5em; align-self: flex-start; margin-top: 0.18em; }
+html[data-look="midnight"] .mnr-bal-fig .mc-cents { font-size: 0.5em; }
+html[data-look="midnight"] .mnr-acc-hero .acc-bal-label { color: var(--text-muted); }
+html[data-look="midnight"] .mnr-acc-hero .acc-bal-value { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+html[data-look="midnight"] .mnr-acc-hero .acc-bal-sub { color: var(--text-muted); }
+/* The "Current balance" row stays for screen readers and checks; the figure above shows it. */
+html[data-look="midnight"] .mnr-acc-hero .acc-bal-item.is-strong {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* Account actions: glass chip buttons with cyan icons, inside the header panel under the facts. */
+html[data-look="midnight"] .page-account .acc-actions {
+  gap: 8px; padding: 10px 12px;
+  background: rgba(9, 16, 37, 0.66); border-color: var(--glass-line); border-radius: 20px;
+  box-shadow: var(--glass-edge), 0 18px 40px -28px rgba(0, 0, 0, 0.9);
+}
+html[data-look="midnight"] .mnr-acc-hero .acc-actions {
+  padding: 18px 0 0; border: 0; border-top: 1px solid var(--glass-line); border-radius: 0;
+  background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-look="midnight"] .mnr-acc-hero .acc-actions-label { flex-basis: 100%; margin: 0 0 2px; padding-left: 0; font-size: 12px; }
+html[data-look="midnight"] .page-account .acc-actions-label { color: var(--text-muted); }
+html[data-look="midnight"] .page-account .acc-actions .btn-ghost {
+  min-height: 38px; padding: 0 15px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05); color: var(--text);
+  font-size: 13px; font-weight: 600; letter-spacing: 0.01em; text-transform: none;
+  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s var(--ease), translate 0.25s var(--ease);
+}
+html[data-look="midnight"] .page-account .acc-actions .btn-ghost .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .page-account .acc-actions .btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.11); border-color: rgba(143, 216, 255, 0.42); box-shadow: var(--mn-glow); translate: 0 -1px; }
+html[data-look="midnight"] .page-account .acc-actions .btn-ghost:disabled { color: var(--text-muted); border-color: rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); }
+html[data-look="midnight"] .page-account .acc-actions .btn-ghost:disabled .icon { color: var(--text-muted); }
+
+/* Tabs sit on their own row above the panel. */
+html[data-look="midnight"] .page-account .acc-tabs .tabs { margin-bottom: 20px; }
+
+/* Overview: featured arrangement card, big next installment. */
+html[data-look="midnight"] .page-account .acc-next { border-top-color: var(--glass-line); gap: 8px; }
+html[data-look="midnight"] .page-account .acc-next-row { gap: 10px; }
+html[data-look="midnight"] .page-account .acc-next-row strong { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+html[data-look="midnight"] .page-account .acc-prog-text { color: var(--text); }
+html[data-look="midnight"] .page-account .acc-help { color: var(--text-muted); }
+html[data-look="midnight"] .page-account .acc-steps li::before { background: rgba(155, 110, 255, 0.18); color: var(--mn-lilac); border-radius: 50%; }
+
+/* Arrangement tab: the schedule glows — paid rows carry a green light, the next one a cyan edge. */
+html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.chip[data-status="paid"]) td:first-child { box-shadow: inset 3px 0 0 rgba(94, 230, 168, 0.85); }
+html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.chip[data-status="paid"]) .chip-dot { box-shadow: 0 0 10px var(--tone-ok); }
+html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.mnr-next) { background: linear-gradient(90deg, rgba(107, 47, 208, 0.26), rgba(100, 200, 255, 0.07) 70%, transparent); }
+html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.mnr-next) td:first-child { box-shadow: inset 3px 0 0 var(--mn-cyan), inset 16px 0 24px -18px rgba(143, 216, 255, 0.7); }
+html[data-look="midnight"] .mnr-next { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 999px; background: rgba(143, 216, 255, 0.16); color: var(--mn-cyan); font-weight: 700; box-shadow: 0 0 14px rgba(143, 216, 255, 0.45); }
+
+/* =============================================================================================
+   Send payment link (modal): channel → preview → sent, readable on dark
+   ============================================================================================= */
+html[data-look="midnight"] .lp-step-t { color: var(--text); }
+html[data-look="midnight"] .lp-step-n { border-radius: 50%; box-shadow: 0 0 14px rgba(91, 33, 214, 0.7); }
+/* flex: none — the modal body is a scrolling flex column; the preview must never shrink (clip). */
+html[data-look="midnight"] .lp { flex: none; background: rgba(255, 255, 255, 0.035); border-color: var(--glass-line); border-radius: 20px; overflow: hidden; }
+html[data-look="midnight"] .lp-head { border-bottom-color: var(--glass-line); color: var(--text-muted); background: rgba(255, 255, 255, 0.03); }
+html[data-look="midnight"] .lp-head .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .lp-note { color: var(--text-muted); }
+html[data-look="midnight"] .lp-url { color: var(--mn-cyan); }
+html[data-look="midnight"] .lp-k { color: var(--text-muted); }
+html[data-look="midnight"] .lp-mail {
+  overflow: hidden; border-radius: 18px;
+  background: linear-gradient(180deg, rgba(20, 30, 62, 0.9), rgba(10, 17, 38, 0.92));
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 50px -30px rgba(0, 0, 0, 0.9);
+}
+html[data-look="midnight"] .lp-mail-meta { border-bottom-color: var(--glass-line); color: var(--text); }
+html[data-look="midnight"] .lp-bar { height: 3px; background: linear-gradient(90deg, #6B2FD0, #64C8FF); box-shadow: 0 0 16px rgba(100, 200, 255, 0.6); }
+html[data-look="midnight"] .lp-hello { color: var(--text); }
+html[data-look="midnight"] .modal-body .lp-mail-body p:not(.lp-help) { color: var(--text); }
+/* The email's button: a light pill, as the borrower sees it in the Midnight look. */
+html[data-look="midnight"] .lp-cta {
+  min-height: 46px; padding: 0 24px; border-radius: 999px;
+  background: var(--mn-pill); color: var(--mn-pill-ink);
+  letter-spacing: 0.06em;
+  box-shadow: 0 12px 30px -14px rgba(143, 216, 255, 0.7);
+}
+/* The QR keeps a white plate (it must scan): padding + background on the svg itself, rounded. */
+html[data-look="midnight"] .lp-qr .qr,
+html[data-look="midnight"] .lp-done-link .qr { box-sizing: content-box; padding: 8px; background: #fff; border-radius: 16px; box-shadow: 0 16px 40px -16px rgba(143, 216, 255, 0.55); }
+html[data-look="midnight"] .lp-qr-text { color: var(--text-muted); }
+html[data-look="midnight"] .lp-qr-empty { border-color: rgba(255, 255, 255, 0.22); color: var(--text-muted); border-radius: 14px; }
+html[data-look="midnight"] .modal-body .lp-help, html[data-look="midnight"] .lp-help { color: var(--text-muted); border-top-color: var(--glass-line); }
+/* SMS: a message bubble. */
+html[data-look="midnight"] .lp-sms .lp-bubble {
+  border: 1px solid rgba(143, 216, 255, 0.22); border-left: 1px solid rgba(143, 216, 255, 0.22);
+  border-radius: 20px 20px 20px 6px;
+  background: linear-gradient(180deg, rgba(143, 216, 255, 0.12), rgba(107, 47, 208, 0.12));
+  color: var(--text);
+  box-shadow: 0 18px 40px -26px rgba(100, 200, 255, 0.6);
+}
+html[data-look="midnight"] .lp-foot { color: var(--text-muted); }
+/* Sent. */
+html[data-look="midnight"] .lp-done { border: 1px solid rgba(94, 230, 168, 0.28); border-left: 3px solid var(--tone-ok); border-radius: 16px; box-shadow: -6px 0 22px -12px var(--tone-ok); }
+html[data-look="midnight"] .lp-done-icon { border-radius: 50%; box-shadow: 0 0 18px rgba(94, 230, 168, 0.45); }
+html[data-look="midnight"] .lp-done-link { border-color: var(--glass-line); border-radius: 16px; background: rgba(255, 255, 255, 0.03); }
+
+/* =============================================================================================
+   Accounts — responsive (tablet and phone)
+   ============================================================================================= */
+@media (max-width: 1100px) {
+  /* Money first on narrower screens, then the facts (three across), then the actions. */
+  html[data-look="midnight"] .mnr-acc-hero .acc-sum { grid-template-columns: minmax(0, 1fr); grid-template-areas: "bal" "facts" "acts"; grid-template-rows: auto; gap: 22px; }
+  html[data-look="midnight"] .mnr-acc-hero .acc-bal { padding: 0 0 22px; border-left: 0; border-top: 0; border-bottom: 1px solid var(--glass-line); }
+  html[data-look="midnight"] .mnr-acc-hero .dl.dl-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Every account section stays in view: the pill bar wraps instead of scrolling. */
+  html[data-look="midnight"] .page-account .acc-tabs .tabs { flex-wrap: wrap; border-radius: 24px; overflow: visible; }
+}
+@media (min-width: 601px) and (max-width: 1100px) {
+  /* Tablet: the big figure on the left, its breakdown on the right. */
+  html[data-look="midnight"] .mnr-acc-hero .acc-bal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 34px; row-gap: 0; align-items: start; }
+  html[data-look="midnight"] .mnr-acc-hero .mnr-bal-hero { grid-column: 1; grid-row: 1 / span 6; padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+  html[data-look="midnight"] .mnr-acc-hero .acc-bal > .acc-bal-item { grid-column: 2; margin-bottom: 12px; }
+}
+@media (max-width: 900px) {
+  /* Touch: chips and tab pills reach 44px. */
+  html[data-look="midnight"] .page-account .acc-actions .btn-ghost,
+  html[data-look="midnight"] :is(.acc-tabs, .page-portfolios) .tab { min-height: 44px; }
+}
+@media (max-width: 600px) {
+  /* Touch: text links on the record pages get a 44px+ hit area without moving the layout. */
+  html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios) :is(.crumbs a, .dl dd a, .page-sub a) {
+    display: inline-block; position: relative; z-index: 1; padding: 15px 0; margin: -15px 0;
+  }
+  html[data-look="midnight"] :is(.page-account, .page-arrangements, .page-creditors, .page-portfolios) .card-actions .btn-sm { min-height: 44px; }
+  html[data-look="midnight"] :is(.page-accounts, .page-account, .page-arrangements, .page-creditors, .page-portfolios) .tbl tbody td a {
+    display: inline-block; position: relative; z-index: 1; padding: 12px 0; margin: -12px 0;
+  }
+  html[data-look="midnight"] .acc-quick { min-height: 44px; }
+  html[data-look="midnight"] .page-account [data-testid="overview-link"] .dl dd a { white-space: nowrap; }
+  html[data-look="midnight"] .page-account > * + * { margin-top: 16px; }
+  html[data-look="midnight"] .mnr-acc-hero { padding: 20px 18px 20px; border-radius: 22px; }
+  html[data-look="midnight"] .mnr-acc-hero .page-head-row { gap: 16px; }
+  html[data-look="midnight"] .mnr-acc-hero .page-meta { gap: 8px 12px; }
+  /* Actions: full-width pills, the main one first. */
+  html[data-look="midnight"] .mnr-acc-hero .page-actions { width: 100%; flex-direction: column-reverse; gap: 10px; }
+  html[data-look="midnight"] .mnr-acc-hero .page-actions .btn { width: 100%; min-height: 48px; }
+  html[data-look="midnight"] .mnr-acc-hero .acc-summary { margin-top: 18px; padding-top: 18px; }
+  html[data-look="midnight"] .mnr-bal-fig { font-size: 42px; }
+  html[data-look="midnight"] .mnr-acc-hero .dl.dl-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
+  html[data-look="midnight"] .mnr-acc-hero .dl dd { font-size: 15px; }
+  /* Account actions: a two-column grid of 44px pills. */
+  html[data-look="midnight"] .page-account .acc-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px; border-radius: 20px; }
+  html[data-look="midnight"] .mnr-acc-hero .acc-actions { padding: 18px 0 0; border-radius: 0; }
+  html[data-look="midnight"] .page-account .acc-actions-label { grid-column: 1 / -1; margin: 0 0 2px; padding-left: 2px; }
+  html[data-look="midnight"] .page-account .acc-actions .btn-ghost { min-height: 44px; padding: 0 10px; justify-content: flex-start; white-space: normal; text-align: left; }
+  html[data-look="midnight"] .page-account .acc-actions .btn-ghost:last-child { grid-column: 1 / -1; }
+  /* Tabs: every section visible as a 2-column grid of pills. */
+  html[data-look="midnight"] .page-account .acc-tabs .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border-radius: 22px; padding: 6px; gap: 6px; overflow: visible; }
+  html[data-look="midnight"] .page-account .acc-tabs .tab { min-height: 44px; justify-content: space-between; padding: 0 14px; border-radius: 16px; }
+  /* Timeline: time under the title, roomy rows. */
+  html[data-look="midnight"] .page-account .tl-top { flex-direction: column; gap: 2px; }
+  html[data-look="midnight"] .page-account .acc-next-row strong { font-size: 28px; }
+  /* Card heads wrap (title, then its action); short fact lists stay two-up. */
+  html[data-look="midnight"] .page-account .card-head { flex-wrap: wrap; row-gap: 12px; }
+  html[data-look="midnight"] .page-account :is([data-testid="arrangement-card"], [data-testid="overview-link"]) .dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
+  /* Send payment link on a phone: the preview fills the width; the email's button is full width. */
+  html[data-look="midnight"] .lp-mail { margin: 10px; }
+  html[data-look="midnight"] .lp-mail-body { padding: 20px 16px 16px; }
+  html[data-look="midnight"] .lp-cta { align-self: stretch; justify-content: center; text-align: center; padding: 10px 16px; letter-spacing: 0.04em; }
+  html[data-look="midnight"] .lp-sms .lp-bubble { margin: 12px; }
+}
+
+/* =============================================================================================
+   Phones: record tables become glass cards (CSS only — rows, cells and test ids unchanged)
+   ============================================================================================= */
+@media (max-width: 600px) {
+  html[data-look="midnight"] :is([data-testid="accounts-table"], [data-testid="arr-table"], [data-testid="schedule-table"], [data-testid="arr-schedule-table"], [data-testid="acc-requests-table"], [data-testid="acc-txn-table"], [data-testid="acc-audit-table"], [data-testid="contacts-table"]) :is(table, tbody) { display: block; width: 100%; }
+  html[data-look="midnight"] :is([data-testid="accounts-table"], [data-testid="arr-table"], [data-testid="schedule-table"], [data-testid="arr-schedule-table"], [data-testid="acc-requests-table"], [data-testid="acc-txn-table"], [data-testid="acc-audit-table"], [data-testid="contacts-table"]) thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  html[data-look="midnight"] :is([data-testid="accounts-table"], [data-testid="arr-table"], [data-testid="schedule-table"], [data-testid="arr-schedule-table"], [data-testid="acc-requests-table"], [data-testid="acc-txn-table"], [data-testid="acc-audit-table"], [data-testid="contacts-table"]) tbody tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  html[data-look="midnight"] :is([data-testid="accounts-table"], [data-testid="arr-table"], [data-testid="schedule-table"], [data-testid="arr-schedule-table"], [data-testid="acc-requests-table"], [data-testid="acc-txn-table"], [data-testid="acc-audit-table"], [data-testid="contacts-table"]) tbody tr:last-child { border-bottom: 0; }
+  html[data-look="midnight"] :is([data-testid="accounts-table"], [data-testid="arr-table"], [data-testid="schedule-table"], [data-testid="arr-schedule-table"], [data-testid="acc-requests-table"], [data-testid="acc-txn-table"], [data-testid="acc-audit-table"], [data-testid="contacts-table"]) tbody td {
+    display: block; min-width: 0; padding: 0; border: 0; justify-self: start;
+  }
+  /* small labels (the column name, from the cell's data-label) for values that need one */
+  html[data-look="midnight"] [data-testid="accounts-table"] td:is(:nth-child(3), :nth-child(6))::before,
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(6)::before,
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:is(:nth-child(2), :nth-child(4), :nth-child(5), :nth-child(6))::before,
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(2)::before,
+  html[data-look="midnight"] [data-testid="contacts-table"] td:is(:nth-child(5), :nth-child(6))::before {
+    content: attr(data-label); display: inline; margin-right: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted);
+  }
+
+  /* Accounts: borrower + status, portfolio + placed, assignee. */
+  html[data-look="midnight"] [data-testid="accounts-table"] tbody tr { grid-template-areas: "who status" "pf placed" "asg asg"; }
+  html[data-look="midnight"] [data-testid="accounts-table"] td:nth-child(1) { grid-area: who; }
+  html[data-look="midnight"] [data-testid="accounts-table"] td:nth-child(2) { grid-area: pf; }
+  html[data-look="midnight"] [data-testid="accounts-table"] td:nth-child(3) { grid-area: placed; justify-self: end; align-self: end; }
+  html[data-look="midnight"] [data-testid="accounts-table"] td:nth-child(4) { display: none; }
+  html[data-look="midnight"] [data-testid="accounts-table"] td:nth-child(5) { grid-area: status; justify-self: end; align-self: start; }
+  html[data-look="midnight"] [data-testid="accounts-table"] td:nth-child(6) { grid-area: asg; font-size: 13px; }
+  /* Arrangements: borrower + status, reference + total, portfolio + next due, progress. */
+  html[data-look="midnight"] [data-testid="arr-table"] tbody tr { grid-template-areas: "who status" "id total" "pf next" "prog prog"; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(1) { grid-area: id; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(2) { grid-area: who; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(3) { grid-area: pf; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(4) { grid-area: total; justify-self: end; font-weight: 700; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(5) { grid-area: prog; justify-self: stretch; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(6) { grid-area: next; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(6) .cell-2 { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; }
+  html[data-look="midnight"] [data-testid="arr-table"] td:nth-child(7) { grid-area: status; justify-self: end; align-self: start; }
+  html[data-look="midnight"] [data-testid="arr-table"] .arr-prog { min-width: 0; flex-direction: row; align-items: center; gap: 10px; }
+  html[data-look="midnight"] [data-testid="arr-table"] .arr-prog .progress { flex: 1; }
+  /* Schedules: number, due date + status, amount + payment. */
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr { grid-template-columns: 34px minmax(0, 1fr) auto; grid-template-areas: "seq due status" "seq amt pay"; gap: 4px 12px; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) td:nth-child(1) { grid-area: seq; align-self: center; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) td:nth-child(2) { grid-area: due; font-weight: 600; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) td:nth-child(3) { grid-area: amt; color: var(--text-muted); }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) td:nth-child(4) { grid-area: status; justify-self: end; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) td:nth-child(5) { grid-area: pay; justify-self: end; font-size: 13px; text-align: right; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) td:nth-child(5) .cell-2 { align-items: flex-end; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.chip[data-status="paid"]) { box-shadow: inset 3px 0 0 rgba(94, 230, 168, 0.85); }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.chip[data-status="paid"]) td:first-child,
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.mnr-next) td:first-child { box-shadow: none; }
+  html[data-look="midnight"] :is([data-testid="schedule-table"], [data-testid="arr-schedule-table"]) tbody tr:has(.mnr-next) { box-shadow: inset 3px 0 0 var(--mn-cyan); }
+  /* Payment requests: id + status, amount + installment, dates, deliveries. */
+  html[data-look="midnight"] [data-testid="acc-requests-table"] tbody tr { grid-template-areas: "id status" "amt inst" "cr ex" "sent sent"; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(1) { grid-area: id; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(2) { grid-area: inst; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(3) { grid-area: amt; font-weight: 700; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(4) { grid-area: cr; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(5) { grid-area: ex; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(6) { grid-area: sent; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(7) { grid-area: status; justify-self: end; }
+  html[data-look="midnight"] [data-testid="acc-requests-table"] td:nth-child(7) .dash-status { align-items: flex-end; }
+  /* Transactions: id + status, start + amount, method + detail. */
+  html[data-look="midnight"] [data-testid="acc-txn-table"] tbody tr { grid-template-areas: "id status" "st amt" "me det"; }
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(1) { grid-area: id; }
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(2) { grid-area: st; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(3) { grid-area: me; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(4) { grid-area: amt; justify-self: end; font-weight: 700; }
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(5) { grid-area: status; justify-self: end; }
+  html[data-look="midnight"] [data-testid="acc-txn-table"] td:nth-child(6) { grid-area: det; justify-self: end; font-size: 12px; text-align: right; overflow-wrap: anywhere; }
+  /* Audit: what, then who + when, then the change. */
+  html[data-look="midnight"] [data-testid="acc-audit-table"] tbody tr { grid-template-areas: "what what" "who when" "chg chg"; }
+  html[data-look="midnight"] [data-testid="acc-audit-table"] td:nth-child(1) { grid-area: when; justify-self: end; font-size: 12px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="acc-audit-table"] td:nth-child(2) { grid-area: who; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="acc-audit-table"] td:nth-child(3) { grid-area: what; }
+  html[data-look="midnight"] [data-testid="acc-audit-table"] td:nth-child(4) { grid-area: chg; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="acc-audit-table"] .acc-change { white-space: normal; flex-wrap: wrap; }
+  /* Creditors, portfolios, import wizard and settings tables: the same card rows. */
+  html[data-look="midnight"] :is([data-testid="cr-table"], [data-testid="cr-pf-table"], [data-testid="pf-table"], [data-testid="pf-accounts"], [data-testid="import-headers"], [data-testid="import-peek-table"], [data-testid="import-errors"], [data-testid="policy-table"]) :is(table, tbody) { display: block; width: 100%; }
+  html[data-look="midnight"] :is([data-testid="cr-table"], [data-testid="cr-pf-table"], [data-testid="pf-table"], [data-testid="pf-accounts"], [data-testid="import-headers"], [data-testid="import-peek-table"], [data-testid="import-errors"], [data-testid="policy-table"]) thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  html[data-look="midnight"] :is([data-testid="cr-table"], [data-testid="cr-pf-table"], [data-testid="pf-table"], [data-testid="pf-accounts"], [data-testid="import-headers"], [data-testid="import-peek-table"], [data-testid="import-errors"], [data-testid="policy-table"]) tbody tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  html[data-look="midnight"] :is([data-testid="cr-table"], [data-testid="cr-pf-table"], [data-testid="pf-table"], [data-testid="pf-accounts"], [data-testid="import-headers"], [data-testid="import-peek-table"], [data-testid="import-errors"], [data-testid="policy-table"]) tbody tr:last-child { border-bottom: 0; }
+  html[data-look="midnight"] :is([data-testid="cr-table"], [data-testid="cr-pf-table"], [data-testid="pf-table"], [data-testid="pf-accounts"], [data-testid="import-headers"], [data-testid="import-peek-table"], [data-testid="import-errors"], [data-testid="policy-table"]) tbody td {
+    display: block; min-width: 0; padding: 0; border: 0; justify-self: start;
+  }
+  html[data-look="midnight"] [data-testid="cr-table"] td:is(:nth-child(3), :nth-child(4), :nth-child(5))::before,
+  html[data-look="midnight"] :is([data-testid="cr-pf-table"], [data-testid="pf-table"]) td:is(:nth-child(2), :nth-child(4), :nth-child(5))::before,
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:is(:nth-child(4), :nth-child(6))::before,
+  html[data-look="midnight"] [data-testid="import-errors"] td:is(:nth-child(1), :nth-child(4))::before {
+    content: attr(data-label); display: inline; margin-right: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted);
+  }
+  /* Creditors: name + commission, portfolios + live plans, placed + collected, recovery. */
+  html[data-look="midnight"] [data-testid="cr-table"] tbody tr { grid-template-areas: "name comm" "pfs live" "placed coll" "rec rec"; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(1) { grid-area: name; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(2) { grid-area: pfs; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(3) { grid-area: live; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(4) { grid-area: placed; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(5) { grid-area: coll; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(6) { grid-area: rec; justify-self: stretch; }
+  html[data-look="midnight"] [data-testid="cr-table"] td:nth-child(7) { grid-area: comm; justify-self: end; align-self: start; }
+  /* Portfolios (list and a creditor's placements): name + last import or accounts, dates and money, recovery. */
+  html[data-look="midnight"] [data-testid="pf-table"] tbody tr { grid-template-areas: "name last" "on acc" "placed coll" "rec rec"; }
+  html[data-look="midnight"] [data-testid="cr-pf-table"] tbody tr { grid-template-areas: "name acc" "on on" "placed coll" "rec rec"; }
+  html[data-look="midnight"] :is([data-testid="pf-table"], [data-testid="cr-pf-table"]) td:nth-child(1) { grid-area: name; }
+  html[data-look="midnight"] :is([data-testid="pf-table"], [data-testid="cr-pf-table"]) td:nth-child(2) { grid-area: on; font-size: 13px; }
+  html[data-look="midnight"] :is([data-testid="pf-table"], [data-testid="cr-pf-table"]) td:nth-child(3) { grid-area: acc; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] :is([data-testid="pf-table"], [data-testid="cr-pf-table"]) td:nth-child(4) { grid-area: placed; font-size: 13px; }
+  html[data-look="midnight"] :is([data-testid="pf-table"], [data-testid="cr-pf-table"]) td:nth-child(5) { grid-area: coll; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] :is([data-testid="pf-table"], [data-testid="cr-pf-table"]) td:nth-child(6) { grid-area: rec; justify-self: stretch; }
+  html[data-look="midnight"] [data-testid="pf-table"] td:nth-child(7) { grid-area: last; justify-self: end; align-self: start; }
+  html[data-look="midnight"] [data-testid="pf-table"] td:nth-child(7) .cell-2 { align-items: flex-end; }
+  html[data-look="midnight"] [data-testid="pf-table"] td:nth-child(3) .cell-2 { flex-direction: row; gap: 6px; align-items: baseline; }
+  /* A portfolio's accounts: borrower + status, reference + placed, assignee + loaded. */
+  html[data-look="midnight"] [data-testid="pf-accounts"] tbody tr { grid-template-areas: "name status" "ref placed" "asg loaded"; }
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:nth-child(1) { grid-area: name; }
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:nth-child(2) { grid-area: ref; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:nth-child(3) { grid-area: status; justify-self: end; }
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:nth-child(4) { grid-area: asg; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:nth-child(5) { grid-area: placed; justify-self: end; font-weight: 700; }
+  html[data-look="midnight"] [data-testid="pf-accounts"] td:nth-child(6) { grid-area: loaded; justify-self: end; font-size: 13px; }
+  /* Import template columns: name + required, then the rule. */
+  html[data-look="midnight"] [data-testid="import-headers"] tbody tr { grid-template-areas: "col req" "rule rule"; }
+  html[data-look="midnight"] [data-testid="import-headers"] td:nth-child(1) { grid-area: col; }
+  html[data-look="midnight"] [data-testid="import-headers"] td:nth-child(2) { grid-area: req; justify-self: end; }
+  html[data-look="midnight"] [data-testid="import-headers"] td:nth-child(3) { grid-area: rule; }
+  /* Sample file rows: row number, name + check, mobile + balance. */
+  html[data-look="midnight"] [data-testid="import-peek-table"] tbody tr { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "n name check" "n mobile bal"; }
+  html[data-look="midnight"] [data-testid="import-peek-table"] td:nth-child(1) { grid-area: n; align-self: center; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="import-peek-table"] td:nth-child(2) { grid-area: name; font-weight: 600; }
+  html[data-look="midnight"] [data-testid="import-peek-table"] td:nth-child(3) { grid-area: mobile; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="import-peek-table"] td:nth-child(4) { grid-area: bal; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="import-peek-table"] td:nth-child(5) { grid-area: check; justify-self: end; }
+  /* Error rows: row + field, the problem, the value in the file. */
+  html[data-look="midnight"] [data-testid="import-errors"] tbody tr { grid-template-areas: "row field" "prob prob" "val val"; }
+  html[data-look="midnight"] [data-testid="import-errors"] td:nth-child(1) { grid-area: row; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="import-errors"] td:nth-child(2) { grid-area: field; justify-self: end; }
+  html[data-look="midnight"] [data-testid="import-errors"] td:nth-child(3) { grid-area: prob; }
+  html[data-look="midnight"] [data-testid="import-errors"] td:nth-child(4) { grid-area: val; font-size: 13px; }
+  /* Policies: name + V3 reference, the assumed value, the status tag. */
+  html[data-look="midnight"] [data-testid="policy-table"] tbody tr { grid-template-areas: "pol ref" "val val" "st st"; }
+  html[data-look="midnight"] [data-testid="policy-table"] td:nth-child(1) { grid-area: pol; }
+  html[data-look="midnight"] [data-testid="policy-table"] td:nth-child(2) { grid-area: val; }
+  html[data-look="midnight"] [data-testid="policy-table"] td:nth-child(3) { grid-area: ref; justify-self: end; align-self: start; }
+  html[data-look="midnight"] [data-testid="policy-table"] td:nth-child(4) { grid-area: st; }
+  /* Role matrix: stays a matrix; the action column holds still while the roles scroll. */
+  html[data-look="midnight"] [data-testid="perm-table"] :is(th, td):first-child { position: sticky; left: 0; z-index: 1; background: #0D1530; box-shadow: 8px 0 14px -10px rgba(0, 0, 0, 0.9); min-width: 150px; white-space: normal; }
+  /* Import batches (portfolio tab): the file on its own line, the facts after it. */
+  html[data-look="midnight"] [data-testid="pf-batches"] :is(table, tbody) { display: block; width: 100%; }
+  html[data-look="midnight"] [data-testid="pf-batches"] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  html[data-look="midnight"] [data-testid="pf-batches"] tbody tr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+  html[data-look="midnight"] [data-testid="pf-batches"] tbody tr:last-child { border-bottom: 0; }
+  html[data-look="midnight"] [data-testid="pf-batches"] tbody td { display: block; padding: 0; border: 0; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="pf-batches"] tbody td:nth-child(1) { flex-basis: 100%; font-size: 14px; }
+  html[data-look="midnight"] [data-testid="pf-batches"] tbody td:is(:nth-child(4), :nth-child(5), :nth-child(6))::before { content: attr(data-label); margin-right: 5px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+  /* Attachments: the document chip on its own line, the facts after it. */
+  html[data-look="midnight"] [data-testid="attachments-table"] :is(table, tbody) { display: block; width: 100%; }
+  html[data-look="midnight"] [data-testid="attachments-table"] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  html[data-look="midnight"] [data-testid="attachments-table"] tbody tr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+  html[data-look="midnight"] [data-testid="attachments-table"] tbody tr:last-child { border-bottom: 0; }
+  html[data-look="midnight"] [data-testid="attachments-table"] tbody td { display: block; padding: 0; border: 0; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="attachments-table"] tbody td:nth-child(1) { flex-basis: 100%; }
+  html[data-look="midnight"] [data-testid="attachments-table"] td:nth-child(5) .num { white-space: nowrap; }
+  /* Contact history: outcome + when, channel + by, note, next action. */
+  html[data-look="midnight"] [data-testid="contacts-table"] tbody tr { grid-template-areas: "oc when" "ch by" "note note" "next next"; }
+  html[data-look="midnight"] [data-testid="contacts-table"] td:nth-child(1) { grid-area: when; justify-self: end; font-size: 12px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="contacts-table"] td:nth-child(2) { grid-area: ch; font-size: 13px; color: var(--text-muted); }
+  html[data-look="midnight"] [data-testid="contacts-table"] td:nth-child(3) { grid-area: oc; }
+  html[data-look="midnight"] [data-testid="contacts-table"] td:nth-child(4) { grid-area: note; }
+  html[data-look="midnight"] [data-testid="contacts-table"] td:nth-child(5) { grid-area: next; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="contacts-table"] td:nth-child(6) { display: block; grid-area: by; justify-self: end; font-size: 13px; }
+  html[data-look="midnight"] [data-testid="contacts-table"] .acc-note { min-width: 0; max-width: none; }
+}
+@media (max-width: 380px) {
+  html[data-look="midnight"] .mnr-bal-fig { font-size: 38px; }
+}
+
+/* =============================================================================================
+   KPI tiles on the record screens (arrangement summary, creditors, portfolios): big figures
+   ============================================================================================= */
+/* Same tile language as the operations screens: the tone's light in one corner, a lit top line,
+   a gentle lift. */
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) > .kpi {
+  border-radius: 20px;
+  background: radial-gradient(120% 95% at 100% 0%, color-mix(in srgb, var(--t) 13%, transparent), transparent 62%), linear-gradient(180deg, rgba(20, 30, 58, 0.72), rgba(11, 18, 36, 0.8));
+  transition: translate 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) > .kpi:hover { translate: 0 -2px; border-color: rgba(143, 216, 255, 0.22); box-shadow: var(--glass-edge), 0 22px 50px -28px rgba(100, 200, 255, 0.42); }
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) > .kpi::before {
+  left: 20px; right: 20px; top: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--t), transparent); opacity: 0.85;
+}
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) .kpi-head .icon {
+  box-sizing: content-box; padding: 6px; border-radius: 10px; color: var(--t);
+  background: color-mix(in srgb, var(--t) 14%, transparent);
+}
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) .kpi-head { margin-top: -3px; min-height: 24px; }
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) .kpi-label { color: var(--text-muted); letter-spacing: 0.1em; }
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis) .kpi-value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; white-space: nowrap; }
+html[data-look="midnight"] .arr-kpis .kpi-value { font-size: 23px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.1; white-space: nowrap; }
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) .kpi-sub { color: var(--text-muted); }
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) .kpi.tone-ok .kpi-value { text-shadow: 0 0 26px rgba(94, 230, 168, 0.22); }
+html[data-look="midnight"] :is(.cr-kpis, .pf-kpis, .arr-kpis) .kpi.tone-info .kpi-value { text-shadow: 0 0 26px rgba(143, 216, 255, 0.25); }
+@media (max-width: 1280px) {
+  html[data-look="midnight"] :is(.cr-kpis, .pf-kpis) .kpi-value { font-size: 25px; }
+}
+
+/* =============================================================================================
+   Arrangements — list: status tiles (glass) with a glowing brand-gradient edge when selected
+   ============================================================================================= */
+html[data-look="midnight"] .arr-tiles {
+  gap: 10px; margin-bottom: 22px; padding: 0;
+  background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-look="midnight"] .arr-tiles .arr-tile {
+  min-height: 98px; padding: 14px 14px 13px;
+  border: 1px solid var(--glass-line); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(20, 30, 58, 0.74), rgba(11, 18, 36, 0.8));
+  backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--glass-edge), 0 12px 32px -22px rgba(0, 0, 0, 0.9);
+  transition: translate 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.25s, background-color 0.25s;
+}
+html[data-look="midnight"] .arr-tiles .arr-tile::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(160px circle at var(--px, 50%) var(--py, 0%), rgba(143, 216, 255, 0.12), transparent 70%);
+  opacity: 0; transition: opacity 0.35s var(--ease);
+}
+html[data-look="midnight"] .arr-tiles .arr-tile:hover { translate: 0 -2px; border-color: rgba(143, 216, 255, 0.24); box-shadow: var(--glass-edge), 0 22px 50px -28px rgba(100, 200, 255, 0.45); }
+html[data-look="midnight"] .arr-tiles .arr-tile:hover::before { opacity: 1; }
+html[data-look="midnight"] .arr-tiles .arr-tile:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 2px; }
+html[data-look="midnight"] .arr-tile-label { color: var(--text-muted); font-size: 12.5px; font-weight: 600; letter-spacing: 0.01em; text-transform: none; }
+html[data-look="midnight"] .arr-tile-count { font-size: 28px; letter-spacing: -0.02em; color: var(--text); }
+html[data-look="midnight"] .arr-tile-dot { border-radius: 50%; box-shadow: 0 0 8px var(--t); }
+html[data-look="midnight"] .arr-tiles .arr-tile.is-on {
+  border-color: transparent;
+  background: linear-gradient(160deg, rgba(91, 33, 214, 0.46), rgba(31, 79, 224, 0.18) 62%, rgba(11, 18, 36, 0.82));
+  box-shadow: 0 18px 46px -18px rgba(100, 200, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+html[data-look="midnight"] .arr-tiles .arr-tile.is-on::after {
+  inset: -1px; height: auto; border-radius: inherit; padding: 1px;
+  background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+html[data-look="midnight"] .arr-tile.is-on .arr-tile-label { color: var(--text); }
+html[data-look="midnight"] .arr-tile.is-on .arr-tile-count { text-shadow: 0 0 22px rgba(143, 216, 255, 0.45); }
+html[data-look="midnight"] .arr-id { color: var(--mn-cyan); }
+html[data-look="midnight"] .page-arrangements .arr-prog .progress { height: 6px; }
+
+/* =============================================================================================
+   Arrangements — detail: featured summary, glowing schedule, document chips, versions
+   ============================================================================================= */
+html[data-look="midnight"] .arr-kpis { gap: 12px; }
+html[data-look="midnight"] .arr-kpis > .kpi { padding: 14px 15px; }
+html[data-look="midnight"] .arr-kpis [data-testid="arr-kpi-next-value"] { font-size: 18px; padding-top: 3px; }
+html[data-look="midnight"] .page-arrangements [data-testid="arr-summary"] .progress { height: 8px; margin-top: 18px; }
+html[data-look="midnight"] .arr-progress-cap { color: var(--text-muted); }
+/* Attachments: file names are glowing document chips that open the viewer. */
+html[data-look="midnight"] [data-testid="attachments-table"] td:nth-child(5) .num { white-space: normal; }
+html[data-look="midnight"] .arr-file-btn {
+  display: inline-flex; align-items: center; gap: 9px; min-height: 36px; padding: 5px 14px 5px 5px;
+  border: 1px solid rgba(143, 216, 255, 0.26); border-radius: 18px; overflow-wrap: break-word;
+  background: linear-gradient(180deg, rgba(143, 216, 255, 0.11), rgba(107, 47, 208, 0.12));
+  color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.25; text-align: left; cursor: pointer;
+  transition: translate 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s var(--ease);
+}
+html[data-look="midnight"] .arr-file-btn .icon {
+  width: 26px; height: 26px; padding: 5px; border-radius: 50%;
+  background: linear-gradient(135deg, #6B2FD0, #3466F0); color: #fff;
+  box-shadow: 0 0 12px rgba(107, 47, 208, 0.7);
+}
+html[data-look="midnight"] .arr-file-btn:hover { translate: 0 -2px; border-color: rgba(143, 216, 255, 0.7); box-shadow: 0 0 0 1px rgba(143, 216, 255, 0.3), 0 12px 26px -12px rgba(100, 200, 255, 0.75); }
+html[data-look="midnight"] .arr-file-btn:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 2px; }
+html[data-look="midnight"] .arr-file:not(.arr-file-btn) .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .arr-foot-note { color: var(--text-muted); border-top-color: var(--glass-line); }
+/* Versions: the open one carries the edge. */
+html[data-look="midnight"] .arr-versions { gap: 8px; }
+html[data-look="midnight"] .arr-versions .arr-version {
+  position: relative; padding: 11px 12px; border: 1px solid var(--glass-line); border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+html[data-look="midnight"] .arr-versions .arr-version.is-current {
+  border-color: transparent;
+  background: linear-gradient(90deg, rgba(107, 47, 208, 0.3), rgba(100, 200, 255, 0.08));
+  box-shadow: 0 16px 40px -24px rgba(100, 200, 255, 0.7);
+}
+html[data-look="midnight"] .arr-versions .arr-version.is-current::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+html[data-look="midnight"] .arr-version-link strong { color: var(--mn-lilac); }
+html[data-look="midnight"] .arr-version-link .num { color: var(--text-muted); }
+html[data-look="midnight"] .arr-version.is-current .arr-version-link .num { color: var(--text); }
+
+/* Create / revise: the live schedule preview in glass. */
+html[data-look="midnight"] .arr-preview-big { font-size: 28px; color: var(--text); letter-spacing: -0.015em; text-shadow: 0 0 26px rgba(143, 216, 255, 0.3); }
+html[data-look="midnight"] #modal-root .arr-preview-big { font-size: 22px; }
+html[data-look="midnight"] .arr-preview .tbl { border-color: var(--glass-line); border-radius: 14px; overflow: hidden; background: rgba(255, 255, 255, 0.025); }
+html[data-look="midnight"] .arr-preview-check {
+  background: rgba(143, 216, 255, 0.06); border: 1px solid rgba(143, 216, 255, 0.2); border-left: 3px solid var(--mn-cyan);
+  border-radius: 14px; color: var(--text); box-shadow: -6px 0 20px -12px var(--mn-cyan);
+}
+html[data-look="midnight"] .arr-preview-check strong { font-size: 18px; }
+html[data-look="midnight"] .arr-form-actions { gap: 12px; }
+
+/* =============================================================================================
+   Creditors
+   ============================================================================================= */
+html[data-look="midnight"] .cr-rec .num,
+html[data-look="midnight"] .pf-rec .num { color: var(--text); }
+html[data-look="midnight"] :is(.cr-rec, .pf-rec) .progress { height: 6px; }
+html[data-look="midnight"] .cr-big { font-size: 30px; color: var(--mn-lilac); text-shadow: 0 0 22px rgba(184, 156, 255, 0.4); }
+html[data-look="midnight"] .cr-note { background: rgba(155, 110, 255, 0.08); border-left-color: var(--mn-lilac); border-radius: 14px; color: var(--text-muted); }
+html[data-look="midnight"] .cr-steps li::before { border-radius: 50%; background: rgba(155, 110, 255, 0.18); color: var(--mn-lilac); box-shadow: 0 0 14px rgba(155, 110, 255, 0.35); }
+html[data-look="midnight"] .cr-steps strong { color: var(--text); }
+html[data-look="midnight"] .cr-steps span { color: var(--text-muted); }
+
+/* =============================================================================================
+   Portfolios — list cards, detail, recovery
+   ============================================================================================= */
+html[data-look="midnight"] .pf-cards { gap: 18px; }
+html[data-look="midnight"] .pf-cards .pf-card {
+  gap: 12px; padding: 22px 22px 20px; border-radius: 22px; overflow: visible;
+  background: linear-gradient(180deg, rgba(20, 30, 58, 0.76), rgba(10, 17, 36, 0.82));
+  border-color: var(--glass-line);
+  transition: translate 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.3s;
+}
+/* The edge glows faintly at rest and fully on hover; the spotlight follows the pointer. */
+html[data-look="midnight"] .pf-cards .pf-card::before {
+  inset: -1px; left: -1px; right: -1px; top: -1px; height: auto; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--mn-edge); opacity: 0.35;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  transition: opacity 0.35s var(--ease);
+}
+html[data-look="midnight"] .pf-cards .pf-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(300px circle at var(--px, 50%) var(--py, 0%), rgba(143, 216, 255, 0.1), transparent 70%);
+  opacity: 0; transition: opacity 0.35s var(--ease);
+}
+html[data-look="midnight"] .pf-cards .pf-card:hover { transform: none; translate: 0 -3px; border-color: transparent; box-shadow: var(--glass-edge), 0 30px 70px -36px rgba(100, 200, 255, 0.6); }
+html[data-look="midnight"] .pf-cards .pf-card:hover::before { opacity: 1; }
+html[data-look="midnight"] .pf-cards .pf-card:hover::after { opacity: 1; }
+html[data-look="midnight"] .pf-cards .pf-card:focus-visible { outline: 2px solid var(--mn-cyan); outline-offset: 3px; }
+html[data-look="midnight"] .pf-card-name { color: var(--text); }
+html[data-look="midnight"] .pf-card-pct { font-size: 46px; letter-spacing: -0.025em; color: var(--text); text-shadow: 0 0 30px rgba(143, 216, 255, 0.3); }
+html[data-look="midnight"] .pf-card .progress { height: 8px; }
+html[data-look="midnight"] .pf-card-foot { color: var(--text-muted); }
+
+/* No inline-end margin on the pill bar: Chrome counts it as scrollable overflow (page side-scroll). */
+html[data-look="midnight"] .page-portfolios [data-testid="pf-tabs-card"] .tabs { margin: 16px 0 0 20px; max-width: calc(100% - 40px); }
+html[data-look="midnight"] .pf-tab-body > .tbl { border-color: var(--glass-line); border-radius: 14px; overflow: hidden; background: rgba(255, 255, 255, 0.02); }
+html[data-look="midnight"] .pf-recovery-pct { font-size: 60px; letter-spacing: -0.03em; color: var(--text); text-shadow: 0 0 34px rgba(143, 216, 255, 0.32); }
+html[data-look="midnight"] .pf-recovery-big .progress { height: 10px; }
+html[data-look="midnight"] .pf-mix-bar { height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: visible; }
+html[data-look="midnight"] .pf-mix-bar > span { border-radius: 999px; background: linear-gradient(90deg, #6B2FD0, #64C8FF); box-shadow: 0 0 12px rgba(100, 200, 255, 0.45); }
+html[data-look="midnight"] .pf-mix-list .num { color: var(--text); }
+
+/* =============================================================================================
+   Portfolios — import wizard: pill steps, glass options with a glowing selected edge
+   ============================================================================================= */
+html[data-look="midnight"] .pf-steps {
+  gap: 6px; padding: 6px; border-radius: 999px; overflow: visible;
+  background: rgba(9, 16, 37, 0.74); border-color: var(--glass-line);
+}
+html[data-look="midnight"] .pf-steps .pf-step { min-height: 48px; padding: 0 18px 0 8px; border: 0; border-radius: 999px; }
+html[data-look="midnight"] .pf-step-n { border-radius: 50%; border-color: rgba(255, 255, 255, 0.22); color: var(--text-muted); }
+html[data-look="midnight"] .pf-step-label { color: var(--text-muted); font-size: 13px; font-weight: 600; letter-spacing: 0.01em; text-transform: none; }
+html[data-look="midnight"] .pf-steps .pf-step.is-on {
+  background: linear-gradient(90deg, rgba(91, 33, 214, 0.42), rgba(31, 79, 224, 0.16));
+  box-shadow: 0 14px 34px -18px rgba(100, 200, 255, 0.6);
+}
+html[data-look="midnight"] .pf-steps .pf-step.is-on::after {
+  inset: 0; left: 0; right: 0; bottom: 0; height: auto; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+html[data-look="midnight"] .pf-step.is-on .pf-step-n { box-shadow: 0 0 14px rgba(91, 33, 214, 0.8); }
+html[data-look="midnight"] .pf-step.is-on .pf-step-label { color: var(--text); }
+html[data-look="midnight"] .pf-step.is-done .pf-step-n { background: rgba(94, 230, 168, 0.14); border-color: rgba(94, 230, 168, 0.6); color: var(--tone-ok); box-shadow: 0 0 12px rgba(94, 230, 168, 0.35); }
+html[data-look="midnight"] .pf-step.is-done .pf-step-label { color: var(--text); }
+
+html[data-look="midnight"] .pf-options { gap: 14px; }
+html[data-look="midnight"] .pf-options .pf-option {
+  position: relative; padding: 18px 20px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04); color: var(--text);
+  transition: translate 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.25s, background-color 0.25s;
+}
+html[data-look="midnight"] .pf-options .pf-option:hover { transform: none; translate: 0 -2px; border-color: rgba(143, 216, 255, 0.4); box-shadow: 0 18px 40px -26px rgba(100, 200, 255, 0.6); }
+html[data-look="midnight"] .pf-options .pf-option.is-on {
+  padding: 18px 20px; border: 1px solid transparent;
+  background: linear-gradient(160deg, rgba(91, 33, 214, 0.34), rgba(31, 79, 224, 0.12) 65%, rgba(255, 255, 255, 0.03));
+  box-shadow: 0 20px 46px -24px rgba(100, 200, 255, 0.6);
+}
+html[data-look="midnight"] .pf-options .pf-option.is-on::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--mn-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+html[data-look="midnight"] .pf-option-radio { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.04); }
+html[data-look="midnight"] .pf-option.is-on .pf-option-radio { border-color: var(--mn-cyan); box-shadow: 0 0 12px rgba(143, 216, 255, 0.55); }
+html[data-look="midnight"] .pf-option.is-on .pf-option-radio::after { background: var(--mn-cyan); }
+html[data-look="midnight"] .pf-option-title { color: var(--text); }
+html[data-look="midnight"] .pf-option-file { color: var(--text-muted); }
+html[data-look="midnight"] .pf-option-file .icon { color: var(--mn-cyan); }
+html[data-look="midnight"] .pf-option-desc { color: var(--text); }
+html[data-look="midnight"] .pf-option-expect { color: var(--mn-lilac); }
+html[data-look="midnight"] .pf-peek { border-color: var(--glass-line); border-radius: 14px; }
+html[data-look="midnight"] .pf-peek > summary { background: rgba(255, 255, 255, 0.04); color: var(--mn-cyan); }
+html[data-look="midnight"] .pf-peek > summary:hover { background: rgba(143, 216, 255, 0.08); }
+html[data-look="midnight"] .pf-peek[open] > summary { border-bottom-color: var(--glass-line); }
+html[data-look="midnight"] .pf-code { background: rgba(143, 216, 255, 0.08); border-color: rgba(143, 216, 255, 0.2); color: var(--mn-cyan); }
+html[data-look="midnight"] .pf-lead, html[data-look="midnight"] .pf-run-note { color: var(--text-muted); }
+html[data-look="midnight"] .pf-run { border-top-color: var(--glass-line); }
+html[data-look="midnight"] .pf-result {
+  border: 1px solid color-mix(in srgb, var(--t) 26%, transparent); border-left: 3px solid var(--t);
+  border-radius: 16px; box-shadow: -6px 0 22px -12px var(--t);
+}
+html[data-look="midnight"] .pf-result-text strong { color: var(--text); }
+html[data-look="midnight"] .pf-result-text span { color: var(--text-muted); }
+html[data-look="midnight"] .pf-result .chip { background: rgba(7, 13, 28, 0.6); }
+html[data-look="midnight"] .pf-result + .tbl { border-color: var(--glass-line); border-radius: 14px; }
+html[data-look="midnight"] .pf-rules li { border-left-width: 3px; }
+html[data-look="midnight"] .pf-rules strong { color: var(--text); }
+html[data-look="midnight"] .pf-rules span { color: var(--text-muted); }
+html[data-look="midnight"] .pf-file-name { color: var(--text); }
+
+/* =============================================================================================
+   Settings: read-only policy panels in glass
+   ============================================================================================= */
+html[data-look="midnight"] .set-policy { color: var(--text); }
+html[data-look="midnight"] .set-value { color: var(--text); }
+html[data-look="midnight"] .set-viewing { color: var(--text-muted); }
+html[data-look="midnight"] .set-yes { color: var(--tone-ok); filter: drop-shadow(0 0 6px rgba(94, 230, 168, 0.55)); }
+html[data-look="midnight"] .set-no { color: var(--text-muted); }
+html[data-look="midnight"] .page-settings .set-col-on { background: rgba(143, 216, 255, 0.07); box-shadow: inset 1px 0 0 rgba(143, 216, 255, 0.14), inset -1px 0 0 rgba(143, 216, 255, 0.14); }
+html[data-look="midnight"] .set-foot { color: var(--text-muted); }
+
+/* =============================================================================================
+   Record screens — tablet and phone
+   ============================================================================================= */
+@media (max-width: 1280px) {
+  html[data-look="midnight"] .arr-tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  html[data-look="midnight"] .pf-steps { flex-direction: column; border-radius: 22px; }
+  html[data-look="midnight"] .pf-steps .pf-step { border-radius: 16px; }
+}
+@media (max-width: 600px) {
+  /* Status tiles: one swipeable row instead of a tall grid. */
+  html[data-look="midnight"] .arr-tiles { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px 2px 10px; margin-bottom: 14px; }
+  html[data-look="midnight"] .arr-tiles::-webkit-scrollbar { display: none; }
+  html[data-look="midnight"] .arr-tiles .arr-tile { flex: 0 0 136px; min-height: 92px; scroll-snap-align: start; }
+  /* KPI tiles two-up. */
+  html[data-look="midnight"] :is(.cr-kpis, .pf-kpis) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  html[data-look="midnight"] :is(.cr-kpis, .pf-kpis) .kpi { padding: 14px; }
+  html[data-look="midnight"] :is(.cr-kpis, .pf-kpis) .kpi-value { font-size: 20px; }
+  html[data-look="midnight"] :is(.cr-kpis, .pf-kpis) .kpi-sub { font-size: 12px; }
+  html[data-look="midnight"] .arr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  html[data-look="midnight"] .arr-kpis .kpi { padding: 12px; }
+  html[data-look="midnight"] .arr-kpis .kpi-value { font-size: 19px; }
+  /* Page actions: full-width pills. */
+  html[data-look="midnight"] :is(.page-arrangements, .page-creditors, .page-portfolios) .page-actions .btn { width: 100%; min-height: 48px; justify-content: center; }
+  html[data-look="midnight"] .pf-card-pct { font-size: 40px; }
+  html[data-look="midnight"] .pf-recovery-pct { font-size: 48px; }
+  html[data-look="midnight"] .page-portfolios [data-testid="pf-tabs-card"] .tabs { margin: 14px 0 0 14px; max-width: calc(100% - 28px); }
+  html[data-look="midnight"] .pf-tab-body { padding: 16px 14px; }
+  html[data-look="midnight"] :is(.pf-run, .pf-result-actions, .arr-form-actions) .btn { min-height: 46px; }
+}
+
+/* =============================================================================================
+   Reduced motion: no ping, no lifts (entrances are calmed by fx.css / motion.css)
+   ============================================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="midnight"] :is(.page-account, .page-arrangements) .tl-item:first-child .tl-dot::after { animation: none; display: none; }
+  html[data-look="midnight"] .page-account .acc-actions .btn-ghost:hover:not(:disabled),
+  html[data-look="midnight"] .arr-tiles .arr-tile:hover,
+  html[data-look="midnight"] .pf-cards .pf-card:hover,
+  html[data-look="midnight"] .pf-options .pf-option:hover,
+  html[data-look="midnight"] .arr-file-btn:hover { translate: none; }
+}

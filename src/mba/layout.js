@@ -5,6 +5,7 @@
 import { h, btn, icon, memo, select, toast, borrowerName } from '../ui/kit.js';
 import { ROLES, ROLE_LABELS } from '../core/permissions.js';
 import { fmtDateTime } from '../core/clock.js';
+import { isMidnight } from '../ui/look.js';
 
 /** Left-nav items, in the plan's fixed order, grouped under uppercase section labels. */
 export const NAV = Object.freeze([
@@ -195,9 +196,50 @@ function renderRoleSwitcher(ctx) {
     sel);
 }
 
+// Midnight look (2026-11-26): on phones and small tablets (<= 768px, CSS) a glass dock at the bottom
+// holds the four most used sections and "More", which opens the same nav drawer as the menu button.
+// Created only in Midnight; Classic keeps its layout exactly. "Reconciliation" is shortened to
+// "Recon" on screen so five labels fit a 360px phone; its accessible name stays in full.
+const DOCK = Object.freeze([
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'accounts', label: 'Accounts' },
+  { id: 'transactions', label: 'Transactions' },
+  { id: 'reconciliation', label: 'Recon', full: 'Reconciliation' },
+]);
+
+function renderDock(ctx, activeId) {
+  const counts = navCounts(ctx.store.get());
+  const items = DOCK.map((d) => {
+    const on = d.id === activeId;
+    const n = counts[d.id] || 0;
+    const name = d.full || d.label;
+    return h('a', {
+      href: `#/m/${d.id}`,
+      class: ['mdock-item', { 'is-on': on }],
+      testid: `dock-${d.id}`,
+      attrs: { 'aria-current': on ? 'page' : null, 'aria-label': n ? `${name}, ${n} need attention` : d.full ? name : null, title: d.full || null },
+      on: { click: () => { ui.navOpen = false; } },
+    },
+    h('span', { class: 'mdock-ic' }, icon(NAV.find((x) => x.id === d.id).icon, { size: 20 }),
+      n ? h('span', { class: 'mdock-badge num', attrs: { 'aria-hidden': 'true' } }, String(n)) : null),
+    h('span', { class: 'mdock-label' }, d.label));
+  });
+  const elsewhere = !DOCK.some((d) => d.id === activeId);
+  const here = NAV.find((x) => x.id === activeId);
+  const more = h('button', {
+    type: 'button',
+    class: ['mdock-item', { 'is-on': elsewhere }],
+    testid: 'dock-more',
+    attrs: { 'aria-expanded': ui.navOpen ? 'true' : 'false', 'aria-label': elsewhere && here ? `More sections, now on ${here.label}` : 'More sections' },
+    on: { click: () => { ui.navOpen = true; ctx.rerender(); } },
+  }, h('span', { class: 'mdock-ic' }, icon('menu', { size: 20 })), h('span', { class: 'mdock-label' }, 'More'));
+  return h('nav', { class: 'mdock', testid: 'mba-dock', attrs: { 'aria-label': 'Quick navigation' } }, items, more);
+}
+
 /** Wraps a page element in the MBA chrome. activeId is one of NAV ids. */
 export function renderMbaLayout(ctx, pageEl, activeId) {
   const role = ctx.store.get().role;
+  const mn = isMidnight();
   const top = h('div', { class: 'mtop', testid: 'mba-topbar' },
     btn(null, { variant: 'ghost', icon: 'menu', title: 'Menu', cls: 'mtop-menu', testid: 'nav-toggle', attrs: { 'aria-expanded': ui.navOpen ? 'true' : 'false' }, onClick: () => { ui.navOpen = !ui.navOpen; ctx.rerender(); } }),
     renderSearch(ctx),
@@ -209,10 +251,11 @@ export function renderMbaLayout(ctx, pageEl, activeId) {
   const main = h('main', { class: 'mmain', id: 'main', attrs: { tabindex: '-1' }, testid: `mba-page-${activeId}` },
     h('div', { class: 'mpage' }, pageEl));
 
-  return h('div', { class: ['mlayout', { 'nav-open': ui.navOpen }], testid: 'mba-layout', dataset: { active: activeId } },
+  return h('div', { class: ['mlayout', { 'nav-open': ui.navOpen, 'has-dock': mn }], testid: 'mba-layout', dataset: { active: activeId } },
     renderNav(ctx, activeId),
     h('div', { class: 'mscrim', on: { click: () => { ui.navOpen = false; ctx.rerender(); } } }),
-    h('div', { class: 'mcol' }, top, main));
+    h('div', { class: 'mcol' }, top, main),
+    mn ? renderDock(ctx, activeId) : null);
 }
 
 /** Closes the notifications dropdown on outside click / Escape. Installed once by the shell. */

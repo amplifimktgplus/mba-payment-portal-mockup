@@ -2,6 +2,19 @@
 // List (name, portfolios, placed, collected, recovery %) · detail (profile, commission terms Q-24,
 // remittance placeholders Q-01, portfolios) · Add creditor form (Admin only, creditor.manage).
 import { renderMbaLayout } from './layout.js';
+import { isMidnight } from '../ui/look.js';
+import { mnrIntro, mnrRise, mnrMoney, mnrNum, mnrSpot } from './accounts.js'; // Midnight look helpers (2026-11-26)
+
+/** KPI values: Classic shows the text; Midnight shows oversized figures that count up once per
+ *  visit and end on exactly the same text. */
+function kpiValues(ctx, intro) {
+  const mid = isMidnight();
+  return {
+    money: (c, delay = 0) => (mid ? mnrMoney(c, { animate: intro, delay }) : ctx.kit.formatPHP(c)),
+    count: (n, delay = 0) => (mid ? mnrNum(n, (v) => Math.round(v).toLocaleString('en-US'), { animate: intro, delay }) : String(n)),
+    pct: (p, delay = 0) => (mid ? mnrNum(p, pctText, { animate: intro, delay }) : pctText(p)),
+  };
+}
 
 export function register(router, ctx) {
   router.on('/m/creditors', () => renderMbaLayout(ctx, listPage(ctx), 'creditors'));
@@ -49,19 +62,24 @@ function listPage(ctx) {
   const rows = creditorStats(ctx, s).sort((a, b) => b.placed - a.placed || a.name.localeCompare(b.name));
   const placed = rows.reduce((x, r) => x + r.placed, 0);
   const collected = rows.reduce((x, r) => x + r.collected, 0);
+  const intro = mnrIntro(ctx);
+  const v = kpiValues(ctx, intro);
 
-  return h('div', { class: 'page page-creditors' },
+  const kpis = h('div', { class: 'grid-4 cr-kpis' },
+    k.kpi({ label: 'Creditors', value: v.count(rows.length), sub: `${Object.keys(s.portfolios).length} portfolios placed`, tone: 'brand', icon: 'creditors', testid: 'cr-kpi-count' }),
+    k.kpi({ label: 'Placed balance', value: v.money(placed, 60), sub: `${Object.keys(s.accounts).length.toLocaleString('en-US')} accounts`, tone: 'neutral', testid: 'cr-kpi-placed' }),
+    k.kpi({ label: 'Collected to date', value: v.money(collected, 120), sub: 'Verified payments, net of refunds', tone: 'ok', testid: 'cr-kpi-collected' }),
+    k.kpi({ label: 'Recovery', value: v.pct(placed ? Math.round((collected / placed) * 1000) / 10 : 0, 180), sub: 'Collected ÷ placed', tone: 'info', testid: 'cr-kpi-recovery' }));
+  if (intro) mnrRise(kpis.children, { step: 70, base: 40 });
+
+  const page = h('div', { class: 'page page-creditors' },
     k.pageHeader({
       eyebrow: 'Clients',
       title: 'Creditors',
       subtitle: 'The creditors MBA collects for, the portfolios they placed and how much has been recovered.',
       actions: k.permBtn(ctx, 'creditor.manage', 'Add creditor', { variant: 'primary', icon: 'plus', testid: 'cr-add', onClick: () => ctx.router.go('#/m/creditors/new') }),
     }),
-    h('div', { class: 'grid-4 cr-kpis' },
-      k.kpi({ label: 'Creditors', value: String(rows.length), sub: `${Object.keys(s.portfolios).length} portfolios placed`, tone: 'brand', icon: 'creditors', testid: 'cr-kpi-count' }),
-      k.kpi({ label: 'Placed balance', value: k.formatPHP(placed), sub: `${Object.keys(s.accounts).length.toLocaleString('en-US')} accounts`, tone: 'neutral', testid: 'cr-kpi-placed' }),
-      k.kpi({ label: 'Collected to date', value: k.formatPHP(collected), sub: 'Verified payments, net of refunds', tone: 'ok', testid: 'cr-kpi-collected' }),
-      k.kpi({ label: 'Recovery', value: pctText(placed ? Math.round((collected / placed) * 1000) / 10 : 0), sub: 'Collected ÷ placed', tone: 'info', testid: 'cr-kpi-recovery' })),
+    kpis,
     k.card({
       title: 'All creditors', eyebrow: 'List', flush: true,
       body: k.table({
@@ -81,6 +99,8 @@ function listPage(ctx) {
         ],
       }),
     }));
+  if (intro) mnrRise(page.querySelectorAll('[data-testid="cr-table"] tbody tr'), { step: 40, base: 200 });
+  return mnrSpot(page);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -146,20 +166,28 @@ function detailPage(ctx, id) {
     }),
   });
 
-  return h('div', { class: 'page page-creditors', testid: 'cr-detail' },
+  const intro = mnrIntro(ctx);
+  const v = kpiValues(ctx, intro);
+  const kpis = h('div', { class: 'grid-4 cr-kpis' },
+    k.kpi({ label: 'Placed balance', value: v.money(st.placed), sub: 'Across all portfolios', tone: 'neutral', testid: 'cr-d-placed' }),
+    k.kpi({ label: 'Collected to date', value: v.money(st.collected, 60), sub: 'Verified, net of refunds', tone: 'ok', testid: 'cr-d-collected' }),
+    k.kpi({ label: 'Recovery', value: v.pct(st.pct, 120), sub: 'Collected ÷ placed', tone: 'info', testid: 'cr-d-recovery' }),
+    k.kpi({ label: 'Live arrangements', value: v.count(st.live, 180), sub: 'Active or partially paid', tone: 'brand', testid: 'cr-d-live' }));
+  if (intro) {
+    mnrRise(kpis.children, { step: 70, base: 40 });
+    mnrRise(portfolios.querySelectorAll('tbody tr'), { step: 50, base: 260 });
+  }
+
+  return mnrSpot(h('div', { class: 'page page-creditors', testid: 'cr-detail' },
     k.pageHeader({
       crumbs: [{ label: 'Creditors', href: '#/m/creditors' }, { label: c.name }],
       eyebrow: 'Creditor',
       title: c.name,
       subtitle: `${st.portfolioCount} ${st.portfolioCount === 1 ? 'portfolio' : 'portfolios'} · ${st.accounts.toLocaleString('en-US')} accounts · ${st.live} live arrangements`,
     }),
-    h('div', { class: 'grid-4 cr-kpis' },
-      k.kpi({ label: 'Placed balance', value: k.formatPHP(st.placed), sub: 'Across all portfolios', tone: 'neutral', testid: 'cr-d-placed' }),
-      k.kpi({ label: 'Collected to date', value: k.formatPHP(st.collected), sub: 'Verified, net of refunds', tone: 'ok', testid: 'cr-d-collected' }),
-      k.kpi({ label: 'Recovery', value: pctText(st.pct), sub: 'Collected ÷ placed', tone: 'info', testid: 'cr-d-recovery' }),
-      k.kpi({ label: 'Live arrangements', value: String(st.live), sub: 'Active or partially paid', tone: 'brand', testid: 'cr-d-live' })),
+    kpis,
     h('div', { class: 'grid-2 cr-row' }, profile, commission),
-    portfolios);
+    portfolios));
 }
 
 // ------------------------------------------------------------------------------------------
@@ -196,7 +224,7 @@ function newPage(ctx) {
   f.error ? k.notice(f.error, { tone: 'danger', title: 'Check the details', testid: 'cr-new-error' }) : null,
   h('div', { class: 'cr-form-actions' }, k.btn('Cancel', { variant: 'ghost', onClick: () => ctx.router.go('#/m/creditors') }), save));
 
-  return h('div', { class: 'page page-creditors' },
+  return mnrSpot(h('div', { class: 'page page-creditors' },
     k.pageHeader({
       crumbs: [{ label: 'Creditors', href: '#/m/creditors' }, { label: 'Add creditor' }],
       eyebrow: 'Clients',
@@ -212,5 +240,5 @@ function newPage(ctx) {
           h('li', {}, h('strong', {}, 'Portfolio'), h('span', {}, 'Placement date and remittance terms.')),
           h('li', {}, h('strong', {}, 'Import'), h('span', {}, 'Accounts loaded from the standard template, validated row by row.')),
           h('li', {}, h('strong', {}, 'Queue'), h('span', {}, 'Valid accounts arrive as New in the unassigned queue.'))),
-      })));
+      }))));
 }

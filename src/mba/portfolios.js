@@ -3,6 +3,8 @@
 //   1. download the template (TEMPLATE_HEADERS)  2. choose a sample file (clean / with errors)
 //   3. result (Accepted / Partially accepted / Rejected) + error rows CSV.
 import { renderMbaLayout } from './layout.js';
+import { isMidnight } from '../ui/look.js';
+import { mnrIntro, mnrRise, mnrMoney, mnrNum, mnrSpot } from './accounts.js'; // Midnight look helpers (2026-11-26)
 
 const REQUIRED = new Set(['creditor_account_no', 'full_name', 'mobile', 'placed_balance', 'currency', 'chargeoff_date']);
 const HEADER_NOTES = {
@@ -24,6 +26,18 @@ export function register(router, ctx) {
 }
 
 const pctText = (p) => `${p.toFixed(1)}%`;
+const fmtCount = (n) => Math.round(n).toLocaleString('en-US');
+
+/** Figures: Classic shows the text; Midnight shows figures that count up once per visit (intro)
+ *  and end on exactly the same text. */
+function figures(ctx, intro) {
+  const mid = isMidnight();
+  return {
+    money: (c, delay = 0) => (mid ? mnrMoney(c, { animate: intro, delay }) : ctx.kit.formatPHP(c)),
+    count: (n, delay = 0) => (mid ? mnrNum(n, fmtCount, { animate: intro, delay }) : n.toLocaleString('en-US')),
+    pct: (p, delay = 0) => (mid ? mnrNum(p, pctText, { animate: intro, delay }) : pctText(p)),
+  };
+}
 
 function pfStats(ctx, s) {
   const rec = Object.fromEntries(ctx.selectors.portfolioRecovery(s).map((r) => [r.portfolioId, r]));
@@ -71,19 +85,25 @@ function listPage(ctx) {
   const s = ctx.store.get();
   const rows = pfStats(ctx, s).sort((a, b) => (a.placedAt < b.placedAt ? -1 : 1));
   const first = rows[0]?.id;
+  const mid = isMidnight();
+  const intro = mnrIntro(ctx);
+  const f = figures(ctx, intro);
 
-  return h('div', { class: 'page page-portfolios' },
+  const cards = h('div', { class: 'pf-cards', testid: 'pf-cards' }, rows.map((r, i) => h('a', { href: `#/m/portfolios/${r.id}`, class: ['pf-card', { 'fx-spot': mid }], testid: `pf-card-${r.id}` },
+    h('div', { class: 'pf-card-top' }, h('span', { class: 'eyebrow' }, r.creditor), h('strong', { class: 'pf-card-name' }, r.name)),
+    h('div', { class: 'pf-card-pct num' }, f.pct(r.pct, 120 + i * 90)),
+    k.progress({ value: r.pct, max: 100, label: `${r.name} recovery ${pctText(r.pct)}`, tone: 'brand' }),
+    h('div', { class: 'pf-card-foot num' }, `${k.formatPHP(r.collected)} of ${k.formatPHP(r.placed)}`))));
+  if (intro) mnrRise(cards.children, { step: 90, base: 40 });
+
+  const page = h('div', { class: 'page page-portfolios' },
     k.pageHeader({
       eyebrow: 'Clients',
       title: 'Portfolios',
       subtitle: 'Accounts placed by each creditor, how they were imported, and recovery so far.',
       actions: k.permBtn(ctx, 'portfolio.import', 'Import accounts', { variant: 'primary', icon: 'upload', testid: 'pf-import-start', onClick: () => ctx.router.go(`#/m/portfolios/${first}/import`) }),
     }),
-    h('div', { class: 'pf-cards', testid: 'pf-cards' }, rows.map((r) => h('a', { href: `#/m/portfolios/${r.id}`, class: 'pf-card', testid: `pf-card-${r.id}` },
-      h('div', { class: 'pf-card-top' }, h('span', { class: 'eyebrow' }, r.creditor), h('strong', { class: 'pf-card-name' }, r.name)),
-      h('div', { class: 'pf-card-pct num' }, pctText(r.pct)),
-      k.progress({ value: r.pct, max: 100, label: `${r.name} recovery ${pctText(r.pct)}`, tone: 'brand' }),
-      h('div', { class: 'pf-card-foot num' }, `${k.formatPHP(r.collected)} of ${k.formatPHP(r.placed)}`)))),
+    cards,
     k.card({
       title: 'All portfolios', eyebrow: 'List', flush: true,
       body: k.table({
@@ -102,6 +122,8 @@ function listPage(ctx) {
         ],
       }),
     }));
+  if (intro) mnrRise(page.querySelectorAll('[data-testid="pf-table"] tbody tr'), { step: 50, base: 300 });
+  return mnrSpot(page);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -160,6 +182,8 @@ function detailPage(ctx, id) {
 
   const statusCounts = {};
   for (const a of accs) statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
+  const intro = mnrIntro(ctx);
+  const f = figures(ctx, intro);
 
   let body;
   if (ui.tab === 'accounts') {
@@ -200,7 +224,7 @@ function detailPage(ctx, id) {
     body = [h('div', { class: 'pf-recovery' },
       h('div', { class: 'pf-recovery-big' },
         h('span', { class: 'eyebrow' }, 'Recovered'),
-        h('span', { class: 'pf-recovery-pct num' }, pctText(st.pct)),
+        h('span', { class: 'pf-recovery-pct num' }, f.pct(st.pct, 200)),
         k.progress({ value: st.pct, max: 100, label: `Recovery ${pctText(st.pct)}`, tone: 'brand' }),
         h('span', { class: 'cell-sub num' }, `${k.formatPHP(st.collected)} collected of ${k.formatPHP(st.placed)} placed`)),
       h('div', { class: 'pf-mix' },
@@ -211,7 +235,14 @@ function detailPage(ctx, id) {
           h('span', { class: 'num' }, String(n)))))))];
   }
 
-  return h('div', { class: 'page page-portfolios', testid: 'pf-detail' },
+  const kpis = h('div', { class: 'grid-4 pf-kpis' },
+    k.kpi({ label: 'Accounts', value: f.count(accs.length), sub: `${st.unassignedNew} new in the unassigned queue`, tone: 'brand', testid: 'pf-kpi-accounts' }),
+    k.kpi({ label: 'Placed balance', value: f.money(st.placed, 60), sub: `${batches.length} import ${batches.length === 1 ? 'batch' : 'batches'}`, tone: 'neutral', testid: 'pf-kpi-placed' }),
+    k.kpi({ label: 'Collected to date', value: f.money(st.collected, 120), sub: `${live} live arrangements`, tone: 'ok', testid: 'pf-kpi-collected' }),
+    k.kpi({ label: 'Recovery', value: f.pct(st.pct, 180), sub: 'Collected ÷ placed', tone: 'info', testid: 'pf-kpi-recovery' }));
+  if (intro) mnrRise(kpis.children, { step: 70, base: 40 });
+
+  return mnrSpot(h('div', { class: 'page page-portfolios', testid: 'pf-detail' },
     k.pageHeader({
       crumbs: [{ label: 'Portfolios', href: '#/m/portfolios' }, { label: st.name }],
       eyebrow: 'Portfolio',
@@ -219,11 +250,7 @@ function detailPage(ctx, id) {
       subtitle: h('span', {}, k.link(st.creditor, `#/m/creditors/${st.creditorId}`), ` · placed ${k.fmtDate(st.placedAt)}`),
       actions: k.permBtn(ctx, 'portfolio.import', 'Import accounts', { variant: 'primary', icon: 'upload', testid: 'pf-import', onClick: () => ctx.router.go(`#/m/portfolios/${id}/import`) }),
     }),
-    h('div', { class: 'grid-4 pf-kpis' },
-      k.kpi({ label: 'Accounts', value: accs.length.toLocaleString('en-US'), sub: `${st.unassignedNew} new in the unassigned queue`, tone: 'brand', testid: 'pf-kpi-accounts' }),
-      k.kpi({ label: 'Placed balance', value: k.formatPHP(st.placed), sub: `${batches.length} import ${batches.length === 1 ? 'batch' : 'batches'}`, tone: 'neutral', testid: 'pf-kpi-placed' }),
-      k.kpi({ label: 'Collected to date', value: k.formatPHP(st.collected), sub: `${live} live arrangements`, tone: 'ok', testid: 'pf-kpi-collected' }),
-      k.kpi({ label: 'Recovery', value: pctText(st.pct), sub: 'Collected ÷ placed', tone: 'info', testid: 'pf-kpi-recovery' })),
+    kpis,
     k.card({
       flush: true, testid: 'pf-tabs-card',
       body: [
@@ -234,7 +261,7 @@ function detailPage(ctx, id) {
         }),
         h('div', { class: 'pf-tab-body' }, body),
       ],
-    }));
+    })));
 }
 
 // ------------------------------------------------------------------------------------------
@@ -376,7 +403,7 @@ function importPage(ctx, id) {
 
   const batches = Object.values(s.importBatches).filter((b) => b.portfolioId === id).sort((a, b) => (a.at < b.at ? 1 : -1));
 
-  return h('div', { class: 'page page-portfolios', testid: 'import-wizard' },
+  return mnrSpot(h('div', { class: 'page page-portfolios', testid: 'import-wizard' },
     k.pageHeader({
       crumbs: [{ label: 'Portfolios', href: '#/m/portfolios' }, { label: pf.name, href: `#/m/portfolios/${id}` }, { label: 'Import accounts' }],
       eyebrow: 'Intake (V3 §5)',
@@ -394,5 +421,5 @@ function importPage(ctx, id) {
             h('li', {}, h('strong', {}, 'Partially accepted'), h('span', {}, 'Valid rows load; error rows can be downloaded, fixed and re-imported.')),
             h('li', {}, h('strong', {}, 'Rejected'), h('span', {}, 'No valid rows, for example the same file imported twice (duplicate account numbers).'))),
         }),
-        k.card({ title: 'Earlier imports', eyebrow: pf.name, flush: true, body: batchesTable(ctx, s, batches, { testid: 'import-history', compact: true }) }))));
+        k.card({ title: 'Earlier imports', eyebrow: pf.name, flush: true, body: batchesTable(ctx, s, batches, { testid: 'import-history', compact: true }) })))));
 }

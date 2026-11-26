@@ -7,8 +7,17 @@
 // Payment truth: this file never marks anything paid itself — it calls deliverWebhook().
 // Attachments (2026-11-26, user request): each row shows the borrower's own contract and signed
 // agreement (the arrangement's files, V3 §7); a chip opens the preview without opening the row.
+// Midnight look (2026-11-26, the owner picked design option A): only when isMidnight(), the list
+// adds status filter chips, method marks on white plates, count-up KPI figures and an eye button
+// per row that opens a glass quick-view panel (a bottom sheet on phones); the detail page shows
+// the method's mark. A row click still opens the detail page. Classic draws exactly as before.
+// Styles: midnight-mba-ops.css.
 import { renderMbaLayout } from './layout.js';
-import { docChips, docList } from './docViewer.js';
+import { docChips, docList, openDocViewer } from './docViewer.js';
+import { isMidnight } from '../ui/look.js';
+import * as fx from '../ui/fx.js';
+import { STATUS_TONE, fmtSize } from '../core/format.js';
+import { METHOD_MARKS, METHOD_ICONS } from '../borrower/payLogos.js';
 
 const STATUSES = ['initiated', 'pending', 'paid', 'failed', 'expired', 'cancelled', 'refunded'];
 const STATUS_LABEL = { expired: 'Expired session' };
@@ -49,6 +58,176 @@ function paymentOf(state, attemptId) {
 function eventsOf(state, attemptId) {
   return vals(state.webhookEvents).filter((e) => e.attemptId === attemptId)
     .sort((a, b) => byAt(a.receivedAt, b.receivedAt) || byAt(a.id, b.id));
+}
+
+// --------------------------------------------------------------------------------------------
+// Midnight helpers (drawn only when isMidnight(); other MBA ops screens import the first two)
+
+/**
+ * A payment method's mark on a small white plate (the marks are drawn for light backgrounds).
+ * Same marks as the borrower's method tiles (class bmethod-logo); a method without a brand mark
+ * (Online banking) gets a line icon and its name. The plate is named for assistive tech, or
+ * hidden from it (decorative) when the method's name is already written beside it.
+ */
+export function methodPlate(ctx, method, { size = 'md', decorative = false } = {}) {
+  if (!method) return null;
+  const { h, icon } = ctx.kit;
+  const marks = METHOD_MARKS[method] || [];
+  const plate = h('span', {
+    class: ['mn-plate', `is-${size}`, { 'has-name': !marks.length }],
+    attrs: decorative ? { 'aria-hidden': 'true' } : { role: 'img', 'aria-label': method, title: method },
+  });
+  if (marks.length) {
+    for (const m of marks) plate.appendChild(h('img', { class: 'bmethod-logo', src: m.src, alt: '', draggable: false, attrs: { 'data-mark': m.name } }));
+  } else {
+    plate.append(icon(METHOD_ICONS[method] || 'bank', { size: 15 }), h('span', { class: 'mn-plate-name' }, method));
+  }
+  return plate;
+}
+
+/** Plate + the method's name in words; a plate that already spells the name stands alone. */
+function methodLine(ctx, method, { prefix = '' } = {}) {
+  const { h } = ctx.kit;
+  if (!(METHOD_MARKS[method] || []).length) return h('span', { class: 'mn-method' }, methodPlate(ctx, method));
+  return h('span', { class: 'mn-method' }, methodPlate(ctx, method, { decorative: true }), h('span', {}, `${prefix}${method}`));
+}
+
+/**
+ * KPI figures count up to their real value. The exact text stays in .kpi-value (what assistive
+ * tech reads and the e2e checks compare); the count runs in an aria-hidden copy shown in its
+ * place. Entering a screen counts from zero; a re-render of the same screen counts from the
+ * figure shown before (so "Awaiting match 2 → 0" moves, and an unchanged figure stays still).
+ */
+export function countKpis(ctx, root) {
+  if (!isMidnight()) return root;
+  const seen = ctx.kit.memo('mn.kpi-count', () => ({ hash: null, vals: {} }));
+  const hash = ctx.route?.hash ?? '';
+  const fresh = seen.hash !== hash;
+  seen.hash = hash;
+  root.querySelectorAll('.kpi .kpi-value').forEach((v, i) => {
+    const m = v.textContent.trim().match(/^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/);
+    if (!m) return;
+    const [, pre, num, post] = m;
+    const dec = (num.split('.')[1] || '').length;
+    const to = Number(num.replace(/,/g, ''));
+    const key = v.closest('.kpi')?.dataset.testid || String(i);
+    const from = fresh ? 0 : (seen.vals[key] ?? to);
+    seen.vals[key] = to;
+    const fmt = (x) => `${pre}${x.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}${post}`;
+    const copy = ctx.kit.h('div', { class: 'mn-count num', attrs: { 'aria-hidden': 'true' } });
+    v.classList.add('mn-counted');
+    v.after(copy);
+    if (from === to) copy.textContent = fmt(to);
+    else fx.countUp(copy, to, { from, format: fmt, duration: 1100, delay: fresh ? 120 + i * 90 : 0 });
+  });
+  return root;
+}
+
+const STEP_SR = { done: 'done', current: 'current step', fail: 'stopped here', todo: 'not reached yet' };
+
+/** The attempt's history, oldest first, as steps; an open attempt ends with the step it awaits. */
+function quickSteps(ctx, a, pay) {
+  const detail = statusDetail(ctx, a, pay);
+  const hist = a.history || [];
+  const end = { pending: 'current', initiated: 'current', failed: 'fail', expired: 'fail', cancelled: 'fail' };
+  const steps = hist.map((x, i) => ({
+    state: i < hist.length - 1 ? 'done' : (end[x.status] || 'done'),
+    title: statusLabel(ctx.kit, x.status), detail: detail[x.status] || '', at: x.at,
+  }));
+  const last = hist.at(-1)?.status;
+  if (last === 'pending' || last === 'initiated') steps.push({ state: 'todo', title: 'Paid', detail: 'Posts once the webhook is verified', at: null });
+  return steps;
+}
+
+/** The eye button on a list row (Midnight): opens the quick view, never the row behind it. */
+function quickBtn(ctx, id) {
+  const { h, icon } = ctx.kit;
+  return h('button', {
+    type: 'button', class: 'mn-eye', testid: `tx-quick-${id}`,
+    attrs: { 'aria-label': `Quick view of ${id}`, title: 'Quick view', 'aria-haspopup': 'dialog' },
+    on: { click: (e) => { e.stopPropagation(); openQuickView(ctx, id); } },
+  }, icon('eye', { size: 16 }));
+}
+
+/**
+ * Midnight quick view: a glass side panel (a bottom sheet on phones) with the status timeline,
+ * amount, method, borrower, request and the files. Escape, the close buttons and a click outside
+ * close it and focus returns to the row's eye button; "Open transaction" goes to the detail page.
+ * Built on the kit modal, so a route change closes it like every other dialog.
+ */
+function openQuickView(ctx, id) {
+  const kit = ctx.kit;
+  const { h, chip, link, btn, icon, dl, fmtDate, fmtDateTime, borrowerName } = kit;
+  const { docKind, DOC_LABEL } = ctx.selectors;
+  const s = ctx.store.get();
+  const a = s.attempts[id];
+  if (!a) return null;
+  const acc = s.accounts[a.accountId] || null;
+  const req = s.requests[a.requestId] || null;
+  const inst = req ? s.installments[req.installmentId] : null;
+  const arr = req ? s.arrangements[req.arrangementId] : null;
+  const pay = paymentOf(s, a.id);
+  const files = req ? ctx.selectors.attachmentsFor(s, req.arrangementId) : [];
+  const steps = quickSteps(ctx, a, pay);
+  const onLook = () => m.close(); // switching to Classic mid-view closes the panel
+  const m = kit.modal({
+    title: a.id,
+    eyebrow: pay ? 'Payment · quick view' : 'Checkout attempt · quick view',
+    testid: 'tx-quick-panel',
+    size: 'quick',
+    initialFocus: '[data-testid="tx-quick-panel-close"]',
+    onClose: () => {
+      window.removeEventListener('mba-look', onLook);
+      const eye = document.querySelector(`[data-testid="tx-quick-${id}"]`);
+      if (eye && document.activeElement !== eye) eye.focus({ preventScroll: true });
+    },
+    body: () => [
+      h('section', { class: ['mn-qv-sum', `tone-${STATUS_TONE[a.status] || 'neutral'}`] },
+        h('div', { class: 'mn-qv-sum-top' },
+          chip(a.status, { label: statusLabel(kit, a.status), size: 'lg', testid: 'tx-quick-status' }),
+          h('span', { class: 'num' }, `Started ${fmtDateTime(a.createdAt)}`)),
+        fx.money(a.amount, { duration: 900, className: 'mn-qv-money' }),
+        h('div', { class: 'mn-qv-method' }, a.method ? methodLine(ctx, a.method, { prefix: 'via ' }) : h('span', {}, 'No method chosen yet'))),
+      dl([
+        ['Borrower', acc ? link(borrowerName(acc), `#/m/accounts/${acc.id}`) : '—'],
+        ['Account reference', acc ? h('span', { class: 'num' }, acc.ref) : '—'],
+        ['Payment request', req ? link(req.id, `#/m/requests/${req.id}`, { cls: 'num' }) : '—'],
+        ['Installment', inst ? `${inst.seq} of ${arr?.count ?? '—'} · due ${fmtDate(inst.dueDate)}` : '—'],
+      ], { cols: 2, testid: 'tx-quick-meta' }),
+      h('section', { class: 'mn-qv-sec' },
+        h('h3', { class: 'mn-qv-h' }, 'Status timeline'),
+        h('ol', { class: 'mn-qv-steps', testid: 'tx-quick-steps' }, steps.map((st, i) => h('li', { class: ['mn-qv-step', `is-${st.state}`], style: { '--i': i } },
+          h('span', { class: 'mn-qv-dot', attrs: { 'aria-hidden': 'true' } }, { done: icon('check', { size: 13 }), fail: icon('x', { size: 13 }) }[st.state] || null),
+          h('div', { class: 'mn-qv-step-text' },
+            h('strong', {}, st.title, h('span', { class: 'sr-only' }, ` (${STEP_SR[st.state]})`)),
+            st.detail ? h('span', {}, st.detail) : null,
+            st.at ? h('time', { class: 'num', attrs: { datetime: st.at } }, fmtDateTime(st.at)) : null))))),
+      h('section', { class: 'mn-qv-sec' },
+        h('h3', { class: 'mn-qv-h' }, 'Attachments', h('span', { class: 'mn-qv-h-n' }, `${files.length} file${files.length === 1 ? '' : 's'}`)),
+        files.length
+          ? h('ul', { class: 'mn-qv-docs', testid: 'tx-quick-files' }, files.map((f) => {
+            const kind = docKind(f);
+            return h('li', { class: ['mn-qv-doc', `is-${kind}`] },
+              h('span', { class: 'mn-qv-doc-ic', attrs: { 'aria-hidden': 'true' } }, icon('file', { size: 18 })),
+              h('span', { class: 'mn-qv-doc-text' },
+                h('strong', {}, DOC_LABEL[kind]),
+                h('span', { class: 'mn-qv-doc-name' }, f.filename),
+                h('span', { class: 'mn-qv-doc-meta num' }, `v${f.version} · ${fmtSize(f.size)} · ${fmtDate(f.at)}`)),
+              btn('Preview', {
+                variant: 'secondary', size: 'sm', icon: 'eye', testid: `tx-quick-preview-${f.id}`,
+                attrs: { 'aria-label': `Preview the ${DOC_LABEL[kind].toLowerCase()}: ${f.filename}` },
+                onClick: () => openDocViewer(ctx, f.id),
+              }));
+          }))
+          : h('p', { class: 'mn-qv-none' }, 'No contract or agreement is on file for this arrangement.')),
+    ],
+    actions: (api) => [
+      btn('Close', { variant: 'secondary', testid: 'tx-quick-close', onClick: () => api.close() }),
+      btn('Open transaction', { variant: 'primary', iconRight: 'arrowRight', testid: 'tx-quick-open', onClick: () => { api.close(); ctx.router.go(`#/m/transactions/${id}`); } }),
+    ],
+  });
+  window.addEventListener('mba-look', onLook);
+  return m.open();
 }
 
 // --------------------------------------------------------------------------------------------
@@ -108,6 +287,17 @@ function renderList(ctx, query) {
     ctx.rerender();
   };
 
+  // Midnight: one-click status chips (the same filter as the Status field, kept in step with it).
+  const mn = isMidnight();
+  const chipBar = mn
+    ? h('div', { class: 'mn-chipbar', testid: 'tx-status-chips', attrs: { role: 'group', 'aria-label': 'Filter by status' } },
+      [['', 'All', all.length], ...STATUSES.map((st) => [st, statusLabel(kit, st), counts[st]])].map(([st, label, n]) => h('button', {
+        type: 'button', class: ['mn-fchip', st ? `tone-${STATUS_TONE[st] || 'neutral'}` : 'is-all'], testid: `tx-status-chip-${st || 'all'}`,
+        attrs: { 'aria-pressed': String(f.status === st) },
+        on: { click: () => { if (f.status !== st) applyFilters({ ...f, status: st }); } },
+      }, st ? h('span', { class: 'mn-fchip-dot', attrs: { 'aria-hidden': 'true' } }) : null, h('span', {}, label), h('span', { class: 'mn-fchip-n num' }, n.toLocaleString('en-US')))))
+    : null;
+
   const pendingList = all.filter((a) => a.status === 'pending').sort((a, b) => byAt(b.createdAt, a.createdAt));
   const pendingNotice = pendingList.length
     ? notice(h('span', { class: 'tx-pending-line' },
@@ -116,7 +306,7 @@ function renderList(ctx, query) {
     { tone: 'warn', title: 'Pending confirmation', testid: 'tx-pending-notice', icon: 'clock' })
     : null;
 
-  return h('div', { class: 'page page-transactions', testid: 'transactions-page' },
+  return countKpis(ctx, h('div', { class: 'page page-transactions', testid: 'transactions-page' },
     pageHeader({
       eyebrow: 'Collections',
       title: 'Transactions',
@@ -139,6 +329,7 @@ function renderList(ctx, query) {
       onApply: applyFilters,
       onReset: () => applyFilters({}),
     }),
+    chipBar,
     card({
       flush: true,
       title: f.status ? `${statusLabel(kit, f.status)} transactions` : 'All transactions',
@@ -152,17 +343,26 @@ function renderList(ctx, query) {
         onRowClick: (row) => ctx.router.go(`#/m/transactions/${row.id}`),
         empty: 'No transactions match these filters.',
         columns: [
-          { key: 'id', label: 'Transaction', render: (row) => link(row.id, `#/m/transactions/${row.id}`, { cls: 'mono', testid: `tx-link-${row.id}` }) },
+          {
+            key: 'id', label: 'Transaction',
+            // Midnight: the eye button, then the id over its request (the request column folds in here).
+            render: (row) => (mn
+              ? h('div', { class: 'mn-txid' }, quickBtn(ctx, row.id),
+                h('div', { class: 'cell-2' },
+                  link(row.id, `#/m/transactions/${row.id}`, { cls: 'mono', testid: `tx-link-${row.id}` }),
+                  h('span', { class: 'cell-sub' }, 'for ', link(row.requestId, `#/m/requests/${row.requestId}`, { cls: 'mono mn-txreq' }))))
+              : link(row.id, `#/m/transactions/${row.id}`, { cls: 'mono', testid: `tx-link-${row.id}` })),
+          },
           { key: 'name', label: 'Borrower', render: (row) => h('div', { class: 'cell-2' }, h('span', { class: 'cell-main' }, row.name), h('span', { class: 'cell-sub mono' }, row.accRef)) },
           { key: 'requestId', label: 'For request', render: (row) => link(row.requestId, `#/m/requests/${row.requestId}`, { cls: 'mono' }) },
-          { key: 'method', label: 'Method' },
+          mn ? { key: 'method', label: 'Method', render: (row) => methodPlate(ctx, row.method) } : { key: 'method', label: 'Method' },
           { key: 'amount', label: 'Amount', align: 'right', render: (row) => kit.money(row.amount) },
           { key: 'createdAt', label: 'Started', render: (row) => dateTimeCell(kit, row.createdAt) },
           { key: 'status', label: 'Status', render: (row) => chip(row.status, { label: statusLabel(kit, row.status) }), sortValue: (row) => STATUSES.indexOf(row.status) },
           { key: 'files', label: 'Attachments', sortable: false, cls: 'tx-docs-cell', render: (row) => docChips(ctx, filesOf(row.arrangementId)) },
         ],
       }),
-    }));
+    })));
 }
 
 // --------------------------------------------------------------------------------------------
@@ -196,9 +396,10 @@ function webhookLog(ctx, state, a) {
   return list;
 }
 
-function statusTimeline(ctx, state, a, pay) {
+/** One line per attempt status, for the detail timeline and the Midnight quick view. */
+function statusDetail(ctx, a, pay) {
   const { formatPHP } = ctx.kit;
-  const detail = {
+  return {
     initiated: 'Checkout session created (simulated)',
     pending: 'Borrower is at the payment provider; waiting for the webhook',
     paid: pay ? `Verified and posted · ${formatPHP(pay.gross)}` : 'Verified and posted',
@@ -207,6 +408,10 @@ function statusTimeline(ctx, state, a, pay) {
     cancelled: 'Session cancelled with its request',
     refunded: pay ? `Refunded ${formatPHP(pay.gross)} by Finance` : 'Refunded',
   };
+}
+
+function statusTimeline(ctx, state, a, pay) {
+  const detail = statusDetail(ctx, a, pay);
   const tone = { initiated: 'neutral', pending: 'warn', paid: 'ok', failed: 'danger', expired: 'neutral', cancelled: 'neutral', refunded: 'neutral' };
   // history is recorded in order; equal timestamps (initiated + pending in one tick) keep that order
   return a.history.map((x, i) => ({ i, at: x.at, kind: x.status, title: statusLabel(ctx.kit, x.status), detail: detail[x.status] || '', tone: tone[x.status] || 'neutral' }))
@@ -300,7 +505,7 @@ function renderDetail(ctx, id) {
       body: dl([
         ['Amount', h('span', { class: 'num tx-big', testid: 'tx-amount' }, formatPHP(a.amount))],
         ['Status', chip(a.status, { label: statusLabel(kit, a.status), size: 'lg', testid: 'tx-status' })],
-        ['Method', a.method || '—'],
+        ['Method', a.method && isMidnight() ? methodLine(ctx, a.method) : a.method || '—'],
         ['Borrower', acc ? link(`${name} · ${acc.ref}`, `#/m/accounts/${acc.id}`, { testid: 'tx-account-link' }) : '—'],
         ['For request', req ? link(req.id, `#/m/requests/${req.id}`, { cls: 'mono', testid: 'tx-request-link' }) : '—'],
         ['Installment', inst ? `${inst.seq} of ${arr?.count ?? '—'} · due ${fmtDate(inst.dueDate)}` : '—'],

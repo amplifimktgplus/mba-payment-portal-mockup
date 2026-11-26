@@ -13,6 +13,7 @@ import { h, btn, icon, segmented, toast, confirmDialog, closeAllModals, clearMem
 import { installLayoutListeners, resetLayoutUi } from '../mba/layout.js';
 import { bui } from '../borrower/parts.js';
 import { playSplash } from '../ui/splash.js';
+import { getLook, setLook } from '../ui/look.js';
 
 export const LOGO_WHITE_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoWhiteSvg)}`;
 
@@ -110,6 +111,14 @@ function renderDrawer(ctx) {
       h('h3', { class: 'drawer-label' }, 'Demo clock'),
       h('div', { class: 'clock', testid: 'demo-clock' }, icon('clock', { size: 18 }), h('span', { class: 'num' }, `${fmtDateTime(DEMO_NOW)} PHT`), h('span', { class: 'clock-fixed' }, 'Fixed')),
       h('p', { class: 'drawer-help' }, 'Due dates, overdue and expiry states are computed against this fixed date.')),
+    h('section', { class: 'drawer-sec' },
+      h('h3', { class: 'drawer-label' }, 'Look'),
+      segmented({
+        items: [{ value: 'midnight', label: 'Midnight', testid: 'look-midnight' }, { value: 'classic', label: 'Classic', testid: 'look-classic' }],
+        value: getLook(), variant: 'dark', label: 'Look', testid: 'look-switch',
+        onChange: (v) => { setLook(v); close(); },
+      }),
+      h('p', { class: 'drawer-help' }, 'Midnight is the new design. Classic is the previous one, kept as a fallback. Your choice is remembered in this browser.')),
     h('section', { class: 'drawer-sec' },
       h('h3', { class: 'drawer-label' }, 'Intro'),
       h('p', { class: 'drawer-help' }, 'The opening animation plays once per browser session. Replay it just before you present.'),
@@ -219,6 +228,11 @@ export function mountShell(ctx, root) {
 
   let scheduled = false;
   let lastPath = null;
+  // ctx.entering (2026-11-26, Midnight look): true for the first render of a screen (route change)
+  // or right after a look switch, false for a re-render of the same screen (store change). Screens
+  // run entrance motion only when it is true, so a bell click or a webhook never replays it.
+  let lookSwitched = false;
+  window.addEventListener('mba-look', () => { lookSwitched = true; });
   const bannerKeys = new Set(['[data-testid="view-borrower"]', '[data-testid="view-mba"]', '[data-testid="demo-tools"]']);
 
   let lastShellH = 0;
@@ -247,6 +261,9 @@ export function mountShell(ctx, root) {
     const key = viewSlot.contains(active) || bannerSlot.contains(active) ? focusKey(active) : null;
     const sel = key && 'selectionStart' in active ? (() => { try { return [active.selectionStart, active.selectionEnd]; } catch { return null; } })() : null;
 
+    const routeChanged = route.hash !== lastPath;
+    ctx.entering = routeChanged || lookSwitched;
+    lookSwitched = false;
     const { view, el } = ctx.renderRoute(route);
     document.documentElement.dataset.view = view;
     bannerSlot.replaceChildren(renderBanner(ctx), renderHeader(ctx, view));
@@ -256,7 +273,6 @@ export function mountShell(ctx, root) {
     shellUi.drawerShown = shellUi.drawerOpen;
 
     measureShell();
-    const routeChanged = route.hash !== lastPath;
     lastPath = route.hash;
     // Same screen re-rendered: put focus (and caret) back where the user was.
     // New screen: scroll to top and move focus to the page title (WCAG focus-on-route-change),
