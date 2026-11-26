@@ -29,7 +29,7 @@ export const POLICIES = Object.freeze({
   reminders: Object.freeze(['D-3', 'D0', 'D+1']),
   defaultThreshold: 2,
   earlyPayoff: false,
-  methods: Object.freeze(['GCash', 'Maya', 'Card', 'Online banking']),
+  methods: Object.freeze(['GCash', 'Maya', 'QR Ph', 'Online banking', 'Card', 'MariBank']),
   feeBorneBy: 'MBA',
   feePct: 2.5,
   sessionIdleMin: 15,

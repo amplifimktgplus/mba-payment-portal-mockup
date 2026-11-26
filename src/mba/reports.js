@@ -308,7 +308,7 @@ function renderReports(ctx) {
   const r4 = reportCard(ctx, {
     id: 'methods', n: '04', title: 'Payment-method mix',
     def: `Share of verified payments to date by method (${formatPHP(mixTotal)} across ${mix.reduce((t, r) => t + r.count, 0)} payments). Methods come from the Policies list.`,
-    chart: segmentedBar(ctx.kit, mix.map((r, i) => ({ name: r.method, value: r.amount, pct: r.pct, cls: `viz-fill-${(i % 4) + 1}`, tipValue: formatPHP(r.amount), count: r.count })), { testid: 'chart-methods', title: 'Payment-method mix', legendCols: [{ label: 'Method' }, { label: 'Payments', value: (p) => p.count.toLocaleString('en-US') }, { label: 'Amount', value: (p) => formatPHP(p.value) }] }),
+    chart: segmentedBar(ctx.kit, mix.map((r, i) => ({ name: r.method, value: r.amount, pct: r.pct, cls: `viz-fill-${Math.min(i, 5) + 1}` /* fixed slot per method, in POLICIES.methods order (6 validated colours) */, tipValue: formatPHP(r.amount), count: r.count })), { testid: 'chart-methods', title: 'Payment-method mix', legendCols: [{ label: 'Method' }, { label: 'Payments', value: (p) => p.count.toLocaleString('en-US') }, { label: 'Amount', value: (p) => formatPHP(p.value) }] }),
     columns: [
       { key: 'method', label: 'Method' },
       { key: 'count', label: 'Payments', align: 'right', render: (r) => numCell(r.count) },

@@ -30,4 +30,4 @@ npm run e2e        # browser walkthroughs of dist/index.html (needs Google Chrom
 
 ## Built with
 
-Plain JavaScript modules bundled into one file by esbuild, qrcode-generator for the payment QR code, and puppeteer-core for the browser walkthroughs. The Montserrat font is included under the SIL Open Font License; see `src/assets/fonts/OFL.txt`.
+Plain JavaScript modules bundled into one file by esbuild, qrcode-generator for the payment QR code, and puppeteer-core for the browser walkthroughs. The Montserrat font is included under the SIL Open Font License; see `src/assets/fonts/OFL.txt`. The payment-method logos are trademarks of their owners and appear only to show which methods are accepted. Their sources and licences are listed in `src/assets/pay/CREDITS.md`.

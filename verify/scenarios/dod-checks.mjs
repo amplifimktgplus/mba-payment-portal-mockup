@@ -19,12 +19,13 @@ export default async function dodChecks(page, t) {
     const r = await page.evaluate(() => {
       const txt = document.body.innerText;
       const imgs = [...document.images].map((i) => i.className + '|' + (i.getAttribute('src') || '').slice(0, 40));
-      const logoLike = [...document.querySelectorAll('[aria-label],[alt],title')].filter((n) => /(paymongo|gcash|maya)\s*logo/i.test(n.getAttribute?.('aria-label') || n.getAttribute?.('alt') || n.textContent || '')).length;
+      // 2026-11-26: payment-method logos are allowed on the B4 tiles (product owner); PayMongo's is not.
+      const logoLike = [...document.querySelectorAll('[aria-label],[alt],title')].filter((n) => /paymongo\s*logo/i.test(n.getAttribute?.('aria-label') || n.getAttribute?.('alt') || n.textContent || '')).length;
       return { official: /Official Receipt/.test(txt), imgs, logoLike };
     });
     t.assert(!r.official, `${where}: page text contains "Official Receipt"`);
-    t.assert(r.imgs.every((s) => s.startsWith('lockup-logo|')), `${where}: unexpected <img>: ${r.imgs.join(', ')}`);
-    t.assert(r.logoLike === 0, `${where}: provider logo label found`);
+    t.assert(r.imgs.every((s) => s.startsWith('lockup-logo|') || s.startsWith('bmethod-logo|')), `${where}: unexpected <img>: ${r.imgs.join(', ')}`);
+    t.assert(r.logoLike === 0, `${where}: PayMongo logo label found`);
   }
 
   async function bannerVisible(where) {

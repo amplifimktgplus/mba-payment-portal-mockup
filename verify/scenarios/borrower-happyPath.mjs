@@ -79,7 +79,7 @@ export default async function borrowerHappyPath(page, t) {
   // B3 — the arrangement screen.
   await t.waitFor(screenSel('B3'));
   const b3 = await screenText(t);
-  for (const want of ['Amount due now', '₱2,500.00', 'Installment 3 of 6', '₱5,000.00 paid of ₱15,000.00', 'Due Dec 5, 2026', 'Sample Bank (demo)', '6 monthly payments of ₱2,500.00', '₱10,000.00', 'Already paid at a bank? Send us your receipt', 'GCash · Maya · Card · Online banking']) {
+  for (const want of ['Amount due now', '₱2,500.00', 'Installment 3 of 6', '₱5,000.00 paid of ₱15,000.00', 'Due Dec 5, 2026', 'Sample Bank (demo)', '6 monthly payments of ₱2,500.00', '₱10,000.00', 'Already paid at a bank? Send us your receipt', 'GCash · Maya · QR Ph · Online banking · Card · MariBank']) {
     t.assert(b3.includes(want), `B3 is missing "${want}"`);
   }
   t.assert((await t.textOf('pay-now')).includes('Pay now ₱2,500.00'), `pay-now label: ${await t.textOf('pay-now')}`);
@@ -94,8 +94,21 @@ export default async function borrowerHappyPath(page, t) {
   const b4 = await screenText(t);
   t.assert(b4.includes('Simulated — PayMongo test-mode placeholder'), 'B4 missing the simulated label');
   t.assert(b4.includes('Sample Bank (demo) · collected by M.B.A. Consulting Philippines'), 'B4 missing the payee line (C10)');
-  for (const m of ['GCash', 'Maya', 'Card', 'Online banking']) t.assert(b4.includes(m), `B4 missing method ${m}`);
-  t.assert(!(await t.exists('img[src*="paymongo" i], img[alt*="GCash" i], img[alt*="Maya" i]')), 'provider logo found on B4');
+  for (const m of ['GCash', 'Maya', 'QR Ph', 'Online banking', 'Card', 'MariBank']) t.assert(b4.includes(m), `B4 missing method ${m}`);
+  // Method tiles show the real method logos (product owner, 2026-11-26); PayMongo's own logo never appears.
+  await t.waitUntil(() => [...document.querySelectorAll('img.bmethod-logo')].every((i) => i.complete && i.naturalWidth > 0));
+  const tiles = await t.page.$$eval('[data-testid="method-list"] .bmethod', (els) => els.map((el) => ({
+    name: el.querySelector('.bmethod-name')?.firstChild?.textContent || '',
+    marks: [...el.querySelectorAll('img.bmethod-logo')].map((i) => i.dataset.mark),
+    icon: !!el.querySelector('.bmethod-mark svg'),
+  })));
+  t.assert(tiles.length === 6, `expected 6 method tiles, got ${tiles.length}`);
+  for (const tile of tiles) t.assert(tile.marks.length || tile.icon, `method tile "${tile.name}" shows no logo or icon`);
+  t.assert(tiles.find((x) => x.name === 'Card')?.marks.join('+') === 'Visa+Mastercard', 'Card tile should show Visa and Mastercard');
+  t.assert(tiles.find((x) => x.name === 'Online banking')?.icon, 'Online banking should show the bank icon');
+  t.assert(!(await t.exists('img[src*="paymongo" i], img[alt*="paymongo" i], img[data-mark*="paymongo" i]')), 'PayMongo logo found on B4');
+  const providerNote = await t.textOf('provider-note');
+  t.assert(providerNote.includes('secure page') && providerNote.includes('never reach MBA'), `provider note missing: "${providerNote}"`);
   await t.click('outcome-success');
   t.assert(await t.exists('[data-testid="outcome-success"][aria-pressed="true"]'), 'success outcome not selected');
   await t.click('checkout-pay');

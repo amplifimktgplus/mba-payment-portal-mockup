@@ -1,5 +1,6 @@
-/* mba-dashboard.css — Dashboard (D§7.1). Tokens only (tokens.css). Square corners, no shadows,
-   bold uppercase labels; purple is the single data hue; gradients only as decoration. */
+/* mba-dashboard.css — Dashboard (D§7.1). Tokens only (tokens.css). Bold uppercase labels;
+   purple is the single data hue; gradients only as decoration.
+   2026-11-26: rounded corners and soft hover states replace the square, flat look. */
 
 .page-dashboard > * + * { margin-top: var(--space-5); }
 .page-dashboard .page-head { margin-bottom: var(--space-5); }
@@ -38,9 +39,10 @@
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
   min-height: 44px; padding: var(--space-2) var(--space-5);
   color: var(--text); text-decoration: none; font-size: var(--fs-sm); font-weight: var(--fw-medium);
-  transition: background-color 0.15s var(--ease);
+  transition: background-color var(--dur-fast) var(--ease);
 }
-.dash-exc-row:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.dash-exc-row:hover { background: var(--tone-brand-bg); color: var(--text); text-decoration: none; }
+.dash-exc-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; } /* full-bleed row: the ring stays inside the card */
 .dash-exc-row.is-zero .dash-exc-label { color: var(--text-muted); }
 .dash-foot-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
 .dash-exc-card .card-foot { padding-top: var(--space-3); padding-bottom: var(--space-3); }
@@ -52,9 +54,9 @@
 .rec-name { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text); text-decoration: none; }
 .rec-name:hover { color: var(--mba-purple); text-decoration: underline; }
 .rec-pct { font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--text); }
-.rec-track { height: 10px; background: var(--surface-3); }
-.rec-fill { height: 100%; background: var(--mba-purple); transition: width var(--dur-slow) var(--ease); }
-.rec-row:hover .rec-fill { background: var(--mba-purple-deep); }
+.rec-track { height: 10px; background: var(--surface-3); border-radius: var(--radius-xs); overflow: hidden; }
+.rec-fill { height: 100%; background: var(--mba-purple); border-radius: var(--radius-xs); transition: width var(--dur-slow) var(--ease), background-color var(--dur-fast) var(--ease); }
+.rec-row:hover .rec-fill, .rec-row:focus-within .rec-fill { background: var(--mba-purple-deep); }
 .rec-sub { margin-top: 6px; font-size: var(--fs-xs); color: var(--text-muted); }
 .rec-axis { display: flex; justify-content: space-between; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--border); font-size: var(--fs-xs); color: var(--text-muted); }
 
@@ -67,6 +69,7 @@
 .dash-history .filterbar .filter-select { flex: 1 1 170px; max-width: 280px; }
 .dash-history .filter-actions { margin-left: auto; }
 .dash-history .tbl { border: 1px solid var(--border); }
+.card.dash-history .tbl { border-radius: var(--radius-sm); overflow: hidden; } /* inset bordered table; out-ranks .card .tbl { border-radius: 0 } */
 
 @media (max-width: 1420px) {
   .dash-grid { grid-template-columns: minmax(0, 1fr); }

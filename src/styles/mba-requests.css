@@ -21,11 +21,11 @@
 .rq-subhead { font-size: var(--fs-xs); letter-spacing: var(--tracking-caps); color: var(--text-muted); padding-top: var(--space-2); }
 
 /* "delivered via arrangement link" block: QR + explanation */
-.rq-link { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: start; padding: var(--space-4); background: var(--surface-2); border-left: 4px solid var(--mba-purple); }
+.rq-link { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: start; padding: var(--space-4); background: var(--surface-2); border-left: 4px solid var(--mba-purple); border-radius: var(--radius-sm); }
 .rq-link .qr { flex: none; }
 .rq-link-text { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .rq-link-lead { font-size: var(--fs-sm); color: var(--text); }
-.rq-url { padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.rq-url { padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--fs-sm); overflow-wrap: anywhere; }
 .rq-link .qline .tag { font-size: var(--fs-xs); white-space: normal; max-width: 100%; }
 
 .rq-action-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }

@@ -23,7 +23,7 @@ const js = await esbuild.build({
   format: 'iife',
   platform: 'browser',
   target: ['chrome110', 'safari16', 'edge110'],
-  loader: { '.svg': 'text' },
+  loader: { '.svg': 'text', '.png': 'dataurl' },
   legalComments: 'none',
   outfile: 'dist/.tmp/main.js', // name only; nothing is written (write:false)
 });

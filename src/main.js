@@ -30,6 +30,8 @@ import * as reports from './mba/reports.js';
 import * as remittances from './mba/remittances.js';
 import * as settings from './mba/settings.js';
 import { renderBorrower } from './borrower/borrower.js';
+import { initAmbient } from './ui/ambient.js';
+import { playSplash } from './ui/splash.js';
 
 const MBA_MODULES = [dashboard, creditors, portfolios, accounts, arrangements, requests, transactions, reconciliation, reports, remittances, settings];
 
@@ -89,6 +91,8 @@ function boot() {
   // Handy for e2e scenarios and live debugging in the meeting.
   globalThis.__MBA__ = { store, router, ctx };
   mountShell(ctx, root);
+  initAmbient(); // pointer-reactive light (theme-glass.css)
+  playSplash(); // intro, once per session
 }
 
 boot();

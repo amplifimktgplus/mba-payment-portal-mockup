@@ -1,8 +1,8 @@
 /* mba-reports.css — Reports (plan Task 9). Tokens only (tokens.css), plus the chart slots below.
    Chart colour roles (dataviz skill). Single-series bars use the brand purple.
    Categorical slots (method mix) are a brand-derived set validated with the dataviz validator
-   (node validate_palette.js "#6B2FD0,#0B9BC8,#E8590C,#1F4FE0" --mode light → ALL CHECKS PASS:
-   lightness band, chroma, adjacent CVD ΔE ≥ 17.8, normal-vision ΔE ≥ 26.0, contrast ≥ 3:1 on white).
+   (node validate_palette.js "#6B2FD0,#0B9BC8,#E8590C,#1F4FE0,#A87A00,#C2255C" --mode light → ALL CHECKS PASS:
+   worst adjacent CVD ΔE 11.0 (deutan), contrast ≥ 3:1 on white).
    The brand purple itself (#4B0096) sits below the categorical lightness band, so slot 1 is a
    lighter step of the same hue. The page has no dark mode, so only light steps are defined. */
 .page-reports, .viz {
@@ -10,6 +10,8 @@
   --viz-2: #0B9BC8;  /* cyan (brand accent family) */
   --viz-3: #E8590C;  /* orange */
   --viz-4: #1F4FE0;  /* blue (brand accent family) */
+  --viz-5: #A87A00;  /* gold */
+  --viz-6: #C2255C;  /* magenta */
   --viz-ink: var(--text);
   --viz-ink-2: var(--text-muted);
   --viz-grid: var(--surface-3);
@@ -42,6 +44,8 @@
 .viz-fill-2 { fill: var(--viz-2); }
 .viz-fill-3 { fill: var(--viz-3); }
 .viz-fill-4 { fill: var(--viz-4); }
+.viz-fill-5 { fill: var(--viz-5); }
+.viz-fill-6 { fill: var(--viz-6); }
 .viz-tone-ok { fill: var(--tone-ok); }
 .viz-tone-neutral { fill: var(--border-strong); }
 .viz-tone-danger { fill: var(--tone-danger); }
@@ -56,7 +60,7 @@
   position: absolute; z-index: 5; pointer-events: none;
   display: flex; flex-direction: column; gap: 2px;
   padding: var(--space-2) var(--space-3);
-  background: var(--mba-navy); color: var(--text-on-dark);
+  background: var(--mba-navy); color: var(--text-on-dark); border-radius: var(--radius-sm);
   font-size: var(--fs-xs); white-space: nowrap;
 }
 .viz-tip[hidden] { display: none; }
@@ -80,10 +84,13 @@
   cursor: pointer; display: inline-flex; align-items: center; gap: var(--space-2);
   font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--mba-purple); padding: var(--space-2) 0;
+  transition: color var(--dur-fast) var(--ease);
 }
+.report-table summary:hover { color: var(--mba-purple-deep); }
 .report-table summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .report-table[open] summary { margin-bottom: var(--space-3); }
 .report-table .tbl { border: 1px solid var(--border); }
+.card .report-table .tbl { border-radius: var(--radius-sm); overflow: hidden; } /* out-ranks .card .tbl { border-radius: 0 } */
 
 /* Reconciliation report: bars + exception counts side by side */
 .report-recon { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: var(--space-6); align-items: center; }

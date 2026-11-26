@@ -11,6 +11,7 @@ import {
 } from '../ui/kit.js';
 import { POLICIES, BRAND } from '../core/config.js';
 import { bui, bcard, bhead, bmark, openSupport, receiptHtml } from './parts.js';
+import { METHOD_MARKS, METHOD_ICONS } from './payLogos.js';
 
 const EMPTY_DIGITS = () => ['', '', '', '', '', ''];
 const OTP_MS = POLICIES.otpExpiryMin * 60000;
@@ -369,7 +370,8 @@ function B3(ctx, d) {
 }
 
 // =============================================================================================
-// B4 — Simulated checkout (visibly separate; no provider logos or look-alike styling)
+// B4 — Simulated checkout (visibly separate). Payment-method tiles show the real method logos
+// (product owner, 2026-11-26); never PayMongo's own logo or a look-alike of its checkout.
 
 function B4(ctx, d) {
   const ui = bui();
@@ -385,11 +387,25 @@ function B4(ctx, d) {
     h('legend', { class: 'bmethod-legend' }, 'Choose how to pay'),
     d.methods.map((m) => {
       const id = `method-${slug(m)}`;
-      return h('label', { class: ['bmethod', { 'is-on': ui.method === m }], htmlFor: id },
+      const marks = METHOD_MARKS[m];
+      return h('label', { class: ['bmethod', 'fx-spot', { 'is-on': ui.method === m }], htmlFor: id },
         h('input', { type: 'radio', name: 'method', id, value: m, checked: ui.method === m, testid: id, on: { change: () => { ui.method = m; ctx.rerender(); } } }),
-        h('span', { class: 'bmethod-radio', attrs: { 'aria-hidden': 'true' } }),
-        h('span', { class: 'bmethod-name' }, m));
+        h('span', { class: 'bmethod-check', attrs: { 'aria-hidden': 'true' } }, icon('check', { size: 12 })),
+        h('span', { class: 'bmethod-mark', attrs: { 'aria-hidden': 'true' } },
+          marks
+            ? marks.map((k) => h('img', { class: 'bmethod-logo', src: k.src, alt: '', attrs: { 'data-mark': k.name } }))
+            : icon(METHOD_ICONS[m] || 'bank', { size: 28 })),
+        h('span', { class: 'bmethod-name' }, m, m === 'Card' ? h('span', { class: 'sr-only' }, ' (Visa or Mastercard)') : null));
     }));
+
+  // MBA's version of the "you finish on the provider's page" reassurance. The last sentence is what
+  // startCheckout guarantees: one active checkout per account, so a second payment is refused
+  // while the first is still being confirmed.
+  const providerNote = h('div', { class: 'bpaynote', testid: 'provider-note' },
+    h('span', { class: 'bpaynote-icon', attrs: { 'aria-hidden': 'true' } }, icon('lock', { size: 18 })),
+    h('p', { class: 'bpaynote-text' },
+      h('strong', {}, 'You’ll finish paying on our payment provider’s secure page.'),
+      ' Choosing a method above takes you there, so your card, wallet or bank details are entered with them and never reach MBA. This installment stays reserved for this payment until it’s confirmed, so it can’t be paid twice by mistake.'));
 
   const outcome = h('div', { class: 'bdemo', testid: 'outcome' },
     h('div', { class: 'bdemo-head' }, tag('DEMO', { tone: 'brand' }), h('span', {}, 'Choose what the simulated provider does')),
@@ -426,6 +442,7 @@ function B4(ctx, d) {
           ]),
           h('div', { class: 'bcheckout-amount' }, h('span', {}, 'Amount'), h('strong', { class: 'num', testid: 'checkout-amount' }, formatPHP(d.amountDue))),
           methods,
+          providerNote,
           outcome,
           btn(`Pay ${formatPHP(d.amountDue)}`, { variant: 'primary', size: 'lg', block: true, icon: 'lock', testid: 'checkout-pay', onClick: pay }),
           h('p', { class: 'bsmall bcenter' }, 'No card, wallet or bank details are entered in this demo.'))),

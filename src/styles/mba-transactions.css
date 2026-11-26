@@ -15,7 +15,7 @@
 .tx-small { font-size: var(--fs-sm); }
 
 /* gross / fee / net strip */
-.tx-amounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); }
+.tx-amounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; /* clips the net cell's fill */ }
 .tx-amt { display: flex; flex-direction: column; gap: 4px; padding: var(--space-4) var(--space-5); min-width: 0; }
 .tx-amt + .tx-amt { border-left: 1px solid var(--border); }
 .tx-amt-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--text-muted); }
@@ -28,7 +28,7 @@
 
 /* webhook log */
 .wh-events { display: flex; flex-direction: column; gap: var(--space-4); }
-.wh-event { border: 1px solid var(--border); border-left: 4px solid var(--tone-ok); }
+.wh-event { border: 1px solid var(--border); border-left: 4px solid var(--tone-ok); border-radius: var(--radius-sm); overflow: hidden; /* clips the head strip */ }
 .wh-event[data-kind="failed"] { border-left-color: var(--tone-danger); }
 .wh-event.is-dup { border-left-color: var(--tone-warn); }
 .wh-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface-2); border-bottom: 1px solid var(--border); }
@@ -39,7 +39,7 @@
 .wh-step { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: 6px 0; font-size: var(--fs-sm); color: var(--text); }
 .wh-step + .wh-step { border-top: 1px dashed var(--border); }
 .wh-step-time { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
-.wh-mark { display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none; font-size: 12px; font-weight: var(--fw-heavy); line-height: 1; }
+.wh-mark { display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none; font-size: 12px; font-weight: var(--fw-heavy); line-height: 1; border-radius: var(--radius-xs); }
 .wh-step.is-ok .wh-mark { background: var(--tone-ok-bg); color: var(--tone-ok); }
 .wh-step.is-bad .wh-mark { background: var(--tone-danger-bg); color: var(--tone-danger); }
 .wh-step.is-final .wh-label { font-weight: var(--fw-bold); }

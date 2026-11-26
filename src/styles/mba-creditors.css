@@ -9,7 +9,7 @@
 .cr-pfs { display: flex; flex-direction: column; gap: 2px; }
 .cr-comm { justify-content: flex-end; flex-wrap: nowrap; }
 .cr-big { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--mba-purple); }
-.cr-note { padding: var(--space-3) var(--space-4); background: var(--surface-2); border-left: 3px solid var(--mba-purple); font-size: var(--fs-sm); color: var(--text-muted); }
+.cr-note { padding: var(--space-3) var(--space-4); background: var(--surface-2); border-left: 3px solid var(--mba-purple); border-radius: var(--radius-sm); font-size: var(--fs-sm); color: var(--text-muted); }
 .cr-note .link { font-weight: var(--fw-semibold); }
 
 /* ---- add creditor ------------------------------------------------------------------------- */
@@ -23,7 +23,7 @@
   content: counter(crstep);
   grid-row: span 2;
   display: grid; place-items: center; width: 32px; height: 32px;
-  background: var(--tone-brand-bg); color: var(--mba-purple);
+  background: var(--tone-brand-bg); color: var(--mba-purple); border-radius: var(--radius-xs);
   font-weight: var(--fw-bold); font-size: var(--fs-sm);
 }
 .cr-steps strong { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.06em; }

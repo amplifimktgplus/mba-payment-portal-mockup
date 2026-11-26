@@ -1,0 +1,316 @@
+/* theme-glass.css — 2026-11-26 visual refresh, at the product owner's request.
+   The look should be modern, sophisticated and trustworthy: slightly rounded corners, frosted glass
+   over a deep-water scene, a reactive light that follows the pointer, film grain, refined hover and
+   press states, and a short intro. Brand colours (#4B0096 / #060D1C / #03BEF1 / #006EFF) and
+   Montserrat are unchanged. Text sits on fills opaque enough to keep WCAG AA.
+   Loaded LAST (index.css). Remove its @import to return to the original flat look.
+   Shape, glass and motion tokens live in tokens.css. --mx/--my/--px/--py come from ui/ambient.js. */
+
+:root {
+  /* Grain tiles with the alpha baked in: light specks for dark scenes, dark specks for light ones. */
+  --grain-dark: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.32 0 0 0 -0.13'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+  --grain-light: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.04  0 0 0 0 0.06  0 0 0 0 0.13  0.2 0 0 0 -0.09'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+  --cta-gradient: linear-gradient(110deg, #4B0096 0%, #3B23B8 38%, #2A3FD6 70%, #1F4FE0 100%); /* every stop ≥ 6.4:1 with white */
+}
+
+/* =============================================================================================
+   Scene
+   ============================================================================================= */
+html[data-view="mba"] body { background: var(--scene-light); }
+html[data-view="borrower"] body { background: var(--scene-deep); }
+
+/* Borrower: deep water with drifting brand light and a glow that follows the pointer. */
+.view-borrower { background: var(--scene-deep); }
+.bframe { background: linear-gradient(165deg, var(--scene-mid) 0%, var(--scene-deep) 58%, #03060E 100%); }
+.bframe-deco {
+  overflow: hidden;
+  background:
+    radial-gradient(560px 420px at var(--mx, 72%) var(--my, 18%), rgba(3, 190, 241, 0.13), transparent 70%),
+    radial-gradient(46% 40% at 88% 4%, rgba(75, 0, 150, 0.62), transparent 72%),
+    radial-gradient(44% 40% at 4% 96%, rgba(0, 110, 255, 0.26), transparent 72%),
+    radial-gradient(28% 24% at 26% 34%, rgba(46, 230, 193, 0.05), transparent 70%),
+    var(--grain-dark),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 18px);
+}
+.bframe-deco::before {
+  content: ''; position: absolute; inset: -35%;
+  background: conic-gradient(from 0deg at 62% 38%, transparent 0deg, rgba(75, 0, 150, 0.22) 70deg, rgba(0, 110, 255, 0.14) 150deg, rgba(3, 190, 241, 0.09) 220deg, transparent 300deg);
+  filter: blur(70px);
+  animation: fx-drift 36s linear infinite;
+  will-change: transform;
+}
+@keyframes fx-drift { to { transform: rotate(360deg); } }
+
+/* MBA: a pale mesh under the glass, the same pointer glow, and a deep nav column. */
+.view-mba { background: transparent; }
+.mlayout {
+  background:
+    linear-gradient(90deg, var(--scene-deep) var(--nav-width), transparent var(--nav-width)),
+    radial-gradient(640px 460px at var(--mx, 80%) var(--my, 12%), rgba(0, 110, 255, 0.07), transparent 70%),
+    radial-gradient(55% 45% at 100% 0%, rgba(75, 0, 150, 0.09), transparent 72%),
+    radial-gradient(50% 45% at 35% 100%, rgba(3, 190, 241, 0.08), transparent 72%),
+    var(--grain-light),
+    var(--scene-light);
+}
+
+/* =============================================================================================
+   Shell chrome
+   ============================================================================================= */
+.banner { background: var(--grain-dark), var(--mba-gradient-strong); }
+.banner-tools { border-radius: var(--radius-pill); border-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.banner-tools:hover, .banner-tools.is-on { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14); }
+
+.hdr {
+  background: var(--grain-dark), rgba(5, 11, 24, 0.8);
+  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+.lockup-logo { transition: filter var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.lockup:hover .lockup-logo { filter: drop-shadow(0 0 12px rgba(3, 190, 241, 0.45)); transform: rotate(-4deg) scale(1.04); }
+
+/* Segmented controls become pills with a lifted active segment. */
+.seg { padding: 3px; gap: 2px; border-radius: var(--radius-pill); background: var(--surface-2); border-color: var(--border); }
+.seg-btn { border-radius: var(--radius-pill); transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.seg-btn + .seg-btn { border-left: 0; }
+.seg-light .seg-btn.is-on { background: var(--cta-gradient); box-shadow: 0 4px 12px -4px rgba(75, 0, 150, 0.55); }
+.seg-dark { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.seg-dark .seg-btn:hover:not(.is-on) { background: rgba(255, 255, 255, 0.08); }
+.seg-dark .seg-btn.is-on { background: var(--surface); color: var(--mba-purple); box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.bdemo .seg { background: var(--surface); }
+
+/* Demo tools drawer: dark glass sheet. */
+.drawer-layer { background: rgba(5, 11, 24, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.drawer {
+  background: var(--grain-dark), linear-gradient(180deg, rgba(14, 30, 58, 0.9), rgba(5, 11, 24, 0.94));
+  backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border-left-color: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  box-shadow: -30px 0 80px rgba(0, 0, 0, 0.45);
+}
+.hero-btn { border-radius: var(--radius-sm); transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.hero-btn:hover { transform: translateX(2px); box-shadow: 0 8px 24px -12px rgba(100, 200, 255, 0.5); }
+.hero-view, .clock-fixed { border-radius: var(--radius-pill); }
+.clock { border-radius: var(--radius-sm); }
+
+/* MBA navigation: deep glass column with a soft brand glow. */
+.mnav {
+  background:
+    radial-gradient(120% 36% at 0% 0%, rgba(75, 0, 150, 0.35), transparent 70%),
+    radial-gradient(90% 30% at 100% 100%, rgba(0, 110, 255, 0.14), transparent 70%),
+    var(--grain-dark),
+    linear-gradient(180deg, #0B1A33 0%, var(--scene-deep) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mnav-item { border-radius: var(--radius-sm); transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.mnav-item .icon { transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.mnav-item:hover { background: rgba(255, 255, 255, 0.06); }
+.mnav-item:hover .icon { transform: translateX(2px); color: var(--text-on-dark); }
+.mnav-item.is-on { background: linear-gradient(90deg, rgba(75, 0, 150, 0.6), rgba(0, 110, 255, 0.16)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.mnav-item::before { left: 0; top: 10px; bottom: 10px; border-radius: 0 3px 3px 0; }
+.mnav-count { border-radius: var(--radius-pill); }
+
+/* MBA top bar: light glass that the page scrolls under. */
+.mtop {
+  background: rgba(242, 243, 249, 0.72);
+  backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom-color: var(--glass-line);
+}
+.gsearch-input { border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.72); border-color: var(--glass-line); transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.gsearch-input:focus { box-shadow: 0 0 0 4px rgba(75, 0, 150, 0.12); }
+.gsearch-panel, .notif-panel {
+  border-radius: var(--radius-md); overflow: hidden;
+  background: var(--glass-strong); border-color: var(--glass-line);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--shadow-modal);
+}
+.notif-panel { overflow-y: auto; }
+.iconbtn { border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.6); border-color: var(--glass-line); transition: background-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.iconbtn:hover, .iconbtn.is-on { background: var(--surface); transform: translateY(-1px); box-shadow: var(--shadow-1); }
+.notif-count { border-radius: var(--radius-pill); box-shadow: 0 0 0 2px var(--scene-light); }
+.avatar { border-radius: var(--radius-round); background: var(--cta-gradient); box-shadow: 0 6px 16px -6px rgba(75, 0, 150, 0.6); }
+
+/* =============================================================================================
+   Components
+   ============================================================================================= */
+/* Buttons: 10px corners, quick ease-out states, a gentle press. */
+.btn {
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur-fast) var(--ease), background-position var(--dur-slow) var(--ease);
+}
+.btn:active:not(:disabled) { transform: scale(0.985); }
+
+/* Primary CTA: gradient that shifts on hover, a pointer-following light, a single sheen pass, and a glow. */
+.btn-primary {
+  position: relative; isolation: isolate; overflow: hidden;
+  background: var(--cta-gradient); background-size: 200% 100%; background-position: 0% 50%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 16px -8px rgba(75, 0, 150, 0.55);
+}
+.btn-primary:hover:not(:disabled) { background: var(--cta-gradient); background-size: 200% 100%; background-position: 100% 50%; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), var(--glow-brand); transform: translateY(-1px); }
+.btn-primary:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+.btn-primary::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(140px circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, 0.26), transparent 62%);
+  opacity: 0; transition: opacity var(--dur) var(--ease);
+}
+.btn-primary::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-18deg);
+}
+.btn-primary:hover:not(:disabled)::before { opacity: 1; }
+.btn-primary:hover:not(:disabled)::after { transform: skewX(-18deg) translateX(480%); transition: transform 0.9s var(--ease); }
+.btn-primary.is-locked::before, .btn-primary.is-locked::after { display: none; }
+.btn-primary:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+.btn-secondary { background: rgba(255, 255, 255, 0.78); }
+.btn-secondary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px -8px rgba(75, 0, 150, 0.45); }
+.btn-ghost:hover:not(:disabled) { background: rgba(75, 0, 150, 0.06); }
+.btn-danger:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px -8px rgba(180, 35, 24, 0.55); }
+.btn-on-dark { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.btn-on-dark:hover:not(:disabled) { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08); }
+.btn-link { transition: color var(--dur-fast) var(--ease), text-decoration-color var(--dur-fast) var(--ease); }
+
+/* Chips are pills; tags keep small corners. */
+.chip { border-radius: var(--radius-pill); }
+.chip-dot { border-radius: var(--radius-round); }
+.tag { border-radius: var(--radius-xs); }
+
+/* Cards, KPIs, tables, filters: light glass. */
+.card, .kpi, .filterbar {
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-color: var(--glass-line);
+  box-shadow: var(--glass-edge), var(--shadow-1);
+}
+.card { border-radius: var(--radius-md); }
+.card-foot { border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px); background: rgba(244, 245, 249, 0.7); }
+.filterbar { border-radius: var(--radius-md); }
+.kpi { border-radius: var(--radius-md); overflow: hidden; }
+.kpi::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(220px circle at var(--px, 50%) var(--py, 0%), rgba(75, 0, 150, 0.07), transparent 70%);
+  opacity: 0; transition: opacity var(--dur) var(--ease);
+}
+.kpi:hover::after { opacity: 1; }
+.tbl { border-radius: var(--radius-md); overflow: hidden; background: var(--glass-strong); border-color: var(--glass-line); }
+.card .tbl, .card-flush .tbl { border-radius: 0; background: transparent; }
+.card-flush > .card-body:first-child > .tbl:first-child { border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0; }
+.tbl th { background: rgba(244, 245, 249, 0.78); }
+.tbl tr.is-clickable { transition: background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.tbl tr.is-clickable:hover { background: rgba(75, 0, 150, 0.045); box-shadow: inset 3px 0 0 var(--mba-purple); }
+
+/* Inputs: 10px corners and a soft focus halo beside the existing outline. */
+.input { background: rgba(255, 255, 255, 0.9); transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease); }
+.input:focus { box-shadow: 0 0 0 4px rgba(75, 0, 150, 0.12); background: var(--surface); }
+
+/* Overlays: blur says "this sits above the page". */
+.modal-backdrop { background: rgba(5, 11, 24, 0.5); backdrop-filter: blur(6px) saturate(120%); -webkit-backdrop-filter: blur(6px) saturate(120%); }
+.modal {
+  border-radius: var(--radius-lg); overflow: hidden;
+  background: rgba(255, 255, 255, 0.965); border: 1px solid var(--glass-border); /* near-opaque: dialogs sit over dark blurred scrims */
+  backdrop-filter: blur(28px) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(28px) saturate(var(--glass-sat));
+}
+.modal-foot { background: rgba(244, 245, 249, 0.75); }
+.toast {
+  border-radius: var(--radius-md);
+  background: var(--glass-strong); border-top-color: var(--glass-line); border-right-color: var(--glass-line); border-bottom-color: var(--glass-line); /* the left edge keeps its status colour */
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+.notice { border-radius: var(--radius-sm); }
+.empty-icon { border-radius: var(--radius-md); }
+.progress, .progress-fill { border-radius: var(--radius-pill); }
+.tl-dot { border-radius: var(--radius-round); }
+.qr { border-radius: var(--radius-sm); }
+.tab { transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease); }
+
+/* =============================================================================================
+   Borrower card and its blocks
+   ============================================================================================= */
+.bcard {
+  border-radius: var(--radius-lg); overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(255, 255, 255, 0.955)); /* frosted, but reads white beside the inner panels */
+  backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: fx-card-in 0.6s var(--ease) both;
+}
+@keyframes fx-card-in { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: none; } }
+.bdue, .bcheckout, .bsettled { border-radius: var(--radius-md); overflow: hidden; }
+.breceipt { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.bdemo, .bdemo-note, .btrust, .bphone, .bnext, .bcontact, .bsched { border-radius: var(--radius-sm); }
+.bmark { border-radius: var(--radius-round); }
+.otp-box { border-radius: var(--radius-sm); transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.otp-box:focus { box-shadow: 0 0 0 4px rgba(75, 0, 150, 0.14); }
+.bseg { border-radius: var(--radius-pill); }
+.bstep-mark { border-radius: var(--radius-round); }
+.bcontact { transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.bcontact:hover { transform: translateY(-1px); box-shadow: var(--shadow-1); }
+
+/* Pointer spotlight on the payment tiles (position from ui/ambient.js). */
+.bmethod::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(120px circle at var(--px, 50%) var(--py, 50%), rgba(75, 0, 150, 0.08), transparent 70%);
+  opacity: 0; transition: opacity var(--dur) var(--ease);
+}
+.bmethod:hover::after { opacity: 1; }
+
+/* =============================================================================================
+   Intro splash (ui/splash.js)
+   ============================================================================================= */
+.splash {
+  position: fixed; inset: 0; z-index: 3000;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(50% 45% at 50% 42%, rgba(75, 0, 150, 0.5), transparent 70%),
+    radial-gradient(40% 40% at 82% 92%, rgba(0, 110, 255, 0.2), transparent 70%),
+    radial-gradient(36% 36% at 14% 8%, rgba(3, 190, 241, 0.12), transparent 70%),
+    var(--grain-dark),
+    linear-gradient(165deg, var(--scene-mid), var(--scene-deep) 60%, #02050C);
+  color: var(--text-on-dark);
+  cursor: pointer;
+  transition: opacity 0.65s var(--ease-in-out), transform 0.65s var(--ease-in-out), filter 0.65s var(--ease-in-out);
+}
+.splash.is-out { opacity: 0; transform: scale(1.04); filter: blur(6px); pointer-events: none; }
+.splash-glow {
+  position: absolute; width: 540px; height: 540px; max-width: 120vw; max-height: 120vw; border-radius: var(--radius-round);
+  background: radial-gradient(circle, rgba(100, 200, 255, 0.26), rgba(75, 0, 150, 0.18) 42%, transparent 70%);
+  filter: blur(18px);
+  animation: splash-glow 1.8s var(--ease) both;
+}
+.splash-center { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.splash-logo { width: 84px; height: 84px; animation: splash-logo 0.95s var(--ease) both; }
+.splash-word {
+  padding-left: 0.32em; /* balances the trailing letter-spacing */
+  font-size: 22px; font-weight: var(--fw-heavy); letter-spacing: 0.32em;
+  background: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 40%, #8FD3FF 50%, #FFFFFF 60%, #FFFFFF 100%) 100% 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: splash-rise 0.8s var(--ease) 0.25s both, splash-sheen 1.4s var(--ease) 0.5s both;
+}
+.splash-line { width: 180px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.splash-line span { display: block; height: 100%; background: linear-gradient(90deg, #4B0096, #006EFF, #03BEF1); transform: scaleX(0); transform-origin: left; animation: splash-draw 1.1s var(--ease-in-out) 0.35s both; }
+.splash-sub { font-size: var(--fs-xs); font-weight: var(--fw-semibold); letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-on-dark-muted); animation: splash-rise 0.8s var(--ease) 0.55s both; }
+@keyframes splash-logo { from { opacity: 0; transform: scale(0.82); filter: blur(12px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes splash-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes splash-sheen { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@keyframes splash-draw { to { transform: scaleX(1); } }
+@keyframes splash-glow { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; } 100% { opacity: 0.75; transform: none; } }
+
+/* =============================================================================================
+   Narrow layouts and reduced motion
+   ============================================================================================= */
+@media (max-width: 960px) {
+  .mlayout {
+    background:
+      radial-gradient(70% 40% at 100% 0%, rgba(75, 0, 150, 0.09), transparent 72%),
+      radial-gradient(60% 40% at 20% 100%, rgba(3, 190, 241, 0.08), transparent 72%),
+      var(--grain-light),
+      var(--scene-light);
+  }
+  .mnav { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bframe-deco::before, .bcard, .splash, .splash * { animation: none !important; }
+  .splash { transition: none; }
+  .btn-primary::after { display: none; }
+  .btn:hover, .btn:active, .bmethod:hover, .iconbtn:hover, .hero-btn:hover, .bcontact:hover, .lockup:hover .lockup-logo { transform: none !important; }
+}

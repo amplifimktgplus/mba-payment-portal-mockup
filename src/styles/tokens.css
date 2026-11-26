@@ -74,15 +74,43 @@
   --space-7: 40px;
   --space-8: 70px;
 
-  /* --- shape & depth (captured: square corners, no shadows) ------------ */
-  --radius-sm: 2px;            /* inputs, chips — near-square (deviation noted) */
-  --radius-md: 0;              /* cards, buttons, panels — square like the site */
-  --radius-round: 50%;         /* captured: circles only */
-  --shadow-1: none;            /* captured: none */
-  --shadow-modal: 0 20px 60px rgba(6, 13, 28, 0.35); /* deviation: modals need elevation */
+  /* --- shape & depth --------------------------------------------------------
+     2026-11-26 refresh (user request): the site's square, flat look is replaced by slightly
+     rounded corners, soft elevation and frosted glass. Brand colours and type are unchanged. */
+  --radius-xs: 6px;            /* chips, tags, badges, small marks */
+  --radius-sm: 10px;           /* inputs, buttons, method tiles, small panels */
+  --radius-md: 14px;           /* cards, KPI tiles, tables, toasts */
+  --radius-lg: 20px;           /* borrower card, modals, drawers, large glass panels */
+  --radius-pill: 999px;        /* segmented controls, toggles, pills */
+  --radius-round: 50%;         /* circles only */
+  --shadow-1: 0 1px 2px rgba(8, 18, 38, 0.06), 0 6px 18px rgba(8, 18, 38, 0.06);
+  --shadow-2: 0 2px 6px rgba(8, 18, 38, 0.08), 0 18px 44px rgba(8, 18, 38, 0.14);
+  --shadow-modal: 0 30px 80px rgba(6, 13, 28, 0.38), 0 2px 8px rgba(6, 13, 28, 0.12);
+  --glow-brand: 0 12px 30px -8px rgba(75, 0, 150, 0.6), 0 4px 14px -6px rgba(0, 110, 255, 0.45);
 
-  /* --- motion (captured durations 0.3s / 0.5s, ease) ------------------- */
-  --ease: ease;
+  /* --- glass (frosted panels; fills stay opaque enough that text keeps AA) --- */
+  --glass-blur: 22px;
+  --glass-sat: 160%;
+  --glass: rgba(255, 255, 255, 0.76);           /* light glass over the tinted scene */
+  --glass-strong: rgba(255, 255, 255, 0.9);     /* content-heavy glass: forms, tables, modals */
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-line: rgba(11, 16, 32, 0.08);         /* hairline that keeps glass edges visible on light scenes */
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --glass-dark: rgba(12, 22, 46, 0.55);         /* dark glass over the deep-navy scene */
+  --glass-dark-strong: rgba(8, 15, 32, 0.78);
+  --glass-dark-border: rgba(255, 255, 255, 0.12);
+  --glass-dark-edge: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+
+  /* --- scene (the "deep water" backgrounds behind the glass) ------------------ */
+  --scene-deep: #050B18;
+  --scene-mid: #0B1A33;
+  --scene-light: #F2F3F9;
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+
+  /* --- motion ------------------------------------------------------------------- */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);      /* ease-out: entering, hover, state changes */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 0.18s;
   --dur: 0.3s;
   --dur-slow: 0.5s;
 

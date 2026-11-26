@@ -2,11 +2,16 @@
 
 .page-reconciliation .nowrap { white-space: nowrap; }
 
-/* Exceptions by type: 8 tiles, 4 × 2. Square, hairline, the site's numbered-section look. */
+/* Exceptions by type: 8 tiles, 4 × 2, hairline, the site's numbered-section look. 2026-11-26: rounded frame. */
 .recon-types {
+  position: relative;
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
   border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+  border-radius: var(--radius-sm); clip-path: inset(0 round var(--radius-sm));
 }
+/* The tiles draw the outer right/bottom hairlines, so a ring over the border box closes the rounded
+   frame (clip-path rather than overflow, which would clip the ring off the border edge). */
+.recon-types::after { content: ''; position: absolute; inset: -1px 0 0 -1px; border: 1px solid var(--border); border-radius: inherit; pointer-events: none; }
 .recon-type {
   position: relative;
   display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'n label count' 'n sub count';
@@ -15,7 +20,7 @@
   background: var(--surface); color: var(--text);
   border: 0; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
   font: inherit; cursor: pointer;
-  transition: background-color var(--dur) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease);
 }
 .recon-type:hover { background: var(--surface-2); }
 .recon-type:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

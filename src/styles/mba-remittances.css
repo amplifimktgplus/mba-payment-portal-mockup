@@ -5,9 +5,9 @@
 .rm-model-lead { color: var(--text); font-size: var(--fs-md); line-height: var(--lh-base); max-width: 60ch; }
 
 /* Flow diagram: drawn at 480 units, never scaled up; shrinks only on narrow screens. */
-.rm-figure { margin: var(--space-5) 0; padding: var(--space-5); background: var(--surface-2); border: 1px solid var(--border); }
+.rm-figure { margin: var(--space-5) 0; padding: var(--space-5); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .rm-flow { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; overflow: visible; font-family: var(--font); }
-.rm-node { stroke-width: 1; shape-rendering: crispEdges; }
+.rm-node { stroke-width: 1; shape-rendering: crispEdges; } /* nodes stay square: the MBA node's 4px bar is a separate rect, so CSS rx would leave it poking out */
 .rm-node-borrower { fill: var(--surface); stroke: var(--border-strong); }
 .rm-node-creditor { fill: var(--surface); stroke: var(--text-muted); }
 .rm-node-mba { fill: var(--tone-brand-bg); stroke: var(--mba-purple); }
@@ -43,7 +43,7 @@
   .rm-figure { padding: var(--space-3); }
 }
 
-/* Square brand markers (the site's square shapes) for both lists. */
+/* Brand markers for both lists. 2026-11-26: rounded (the xs radius renders these 6px marks as dots). */
 .rm-list li, .rm-notes li { position: relative; padding-left: var(--space-5); }
-.rm-list li::before, .rm-notes li::before { content: ''; position: absolute; left: 2px; top: 0.6em; width: 6px; height: 6px; background: var(--mba-purple); }
+.rm-list li::before, .rm-notes li::before { content: ''; position: absolute; left: 2px; top: 0.6em; width: 6px; height: 6px; background: var(--mba-purple); border-radius: var(--radius-xs); }
 .rm-notes li::before { background: var(--border-strong); }

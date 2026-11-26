@@ -67,8 +67,11 @@ test('test_volume_and_coverage', () => {
   cover(vals(S.importBatches), 'status', ['accepted', 'partial']);
   // On Hold always has a review date (V3 §6)
   assert.ok(accounts.filter((a) => a.status === 'on_hold').every((a) => a.holdUntil));
-  // all 4 methods appear in history
-  assert.deepEqual([...new Set(vals(S.payments).map((p) => p.method))].sort(), ['Card', 'GCash', 'Maya', 'Online banking']);
+  // the original 4 methods appear in history, and every seeded method is a configured one
+  // (2026-11-26: QR Ph and MariBank were added; a few seeded attempts now use them)
+  const seenMethods = new Set(vals(S.payments).map((p) => p.method));
+  for (const m of ['Card', 'GCash', 'Maya', 'Online banking']) assert.ok(seenMethods.has(m), `method ${m} missing from history`);
+  for (const m of seenMethods) assert.ok(['GCash', 'Maya', 'QR Ph', 'Online banking', 'Card', 'MariBank'].includes(m), `unknown method ${m}`);
 });
 
 test('test_payment_history_window', () => {

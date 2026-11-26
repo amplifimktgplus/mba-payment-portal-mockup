@@ -9,6 +9,7 @@ const ring = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${
 export const ICON_PATHS = Object.freeze({
   dashboard: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z',
   creditors: 'M3 21h18 M6 17v-6 M10 17v-6 M14 17v-6 M18 17v-6 M12 3l9 5H3z',
+  bank: 'M3 21h18 M6 17v-6 M10 17v-6 M14 17v-6 M18 17v-6 M12 3l9 5H3z', // online banking (same building as creditors)
   portfolios: 'M3 6h6l2 2h10v12H3z M3 11h18',
   accounts: `M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 ${ring(9, 7, 4)} M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75`,
   arrangements: 'M8 2v4 M16 2v4 M3 5h18v16H3z M3 10h18 M9 15.5l2 2 4-4',

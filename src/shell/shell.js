@@ -12,6 +12,7 @@ import { HEROES } from '../data/seed.js';
 import { h, btn, icon, segmented, toast, confirmDialog, closeAllModals, clearMemo, borrowerName } from '../ui/kit.js';
 import { installLayoutListeners, resetLayoutUi } from '../mba/layout.js';
 import { bui } from '../borrower/parts.js';
+import { playSplash } from '../ui/splash.js';
 
 export const LOGO_WHITE_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoWhiteSvg)}`;
 
@@ -109,6 +110,10 @@ function renderDrawer(ctx) {
       h('h3', { class: 'drawer-label' }, 'Demo clock'),
       h('div', { class: 'clock', testid: 'demo-clock' }, icon('clock', { size: 18 }), h('span', { class: 'num' }, `${fmtDateTime(DEMO_NOW)} PHT`), h('span', { class: 'clock-fixed' }, 'Fixed')),
       h('p', { class: 'drawer-help' }, 'Due dates, overdue and expiry states are computed against this fixed date.')),
+    h('section', { class: 'drawer-sec' },
+      h('h3', { class: 'drawer-label' }, 'Intro'),
+      h('p', { class: 'drawer-help' }, 'The opening animation plays once per browser session. Replay it just before you present.'),
+      btn('Replay intro', { variant: 'on-dark', testid: 'replay-intro', onClick: () => { close(); playSplash({ force: true }); } })),
     h('section', { class: 'drawer-sec' },
       h('h3', { class: 'drawer-label' }, 'Data'),
       h('p', { class: 'drawer-help', testid: 'storage-mode' }, ctx.store.persistent

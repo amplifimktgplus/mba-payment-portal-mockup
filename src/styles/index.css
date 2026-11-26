@@ -19,3 +19,4 @@
 @import './mba-remittances.css';
 @import './mba-settings.css';
 @import './integration.css';
+@import './theme-glass.css'; /* 2026-11-26 visual refresh — keep last; remove to return to the flat original */
